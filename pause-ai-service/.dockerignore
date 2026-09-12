@@ -1,0 +1,63 @@
+# ========================================
+# PAUSE AI SERVICE - .dockerignore
+# ========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Data (sauf modèle)
+data/training_data.csv
+data/*.csv
+data/*.json
+
+# Tests
+tests/
+*_test.py
+test_*.py
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Jupyter
+*.ipynb
+.ipynb_checkpoints/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Scripts batch Windows
+*.bat
+
+# Model cache
+*.pkl
+*.pickle

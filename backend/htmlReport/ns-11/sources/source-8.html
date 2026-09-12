@@ -1,0 +1,239 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MessengerRealtimeServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: MessengerRealtimeServiceImpl (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">MessengerRealtimeServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (11/11)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (30/30)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (35/35)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services.impl;
+&nbsp;
+&nbsp;import com.logiway.services.MessengerRealtimeService;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.time.Duration;
+&nbsp;import java.util.Collection;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.concurrent.ConcurrentHashMap;
+&nbsp;import java.util.concurrent.CopyOnWriteArrayList;
+&nbsp;
+&nbsp;@Service
+&nbsp;@RequiredArgsConstructor
+&nbsp;public class MessengerRealtimeServiceImpl implements MessengerRealtimeService {
+&nbsp;
+<b class="fc">&nbsp;    private static final long EMITTER_TIMEOUT_MS = Duration.ofMinutes(30).toMillis();</b>
+&nbsp;
+&nbsp;    private final Map&lt;Long, CopyOnWriteArrayList&lt;SseEmitter&gt;&gt; emittersByUser = new ConcurrentHashMap&lt;&gt;();
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public SseEmitter register(Long userId) {
+<b class="fc">&nbsp;        if (userId == null) {</b>
+<b class="fc">&nbsp;            throw new com.logiway.exceptions.UnauthorizedException(&quot;User id is missing for messenger realtime registration&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);</b>
+<b class="fc">&nbsp;        emittersByUser.computeIfAbsent(userId, key -&gt; new CopyOnWriteArrayList&lt;&gt;()).add(emitter);</b>
+&nbsp;
+<b class="fc">&nbsp;        emitter.onCompletion(() -&gt; removeEmitter(userId, emitter));</b>
+<b class="fc">&nbsp;        emitter.onTimeout(() -&gt; removeEmitter(userId, emitter));</b>
+<b class="fc">&nbsp;        emitter.onError((ignored) -&gt; removeEmitter(userId, emitter));</b>
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            emitter.send(SseEmitter.event().name(&quot;connected&quot;).data(&quot;ok&quot;));</b>
+&nbsp;        } catch (IOException ex) {
+<b class="fc">&nbsp;            removeEmitter(userId, emitter);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return emitter;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void publishMessageToUsers(Collection&lt;Long&gt; userIds, Object payload) {
+<b class="fc">&nbsp;        publish(&quot;message&quot;, userIds, payload);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void publishStatusToUsers(Collection&lt;Long&gt; userIds, Object payload) {
+<b class="fc">&nbsp;        publish(&quot;status&quot;, userIds, payload);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void publishConversationToUsers(Collection&lt;Long&gt; userIds, Object payload) {
+<b class="fc">&nbsp;        publish(&quot;conversation&quot;, userIds, payload);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void publishPresenceToAll(Object payload) {
+<b class="fc">&nbsp;        for (Long userId : emittersByUser.keySet()) {</b>
+<b class="fc">&nbsp;            publish(&quot;presence&quot;, List.of(userId), payload);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void publishNamedEventToUsers(Collection&lt;Long&gt; userIds, String eventName, Object payload) {
+<b class="fc">&nbsp;        publish(eventName, userIds, payload);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public boolean hasActiveConnection(Long userId) {
+<b class="fc">&nbsp;        List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</b>
+<b class="fc">&nbsp;        return emitters != null &amp;&amp; !emitters.isEmpty();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void disconnectUser(Long userId) {
+<b class="fc">&nbsp;        List&lt;SseEmitter&gt; emitters = emittersByUser.remove(userId);</b>
+<b class="fc">&nbsp;        if (emitters == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        for (SseEmitter emitter : emitters) {</b>
+<b class="fc">&nbsp;            emitter.complete();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void publish(String eventName, Collection&lt;Long&gt; userIds, Object payload) {
+<b class="fc">&nbsp;        if (userIds == null || userIds.isEmpty() || payload == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        for (Long userId : userIds) {</b>
+<b class="fc">&nbsp;            List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</b>
+<b class="fc">&nbsp;            if (emitters == null || emitters.isEmpty()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            for (SseEmitter emitter : emitters) {</b>
+&nbsp;                try {
+<b class="fc">&nbsp;                    emitter.send(SseEmitter.event().name(eventName).data(payload));</b>
+&nbsp;                } catch (IOException ex) {
+<b class="fc">&nbsp;                    removeEmitter(userId, emitter);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void removeEmitter(Long userId, SseEmitter emitter) {
+<b class="fc">&nbsp;        List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</b>
+<b class="fc">&nbsp;        if (emitters == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        emitters.remove(emitter);</b>
+<b class="fc">&nbsp;        if (emitters.isEmpty()) {</b>
+<b class="fc">&nbsp;            emittersByUser.remove(userId);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

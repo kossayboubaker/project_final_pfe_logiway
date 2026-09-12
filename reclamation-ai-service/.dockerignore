@@ -1,0 +1,57 @@
+# ========================================
+# RÉCLAMATION AI SERVICE - .dockerignore
+# ========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+venv-reclamation/
+env/
+ENV/
+.venv
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Tests
+tests/
+*_test.py
+test_*.py
+test_service.bat
+test_integration.bat
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Scripts batch Windows
+*.bat
+
+# Fichiers non utilisés en production
+app.py
+requirements.txt

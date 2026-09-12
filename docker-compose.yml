@@ -1,0 +1,242 @@
+version: "3.8"
+
+# ========================================
+# LOGIWAY PLATFORM - DOCKER COMPOSE
+# Architecture Microservices Complète
+# ========================================
+
+services:
+  # ========================================
+  # BASE DE DONNÉES MYSQL
+  # ========================================
+  mysql:
+    image: mysql:8.0
+    container_name: logiway-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-logiway2024}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-logiway}
+      MYSQL_USER: ${MYSQL_USER:-logiway_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
+      TZ: Europe/Paris
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./backend/src/main/resources/db/migration:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-logiway2024}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - logiway-network
+
+  # ========================================
+  # BACKEND JAVA SPRING BOOT
+  # ========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: logiway-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Base de données
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-logiway}?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-logiway_user}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
+      
+      # Services IA/ML
+      PAUSE_AI_SERVICE_URL: http://pause-ai:5000
+      RECLAMATION_AI_SERVICE_URL: http://reclamation-ai:5001
+      RAG_SERVICE_URL: http://rag-service:8001
+      
+      # Configuration JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: false
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQL8Dialect
+      
+      # Configuration serveur
+      SERVER_PORT: 8080
+      
+      # Logs
+      LOGGING_LEVEL_COM_LOGIWAY: INFO
+      
+    depends_on:
+      mysql:
+        condition: service_healthy
+      pause-ai:
+        condition: service_healthy
+      reclamation-ai:
+        condition: service_healthy
+      rag-service:
+        condition: service_healthy
+    volumes:
+      - backend-logs:/app/logs
+    networks:
+      - logiway-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ========================================
+  # FRONTEND ANGULAR
+  # ========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: logiway-frontend
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+    networks:
+      - logiway-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ========================================
+  # SERVICE ML - PAUSE INTELLIGENT
+  # Port 5000
+  # ========================================
+  pause-ai:
+    build:
+      context: ./pause-ai-service
+      dockerfile: Dockerfile
+    container_name: logiway-pause-ai
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      MODEL_PATH: data/pause_model.joblib
+      TRAINING_DATA_PATH: data/training_data.csv
+      OSRM_URL: https://router.project-osrm.org
+      DEBUG: false
+      FLASK_ENV: production
+      WORKERS: 2
+      TIMEOUT: 120
+    volumes:
+      - pause-ai-data:/app/data
+      - pause-ai-logs:/app/logs
+    networks:
+      - logiway-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ========================================
+  # SERVICE IA - VALIDATION RÉCLAMATIONS
+  # Port 5001
+  # ========================================
+  reclamation-ai:
+    build:
+      context: ./reclamation-ai-service
+      dockerfile: Dockerfile
+    container_name: logiway-reclamation-ai
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      FLASK_ENV: production
+      PORT: 5001
+      TOXICITY_THRESHOLD: 0.55
+      SEMANTIC_THRESHOLD: 0.25
+      PYTHONUNBUFFERED: 1
+    networks:
+      - logiway-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ========================================
+  # SERVICE RAG - CHATBOT + RAPPORTS
+  # Port 8001
+  # ========================================
+  rag-service:
+    build:
+      context: ./rag-service
+      dockerfile: Dockerfile
+    container_name: logiway-rag-service
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      # Configuration Google Gemini
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      
+      # Configuration MySQL
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-logiway}
+      MYSQL_USER: ${MYSQL_USER:-logiway_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
+      
+      # Configuration serveur
+      PORT: 8001
+      WORKERS: 2
+      LOG_LEVEL: info
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - rag-reports:/app/reports
+      - rag-vectorstore:/app/vectorstore
+      - rag-logs:/app/logs
+    networks:
+      - logiway-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# ========================================
+# VOLUMES PERSISTANTS
+# ========================================
+volumes:
+  mysql-data:
+    driver: local
+  backend-logs:
+    driver: local
+  pause-ai-data:
+    driver: local
+  pause-ai-logs:
+    driver: local
+  rag-reports:
+    driver: local
+  rag-vectorstore:
+    driver: local
+  rag-logs:
+    driver: local
+
+# ========================================
+# RÉSEAU INTERNE
+# ========================================
+networks:
+  logiway-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+

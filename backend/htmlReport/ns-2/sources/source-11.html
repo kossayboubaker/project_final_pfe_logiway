@@ -1,0 +1,746 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SecteurServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: SecteurServiceImpl (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">SecteurServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/36)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/214)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/316)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services.impl;
+&nbsp;
+&nbsp;import com.logiway.dto.request.CreateSectorRequest;
+&nbsp;import com.logiway.dto.request.UpdateSectorRequest;
+&nbsp;import com.logiway.dto.response.SectorResponse;
+&nbsp;import com.logiway.entities.Chauffeur;
+&nbsp;import com.logiway.entities.Entreprise;
+&nbsp;import com.logiway.entities.Manager;
+&nbsp;import com.logiway.entities.Notification;
+&nbsp;import com.logiway.entities.Secteur;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.enums.Role;
+&nbsp;import com.logiway.entities.enums.TypeNotif;
+&nbsp;import com.logiway.exceptions.BadRequestException;
+&nbsp;import com.logiway.exceptions.ResourceNotFoundException;
+&nbsp;import com.logiway.exceptions.UnauthorizedException;
+&nbsp;import com.logiway.repositories.ChauffeurRepository;
+&nbsp;import com.logiway.repositories.EntrepriseRepository;
+&nbsp;import com.logiway.repositories.ManagerRepository;
+&nbsp;import com.logiway.repositories.NotificationRepository;
+&nbsp;import com.logiway.repositories.SecteurRepository;
+&nbsp;import com.logiway.repositories.UtilisateurRepository;
+&nbsp;import com.logiway.security.AuthenticatedUserService;
+&nbsp;import com.logiway.services.NotificationRealtimeService;
+&nbsp;import com.logiway.services.SecteurService;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.*;
+&nbsp;
+&nbsp;@Service
+<b class="nc">&nbsp;@RequiredArgsConstructor</b>
+<b class="nc">&nbsp;@Slf4j</b>
+&nbsp;public class SecteurServiceImpl implements SecteurService {
+&nbsp;
+&nbsp;    private final SecteurRepository secteurRepository;
+&nbsp;    private final EntrepriseRepository entrepriseRepository;
+&nbsp;    private final ManagerRepository managerRepository;
+&nbsp;    private final ChauffeurRepository chauffeurRepository;
+&nbsp;    private final UtilisateurRepository utilisateurRepository;
+&nbsp;    private final NotificationRepository notificationRepository;
+&nbsp;    private final NotificationRealtimeService notificationRealtimeService;
+&nbsp;    private final AuthenticatedUserService authenticatedUserService;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public List&lt;SectorResponse&gt; getAccessibleSectors() {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (currentUser.getRole() == Role.SUPERADMIN) {</b>
+&nbsp;            // ✅ FIX: Utiliser findAllWithRelations() pour charger toutes les relations
+&nbsp;            // Évite LazyInitializationException et améliore les performances (1 query au lieu de N+1)
+<b class="nc">&nbsp;            List&lt;Secteur&gt; secteurs = secteurRepository.findAllWithRelations();</b>
+<b class="nc">&nbsp;            log.info(&quot;[SECTEUR-AFFICHAGE] SUPERADMIN {} accède à {} secteur(s)&quot;, </b>
+<b class="nc">&nbsp;                     currentUser.getId(), secteurs.size());</b>
+<b class="nc">&nbsp;            return secteurs.stream()</b>
+<b class="nc">&nbsp;                .map(this::toResponse)</b>
+<b class="nc">&nbsp;                .toList();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (currentUser.getRole() == Role.MANAGER) {</b>
+<b class="nc">&nbsp;            Long entrepriseId = currentUser.getEntreprise() != null ? currentUser.getEntreprise().getId() : null;</b>
+<b class="nc">&nbsp;            if (entrepriseId == null) {</b>
+<b class="nc">&nbsp;                log.warn(&quot;[SECTEUR-AFFICHAGE] MANAGER {} n&#39;a pas d&#39;entreprise assignée - retour liste vide&quot;, </b>
+<b class="nc">&nbsp;                         currentUser.getId());</b>
+<b class="nc">&nbsp;                return List.of();</b>
+&nbsp;            }
+&nbsp;            
+&nbsp;            // ✅ FIX: Utiliser findByEntrepriseIdWithRelations() pour charger les relations
+&nbsp;            // Résout le problème : les managers voient maintenant leurs secteurs avec tous les détails
+<b class="nc">&nbsp;            List&lt;Secteur&gt; secteurs = secteurRepository.findByEntrepriseIdWithRelations(entrepriseId);</b>
+<b class="nc">&nbsp;            log.info(&quot;[SECTEUR-AFFICHAGE] MANAGER {} (entreprise {}) accède à {} secteur(s)&quot;, </b>
+<b class="nc">&nbsp;                     currentUser.getId(), entrepriseId, secteurs.size());</b>
+&nbsp;            
+<b class="nc">&nbsp;            if (secteurs.isEmpty()) {</b>
+<b class="nc">&nbsp;                log.warn(&quot;[SECTEUR-AFFICHAGE] Aucun secteur trouvé pour l&#39;entreprise {} du MANAGER {}&quot;, </b>
+<b class="nc">&nbsp;                         entrepriseId, currentUser.getId());</b>
+&nbsp;            }
+&nbsp;            
+<b class="nc">&nbsp;            return secteurs.stream()</b>
+<b class="nc">&nbsp;                .map(this::toResponse)</b>
+<b class="nc">&nbsp;                .toList();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (currentUser.getRole() == Role.CHAUFFEUR) {</b>
+<b class="nc">&nbsp;            Chauffeur chauffeur = chauffeurRepository.findById(currentUser.getId()).orElse(null);</b>
+<b class="nc">&nbsp;            if (chauffeur == null) {</b>
+<b class="nc">&nbsp;                log.warn(&quot;[SECTEUR-AFFICHAGE] CHAUFFEUR {} non trouvé dans la base&quot;, currentUser.getId());</b>
+<b class="nc">&nbsp;                return List.of();</b>
+&nbsp;            }
+&nbsp;            
+&nbsp;            // ✅ FIX: Utiliser resolveChauffeurSectorWithRelations() pour charger les relations
+&nbsp;            // Résout le problème : les chauffeurs voient maintenant leur secteur avec tous les détails
+<b class="nc">&nbsp;            Secteur secteur = resolveChauffeurSectorWithRelations(chauffeur);</b>
+<b class="nc">&nbsp;            if (secteur == null) {</b>
+<b class="nc">&nbsp;                log.warn(&quot;[SECTEUR-AFFICHAGE] Aucun secteur résolu pour CHAUFFEUR {} - &quot; +</b>
+&nbsp;                        &quot;secteur direct: {}, manager: {}, entreprise: {}&quot;, 
+<b class="nc">&nbsp;                         currentUser.getId(),</b>
+<b class="nc">&nbsp;                         chauffeur.getSecteur() != null ? chauffeur.getSecteur().getId() : &quot;null&quot;,</b>
+<b class="nc">&nbsp;                         chauffeur.getManager() != null ? chauffeur.getManager().getId() : &quot;null&quot;,</b>
+<b class="nc">&nbsp;                         chauffeur.getEntreprise() != null ? chauffeur.getEntreprise().getId() : &quot;null&quot;);</b>
+<b class="nc">&nbsp;                return List.of();</b>
+&nbsp;            }
+&nbsp;            
+<b class="nc">&nbsp;            log.info(&quot;[SECTEUR-AFFICHAGE] CHAUFFEUR {} accède au secteur {} ({})&quot;, </b>
+<b class="nc">&nbsp;                     currentUser.getId(), secteur.getId(), secteur.getNom());</b>
+<b class="nc">&nbsp;            return List.of(toResponse(secteur));</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        log.warn(&quot;[SECTEUR-AFFICHAGE] Rôle inconnu pour utilisateur {}: {}&quot;, </b>
+<b class="nc">&nbsp;                 currentUser.getId(), currentUser.getRole());</b>
+<b class="nc">&nbsp;        return List.of();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public SectorResponse getSectorById(Long id) {
+<b class="nc">&nbsp;        Secteur secteur = requireSector(id);</b>
+<b class="nc">&nbsp;        authorizeRead(secteur);</b>
+<b class="nc">&nbsp;        return toResponse(secteur);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public SectorResponse createSector(CreateSectorRequest request) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        requireSuperAdmin(currentUser);</b>
+&nbsp;
+<b class="nc">&nbsp;        Long entrepriseId = requireEntrepriseId(request.entrepriseId());</b>
+<b class="nc">&nbsp;        if (secteurRepository.existsByNomIgnoreCaseAndEntreprise_Id(request.nom().trim(), entrepriseId)) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Un secteur avec ce nom existe déjà pour cette entreprise.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Entreprise entreprise = entrepriseRepository.findById(entrepriseId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Entreprise not found&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;        Secteur secteur = Secteur.builder()</b>
+<b class="nc">&nbsp;            .nom(trim(request.nom()))</b>
+<b class="nc">&nbsp;            .description(trimOrNull(request.description()))</b>
+<b class="nc">&nbsp;            .zoneGeographique(trim(request.zoneGeographique()))</b>
+<b class="nc">&nbsp;            .codesPostaux(trimOrNull(request.codesPostaux()))</b>
+<b class="nc">&nbsp;            .entreprise(entreprise)</b>
+<b class="nc">&nbsp;            .build();</b>
+&nbsp;
+<b class="nc">&nbsp;        secteurRepository.save(secteur);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (request.managerId() != null) {</b>
+<b class="nc">&nbsp;            assignManager(secteur.getId(), request.managerId());</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        notifySuperAdminsSector(&quot;Le secteur &quot; + secteurLabel(secteur) + &quot; a ete cree.&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        return toResponse(requireSector(secteur.getId()));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public SectorResponse updateSector(Long id, UpdateSectorRequest request) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        requireSuperAdmin(currentUser);</b>
+&nbsp;
+<b class="nc">&nbsp;        Secteur secteur = requireSector(id);</b>
+<b class="nc">&nbsp;        String newName = trim(request.nom());</b>
+<b class="nc">&nbsp;        if (newName != null &amp;&amp; secteurRepository.existsByNomIgnoreCaseAndEntreprise_IdAndIdNot(newName, resolveEntrepriseId(request.entrepriseId(), secteur), secteur.getId())) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Un secteur avec ce nom existe déjà pour cette entreprise.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Long previousEntrepriseId = secteur.getEntreprise() != null ? secteur.getEntreprise().getId() : null;</b>
+<b class="nc">&nbsp;        Long targetEntrepriseId = resolveEntrepriseId(request.entrepriseId(), secteur);</b>
+<b class="nc">&nbsp;        boolean enterpriseChanged = targetEntrepriseId != null &amp;&amp; !Objects.equals(previousEntrepriseId, targetEntrepriseId);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (enterpriseChanged) {</b>
+<b class="nc">&nbsp;            ensureCanMoveSector(secteur);</b>
+<b class="nc">&nbsp;            Entreprise targetEntreprise = entrepriseRepository.findById(targetEntrepriseId)</b>
+<b class="nc">&nbsp;                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Entreprise not found&quot;));</b>
+<b class="nc">&nbsp;            secteur.setEntreprise(targetEntreprise);</b>
+<b class="nc">&nbsp;            detachSectorUsers(secteur, true);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (newName != null) secteur.setNom(newName);</b>
+<b class="nc">&nbsp;        if (request.description() != null) secteur.setDescription(trimOrNull(request.description()));</b>
+<b class="nc">&nbsp;        if (request.zoneGeographique() != null) secteur.setZoneGeographique(trim(request.zoneGeographique()));</b>
+<b class="nc">&nbsp;        if (request.codesPostaux() != null) secteur.setCodesPostaux(trimOrNull(request.codesPostaux()));</b>
+&nbsp;
+<b class="nc">&nbsp;        secteurRepository.save(secteur);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (request.managerId() != null) {</b>
+<b class="nc">&nbsp;            assignManager(secteur.getId(), request.managerId());</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Secteur updatedSecteur = requireSector(secteur.getId());</b>
+<b class="nc">&nbsp;        notifySuperAdminsSector(&quot;Le secteur &quot; + secteurLabel(updatedSecteur) + &quot; a ete modifie.&quot;);</b>
+<b class="nc">&nbsp;        notifyUsersSector(collectSectorAudience(updatedSecteur),</b>
+<b class="nc">&nbsp;            &quot;Les informations du secteur &quot; + secteurLabel(updatedSecteur) + &quot; ont ete mises a jour.&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        return toResponse(updatedSecteur);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public void deleteSector(Long id) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        requireSuperAdmin(currentUser);</b>
+&nbsp;
+<b class="nc">&nbsp;        Secteur secteur = requireSector(id);</b>
+<b class="nc">&nbsp;        int managersCount = secteur.getManagers() != null ? secteur.getManagers().size() : 0;</b>
+<b class="nc">&nbsp;        int chauffeursCount = secteur.getChauffeurs() != null ? secteur.getChauffeurs().size() : 0;</b>
+<b class="nc">&nbsp;        if (managersCount &gt; 0 || chauffeursCount &gt; 0) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(String.format(</b>
+&nbsp;                &quot;Suppression impossible: %d manager(s) et %d chauffeur(s) sont encore assignés à ce secteur.&quot;,
+<b class="nc">&nbsp;                managersCount,</b>
+<b class="nc">&nbsp;                chauffeursCount</b>
+&nbsp;            ));
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String deletedSectorLabel = secteurLabel(secteur);</b>
+&nbsp;
+<b class="nc">&nbsp;        secteurRepository.delete(secteur);</b>
+<b class="nc">&nbsp;        notifySuperAdminsSector(&quot;Le secteur &quot; + deletedSectorLabel + &quot; a ete supprime.&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public SectorResponse assignManager(Long sectorId, Long managerId) {
+<b class="nc">&nbsp;        requireSuperAdmin(authenticatedUserService.getCurrentUser());</b>
+&nbsp;
+<b class="nc">&nbsp;        Secteur secteur = requireSector(sectorId);</b>
+<b class="nc">&nbsp;        Manager manager = requireManager(managerId);</b>
+<b class="nc">&nbsp;        String previousSectorLabel = manager.getSecteur() != null ? secteurLabel(manager.getSecteur()) : null;</b>
+&nbsp;
+<b class="nc">&nbsp;        if (manager.getSecteur() != null &amp;&amp; !Objects.equals(manager.getSecteur().getId(), secteur.getId())) {</b>
+<b class="nc">&nbsp;            manager.setSecteur(null);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        manager.setSecteur(secteur);</b>
+<b class="nc">&nbsp;        manager.setEntreprise(secteur.getEntreprise());</b>
+<b class="nc">&nbsp;        managerRepository.save(manager);</b>
+&nbsp;
+<b class="nc">&nbsp;        notifySectorUser(manager,</b>
+<b class="nc">&nbsp;            previousSectorLabel == null</b>
+<b class="nc">&nbsp;                ? &quot;Vous avez ete affecte au secteur &quot; + secteurLabel(secteur) + &quot;.&quot;</b>
+<b class="nc">&nbsp;                : &quot;Votre affectation secteur est passee de &quot; + previousSectorLabel + &quot; a &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+<b class="nc">&nbsp;        notifySuperAdminsSector(&quot;Manager &quot; + userLabel(manager) + &quot; affecte au secteur &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+&nbsp;
+<b class="nc">&nbsp;        return toResponse(requireSector(sectorId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public SectorResponse removeManager(Long sectorId, Long managerId) {
+<b class="nc">&nbsp;        requireSuperAdmin(authenticatedUserService.getCurrentUser());</b>
+&nbsp;
+<b class="nc">&nbsp;        Secteur secteur = requireSector(sectorId);</b>
+<b class="nc">&nbsp;        Manager manager = requireManager(managerId);</b>
+<b class="nc">&nbsp;        if (manager.getSecteur() != null &amp;&amp; Objects.equals(manager.getSecteur().getId(), secteur.getId())) {</b>
+<b class="nc">&nbsp;            manager.setSecteur(null);</b>
+<b class="nc">&nbsp;            managerRepository.save(manager);</b>
+<b class="nc">&nbsp;            notifySectorUser(manager, &quot;Vous avez ete retire du secteur &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+<b class="nc">&nbsp;            notifySuperAdminsSector(&quot;Manager &quot; + userLabel(manager) + &quot; retire du secteur &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return toResponse(requireSector(sectorId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public SectorResponse assignChauffeur(Long sectorId, Long chauffeurId) {
+<b class="nc">&nbsp;        requireSuperAdmin(authenticatedUserService.getCurrentUser());</b>
+&nbsp;
+<b class="nc">&nbsp;        Secteur secteur = requireSector(sectorId);</b>
+<b class="nc">&nbsp;        Chauffeur chauffeur = requireChauffeur(chauffeurId);</b>
+<b class="nc">&nbsp;        String previousSectorLabel = chauffeur.getSecteur() != null ? secteurLabel(chauffeur.getSecteur()) : null;</b>
+<b class="nc">&nbsp;        chauffeur.setSecteur(secteur);</b>
+<b class="nc">&nbsp;        chauffeur.setEntreprise(secteur.getEntreprise());</b>
+<b class="nc">&nbsp;        chauffeurRepository.save(chauffeur);</b>
+&nbsp;
+<b class="nc">&nbsp;        notifySectorUser(chauffeur,</b>
+<b class="nc">&nbsp;            previousSectorLabel == null</b>
+<b class="nc">&nbsp;                ? &quot;Vous avez ete affecte au secteur &quot; + secteurLabel(secteur) + &quot;.&quot;</b>
+<b class="nc">&nbsp;                : &quot;Votre affectation secteur est passee de &quot; + previousSectorLabel + &quot; a &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+<b class="nc">&nbsp;        notifySuperAdminsSector(&quot;Chauffeur &quot; + userLabel(chauffeur) + &quot; affecte au secteur &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+<b class="nc">&nbsp;        return toResponse(requireSector(sectorId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional
+&nbsp;    public SectorResponse removeChauffeur(Long sectorId, Long chauffeurId) {
+<b class="nc">&nbsp;        requireSuperAdmin(authenticatedUserService.getCurrentUser());</b>
+&nbsp;
+<b class="nc">&nbsp;        Secteur secteur = requireSector(sectorId);</b>
+<b class="nc">&nbsp;        Chauffeur chauffeur = requireChauffeur(chauffeurId);</b>
+<b class="nc">&nbsp;        if (chauffeur.getSecteur() != null &amp;&amp; Objects.equals(chauffeur.getSecteur().getId(), secteur.getId())) {</b>
+<b class="nc">&nbsp;            chauffeur.setSecteur(null);</b>
+<b class="nc">&nbsp;            chauffeurRepository.save(chauffeur);</b>
+<b class="nc">&nbsp;            notifySectorUser(chauffeur, &quot;Vous avez ete retire du secteur &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+<b class="nc">&nbsp;            notifySuperAdminsSector(&quot;Chauffeur &quot; + userLabel(chauffeur) + &quot; retire du secteur &quot; + secteurLabel(secteur) + &quot;.&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return toResponse(requireSector(sectorId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void detachSectorUsers(Secteur secteur, boolean notifyUsers) {
+<b class="nc">&nbsp;        List&lt;Utilisateur&gt; impacted = new ArrayList&lt;&gt;();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (secteur.getManagers() != null) {</b>
+<b class="nc">&nbsp;            for (Manager manager : new ArrayList&lt;&gt;(secteur.getManagers())) {</b>
+<b class="nc">&nbsp;                manager.setSecteur(null);</b>
+<b class="nc">&nbsp;                managerRepository.save(manager);</b>
+<b class="nc">&nbsp;                impacted.add(manager);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (secteur.getChauffeurs() != null) {</b>
+<b class="nc">&nbsp;            for (Chauffeur chauffeur : new ArrayList&lt;&gt;(secteur.getChauffeurs())) {</b>
+<b class="nc">&nbsp;                chauffeur.setSecteur(null);</b>
+<b class="nc">&nbsp;                chauffeurRepository.save(chauffeur);</b>
+<b class="nc">&nbsp;                impacted.add(chauffeur);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (notifyUsers) {</b>
+<b class="nc">&nbsp;            impacted.forEach(user -&gt; notifySectorUser(user,</b>
+<b class="nc">&nbsp;                user instanceof Chauffeur</b>
+<b class="nc">&nbsp;                    ? &quot;Votre secteur a été modifié par l&#39;administrateur. Veuillez contacter votre manager pour plus d&#39;informations.&quot;</b>
+<b class="nc">&nbsp;                    : &quot;Le secteur qui vous était assigné a été réattribué à une autre entreprise par l&#39;administrateur.&quot;));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void notifySectorUser(Utilisateur user, String message) {
+<b class="nc">&nbsp;        if (user == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Notification notification = Notification.builder()</b>
+<b class="nc">&nbsp;            .type(TypeNotif.SECTEUR)</b>
+<b class="nc">&nbsp;            .message(message)</b>
+<b class="nc">&nbsp;            .utilisateur(user)</b>
+<b class="nc">&nbsp;            .estLu(false)</b>
+<b class="nc">&nbsp;            .build();</b>
+<b class="nc">&nbsp;        notificationRepository.save(notification);</b>
+<b class="nc">&nbsp;        notificationRealtimeService.publishToUsers(List.of(user.getId()), notification);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void notifyUsersSector(Collection&lt;? extends Utilisateur&gt; recipients, String message) {
+<b class="nc">&nbsp;        if (recipients == null || recipients.isEmpty()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        LinkedHashSet&lt;Long&gt; notifiedIds = new LinkedHashSet&lt;&gt;();</b>
+<b class="nc">&nbsp;        for (Utilisateur recipient : recipients) {</b>
+<b class="nc">&nbsp;            if (recipient == null || recipient.getId() == null || !notifiedIds.add(recipient.getId())) {</b>
+&nbsp;                continue;
+&nbsp;            }
+<b class="nc">&nbsp;            notifySectorUser(recipient, message);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void notifySuperAdminsSector(String message) {
+<b class="nc">&nbsp;        notifyUsersSector(utilisateurRepository.findByRole(Role.SUPERADMIN), message);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Collection&lt;Utilisateur&gt; collectSectorAudience(Secteur secteur) {
+<b class="nc">&nbsp;        LinkedHashSet&lt;Utilisateur&gt; recipients = new LinkedHashSet&lt;&gt;();</b>
+<b class="nc">&nbsp;        recipients.addAll(secteur.getManagers());</b>
+<b class="nc">&nbsp;        recipients.addAll(collectSectorDriverEntities(secteur));</b>
+<b class="nc">&nbsp;        return recipients;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void ensureCanMoveSector(Secteur secteur) {
+<b class="nc">&nbsp;        if ((secteur.getManagers() != null &amp;&amp; !secteur.getManagers().isEmpty()) || (secteur.getChauffeurs() != null &amp;&amp; !secteur.getChauffeurs().isEmpty())) {</b>
+<b class="nc">&nbsp;            detachSectorUsers(secteur, true);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private SectorResponse toResponse(Secteur secteur) {
+<b class="nc">&nbsp;        List&lt;SectorResponse.SectorManagerInfo&gt; managers = secteur.getManagers().stream()</b>
+<b class="nc">&nbsp;            .sorted(Comparator.comparing(Manager::getId))</b>
+<b class="nc">&nbsp;            .map(manager -&gt; new SectorResponse.SectorManagerInfo(</b>
+<b class="nc">&nbsp;                manager.getId(),</b>
+<b class="nc">&nbsp;                manager.getPrenom(),</b>
+<b class="nc">&nbsp;                manager.getNom(),</b>
+<b class="nc">&nbsp;                manager.getEmail(),</b>
+<b class="nc">&nbsp;                manager.getRole()</b>
+&nbsp;            ))
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;
+<b class="nc">&nbsp;        List&lt;SectorResponse.SectorDriverInfo&gt; chauffeurs = collectSectorDrivers(secteur);</b>
+&nbsp;
+<b class="nc">&nbsp;        return new SectorResponse(</b>
+<b class="nc">&nbsp;            secteur.getId(),</b>
+<b class="nc">&nbsp;            secteur.getNom(),</b>
+<b class="nc">&nbsp;            secteur.getDescription(),</b>
+<b class="nc">&nbsp;            secteur.getZoneGeographique(),</b>
+<b class="nc">&nbsp;            secteur.getCodesPostaux(),</b>
+<b class="nc">&nbsp;            secteur.getEntreprise() != null ? secteur.getEntreprise().getId() : null,</b>
+&nbsp;            managers,
+&nbsp;            chauffeurs
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * ✅ FIX: Nouvelle méthode pour résoudre le secteur d&#39;un chauffeur avec toutes les relations chargées
+&nbsp;     * Remplace resolveChauffeurSector() pour éviter LazyInitializationException
+&nbsp;     * 
+&nbsp;     * Stratégie de résolution (par ordre de priorité):
+&nbsp;     * 1. Secteur directement assigné au chauffeur (via chauffeur.secteur_id)
+&nbsp;     * 2. Secteur du manager du chauffeur (via chauffeur.manager.secteur_id)
+&nbsp;     * 3. Premier secteur de l&#39;entreprise du chauffeur (fallback)
+&nbsp;     */
+&nbsp;    private Secteur resolveChauffeurSectorWithRelations(Chauffeur chauffeur) {
+<b class="nc">&nbsp;        if (chauffeur == null) {</b>
+<b class="nc">&nbsp;            log.warn(&quot;[SECTEUR-RESOLUTION] Chauffeur null fourni&quot;);</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Cas 1 : Chauffeur directement assigné à un secteur
+<b class="nc">&nbsp;        if (chauffeur.getSecteur() != null &amp;&amp; chauffeur.getSecteur().getId() != null) {</b>
+<b class="nc">&nbsp;            Long secteurId = chauffeur.getSecteur().getId();</b>
+<b class="nc">&nbsp;            log.info(&quot;[SECTEUR-RESOLUTION] Chauffeur {} - Secteur direct trouvé: {}&quot;, </b>
+<b class="nc">&nbsp;                     chauffeur.getId(), secteurId);</b>
+<b class="nc">&nbsp;            Optional&lt;Secteur&gt; secteurOpt = secteurRepository.findByIdWithRelations(secteurId);</b>
+<b class="nc">&nbsp;            if (secteurOpt.isPresent()) {</b>
+<b class="nc">&nbsp;                return secteurOpt.get();</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+&nbsp;        // Cas 2 : Chauffeur assigné via son manager
+<b class="nc">&nbsp;        if (chauffeur.getManager() != null &amp;&amp; chauffeur.getManager().getSecteur() != null </b>
+<b class="nc">&nbsp;            &amp;&amp; chauffeur.getManager().getSecteur().getId() != null) {</b>
+<b class="nc">&nbsp;            Long secteurId = chauffeur.getManager().getSecteur().getId();</b>
+<b class="nc">&nbsp;            log.info(&quot;[SECTEUR-RESOLUTION] Chauffeur {} - Secteur via manager {} trouvé: {}&quot;, </b>
+<b class="nc">&nbsp;                     chauffeur.getId(), chauffeur.getManager().getId(), secteurId);</b>
+<b class="nc">&nbsp;            Optional&lt;Secteur&gt; secteurOpt = secteurRepository.findByIdWithRelations(secteurId);</b>
+<b class="nc">&nbsp;            if (secteurOpt.isPresent()) {</b>
+<b class="nc">&nbsp;                return secteurOpt.get();</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+&nbsp;        // Cas 3 : Fallback sur l&#39;entreprise (premier secteur de l&#39;entreprise)
+<b class="nc">&nbsp;        Long entrepriseId = chauffeur.getEntreprise() != null</b>
+<b class="nc">&nbsp;            ? chauffeur.getEntreprise().getId()</b>
+<b class="nc">&nbsp;            : (chauffeur.getManager() != null &amp;&amp; chauffeur.getManager().getEntreprise() != null</b>
+<b class="nc">&nbsp;                ? chauffeur.getManager().getEntreprise().getId()</b>
+<b class="nc">&nbsp;                : null);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (entrepriseId == null) {</b>
+<b class="nc">&nbsp;            log.warn(&quot;[SECTEUR-RESOLUTION] Chauffeur {} - Aucune entreprise trouvée&quot;, chauffeur.getId());</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        log.info(&quot;[SECTEUR-RESOLUTION] Chauffeur {} - Fallback sur entreprise {}&quot;, </b>
+<b class="nc">&nbsp;                 chauffeur.getId(), entrepriseId);</b>
+<b class="nc">&nbsp;        List&lt;Secteur&gt; secteursEntreprise = secteurRepository.findByEntrepriseIdWithRelations(entrepriseId);</b>
+&nbsp;        
+<b class="nc">&nbsp;        if (secteursEntreprise.isEmpty()) {</b>
+<b class="nc">&nbsp;            log.warn(&quot;[SECTEUR-RESOLUTION] Chauffeur {} - Aucun secteur trouvé pour entreprise {}&quot;, </b>
+<b class="nc">&nbsp;                     chauffeur.getId(), entrepriseId);</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;        
+<b class="nc">&nbsp;        Secteur secteur = secteursEntreprise.get(0);</b>
+<b class="nc">&nbsp;        log.info(&quot;[SECTEUR-RESOLUTION] Chauffeur {} - Fallback secteur: {} ({})&quot;, </b>
+<b class="nc">&nbsp;                 chauffeur.getId(), secteur.getId(), secteur.getNom());</b>
+<b class="nc">&nbsp;        return secteur;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * @deprecated Utiliser resolveChauffeurSectorWithRelations() à la place
+&nbsp;     * Cette méthode ne charge pas les relations et cause des LazyInitializationException
+&nbsp;     */
+&nbsp;    @Deprecated
+&nbsp;    private Secteur resolveChauffeurSector(Chauffeur chauffeur) {
+<b class="nc">&nbsp;        if (chauffeur == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (chauffeur.getSecteur() != null) {</b>
+<b class="nc">&nbsp;            return chauffeur.getSecteur();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (chauffeur.getManager() != null &amp;&amp; chauffeur.getManager().getSecteur() != null) {</b>
+<b class="nc">&nbsp;            return chauffeur.getManager().getSecteur();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Long entrepriseId = chauffeur.getEntreprise() != null</b>
+<b class="nc">&nbsp;            ? chauffeur.getEntreprise().getId()</b>
+<b class="nc">&nbsp;            : (chauffeur.getManager() != null &amp;&amp; chauffeur.getManager().getEntreprise() != null</b>
+<b class="nc">&nbsp;                ? chauffeur.getManager().getEntreprise().getId()</b>
+<b class="nc">&nbsp;                : null);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (entrepriseId == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        List&lt;Secteur&gt; secteursEntreprise = secteurRepository.findByEntreprise_Id(entrepriseId);</b>
+<b class="nc">&nbsp;        return secteursEntreprise.isEmpty() ? null : secteursEntreprise.get(0);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;SectorResponse.SectorDriverInfo&gt; collectSectorDrivers(Secteur secteur) {
+<b class="nc">&nbsp;        return collectSectorDriverEntities(secteur).stream()</b>
+<b class="nc">&nbsp;            .sorted(Comparator.comparing(Chauffeur::getId))</b>
+<b class="nc">&nbsp;            .map(chauffeur -&gt; new SectorResponse.SectorDriverInfo(</b>
+<b class="nc">&nbsp;                chauffeur.getId(),</b>
+<b class="nc">&nbsp;                chauffeur.getPrenom(),</b>
+<b class="nc">&nbsp;                chauffeur.getNom(),</b>
+<b class="nc">&nbsp;                chauffeur.getManager() != null ? chauffeur.getManager().getId() : null</b>
+&nbsp;            ))
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;Chauffeur&gt; collectSectorDriverEntities(Secteur secteur) {
+<b class="nc">&nbsp;        LinkedHashMap&lt;Long, Chauffeur&gt; uniqueDrivers = new LinkedHashMap&lt;&gt;();</b>
+&nbsp;
+&nbsp;        // Keep direct sector-driver assignments when they exist.
+<b class="nc">&nbsp;        for (Chauffeur chauffeur : secteur.getChauffeurs()) {</b>
+<b class="nc">&nbsp;            if (chauffeur.getId() != null) {</b>
+<b class="nc">&nbsp;                uniqueDrivers.put(chauffeur.getId(), chauffeur);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+&nbsp;        // Also include drivers attached through managers assigned to this sector.
+<b class="nc">&nbsp;        List&lt;Long&gt; managerIds = secteur.getManagers().stream()</b>
+<b class="nc">&nbsp;            .map(Manager::getId)</b>
+<b class="nc">&nbsp;            .filter(Objects::nonNull)</b>
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;
+<b class="nc">&nbsp;        if (!managerIds.isEmpty()) {</b>
+<b class="nc">&nbsp;            for (Chauffeur chauffeur : chauffeurRepository.findByManagerIdIn(managerIds)) {</b>
+<b class="nc">&nbsp;                if (chauffeur.getId() != null) {</b>
+<b class="nc">&nbsp;                    uniqueDrivers.putIfAbsent(chauffeur.getId(), chauffeur);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return new ArrayList&lt;&gt;(uniqueDrivers.values());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String secteurLabel(Secteur secteur) {
+<b class="nc">&nbsp;        if (secteur == null) {</b>
+<b class="nc">&nbsp;            return &quot;Secteur&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String nom = trim(secteur.getNom());</b>
+<b class="nc">&nbsp;        return nom != null ? nom : &quot;Secteur&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String userLabel(Utilisateur user) {
+<b class="nc">&nbsp;        if (user == null) {</b>
+<b class="nc">&nbsp;            return &quot;Utilisateur&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String fullName = (trim(user.getPrenom()) == null ? &quot;&quot; : user.getPrenom().trim()) + &quot; &quot; + (trim(user.getNom()) == null ? &quot;&quot; : user.getNom().trim());</b>
+<b class="nc">&nbsp;        String normalizedName = fullName.trim();</b>
+<b class="nc">&nbsp;        if (!normalizedName.isEmpty()) {</b>
+<b class="nc">&nbsp;            return normalizedName;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String email = trim(user.getEmail());</b>
+<b class="nc">&nbsp;        return email != null ? email : &quot;Utilisateur&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Secteur requireSector(Long id) {
+<b class="nc">&nbsp;        return secteurRepository.findByIdWithRelations(id)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Secteur not found&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Manager requireManager(Long id) {
+<b class="nc">&nbsp;        return managerRepository.findById(id)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Manager not found&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Chauffeur requireChauffeur(Long id) {
+<b class="nc">&nbsp;        return chauffeurRepository.findById(id)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Chauffeur not found&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void authorizeRead(Secteur secteur) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        if (currentUser.getRole() == Role.SUPERADMIN) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (currentUser.getRole() == Role.MANAGER) {</b>
+<b class="nc">&nbsp;            Long entrepriseId = currentUser.getEntreprise() != null ? currentUser.getEntreprise().getId() : null;</b>
+<b class="nc">&nbsp;            if (entrepriseId != null &amp;&amp; Objects.equals(entrepriseId, secteur.getEntreprise() != null ? secteur.getEntreprise().getId() : null)) {</b>
+&nbsp;                return;
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (currentUser.getRole() == Role.CHAUFFEUR) {</b>
+<b class="nc">&nbsp;            Chauffeur chauffeur = chauffeurRepository.findById(currentUser.getId()).orElse(null);</b>
+<b class="nc">&nbsp;            if (chauffeur != null &amp;&amp; chauffeur.getSecteur() != null &amp;&amp; Objects.equals(chauffeur.getSecteur().getId(), secteur.getId())) {</b>
+&nbsp;                return;
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        throw new UnauthorizedException(&quot;You are not allowed to access this sector&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void requireSuperAdmin(Utilisateur currentUser) {
+<b class="nc">&nbsp;        if (currentUser == null || currentUser.getRole() != Role.SUPERADMIN) {</b>
+<b class="nc">&nbsp;            throw new UnauthorizedException(&quot;Only SuperAdmin can manage sectors&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private Long requireEntrepriseId(Long entrepriseId) {
+<b class="nc">&nbsp;        if (entrepriseId == null) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Entreprise is required&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return entrepriseId;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Long resolveEntrepriseId(Long newEntrepriseId, Secteur secteur) {
+<b class="nc">&nbsp;        return newEntrepriseId != null ? newEntrepriseId : (secteur.getEntreprise() != null ? secteur.getEntreprise().getId() : null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String trim(String value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        String trimmed = value.trim();</b>
+<b class="nc">&nbsp;        return trimmed.isEmpty() ? null : trimmed;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String trimOrNull(String value) {
+<b class="nc">&nbsp;        return trim(value);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-10 02:59</div>
+</div>
+</body>
+</html>

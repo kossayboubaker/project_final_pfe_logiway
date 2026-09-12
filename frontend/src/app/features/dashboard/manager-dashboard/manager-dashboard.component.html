@@ -1,0 +1,207 @@
+<!-- ════════════════════════════════════════════════
+     LOGIWAY — Console de Gestion Manager
+     PowerBI-style premium analytics dashboard
+     ════════════════════════════════════════════════ -->
+
+<!-- ── PAGE HEADER ──────────────────────────────── -->
+<div class="mgr-header animate-fade-up">
+    <div class="mgr-header__left">
+        <div class="mgr-header__icon">
+            <mat-icon>manage_accounts</mat-icon>
+        </div>
+        <div>
+            <h1 class="mgr-header__title">Console de Gestion</h1>
+            <p class="mgr-header__sub">Gestion de la flotte et optimisation des tournées en temps réel</p>
+        </div>
+    </div>
+    <div class="mgr-header__badge">
+        <mat-icon>sync</mat-icon>
+        <span>{{ kpiTotalTrips }} trajets chargés</span>
+    </div>
+    <div class="sa-live-badge">
+        <span class="sa-live-dot"></span>
+        <span>{{ currentTime | date:'HH:mm' }} — {{ currentTime | date:'dd MMM yyyy' }}</span>
+    </div>
+</div>
+
+<!-- ── KPI CARDS (KPI STATS GRID) ────────────────── -->
+<div class="auto-grid animate-fade-up" style="animation-delay:.08s">
+
+    <!-- Pointage -->
+    <mat-card class="glass-card stat-card ptg-card" [class.ptg--active]="pointage.clockedIn" (click)="togglePointage()" style="cursor:pointer">
+        <mat-card-header>
+            <div class="icon-circle" [class.ptg-icon--on]="pointage.clockedIn" [class.ptg-icon--off]="!pointage.clockedIn">
+                <mat-icon>{{ pointage.clockedIn ? 'play_circle' : 'pause_circle' }}</mat-icon>
+            </div>
+            <div class="stat-info">
+                <mat-card-title>Pointage</mat-card-title>
+                <mat-card-subtitle>{{ pointageStatusLabel }}</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="ptg-time" *ngIf="pointage.clockedIn; else ptgOff">{{ pointage.sessionElapsed }}</div>
+            <ng-template #ptgOff><div class="ptg-time ptg-time--off">--:--:--</div></ng-template>
+            <div class="ptg-today">Aujourd'hui : {{ pointageTodayLabel }}</div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Congés -->
+    <mat-card class="glass-card stat-card">
+        <mat-card-header>
+            <div class="icon-circle warn"><mat-icon>event_busy</mat-icon></div>
+            <div class="stat-info">
+                <mat-card-title>Congés</mat-card-title>
+                <mat-card-subtitle>Demandes totales</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="stat-value">{{ kpiLeavesCount }}</div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Utilisateurs -->
+    <mat-card class="glass-card stat-card">
+        <mat-card-header>
+            <div class="icon-circle primary"><mat-icon>people</mat-icon></div>
+            <div class="stat-info">
+                <mat-card-title>Utilisateurs</mat-card-title>
+                <mat-card-subtitle>Comptes actifs</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="stat-value">{{ kpiTotalUsersCount }}</div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Missions/Trajets -->
+    <mat-card class="glass-card stat-card">
+        <mat-card-header>
+            <div class="icon-circle accent"><mat-icon>route</mat-icon></div>
+            <div class="stat-info">
+                <mat-card-title>Missions</mat-card-title>
+                <mat-card-subtitle>Trajets cumulés</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="stat-value">{{ kpiTotalTrips }}</div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Véhicules -->
+    <mat-card class="glass-card stat-card">
+        <mat-card-header>
+            <div class="icon-circle info"><mat-icon>local_shipping</mat-icon></div>
+            <div class="stat-info">
+                <mat-card-title>Véhicules</mat-card-title>
+                <mat-card-subtitle>Flotte active</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="stat-value">{{ vehicleCount }}</div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Réclamations -->
+    <mat-card class="glass-card stat-card">
+        <mat-card-header>
+            <div class="icon-circle warn"><mat-icon>report_problem</mat-icon></div>
+            <div class="stat-info">
+                <mat-card-title>Réclamations</mat-card-title>
+                <mat-card-subtitle>Tickets ouverts</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="stat-value">{{ kpiComplaintsCount }}</div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Messages -->
+    <mat-card class="glass-card stat-card">
+        <mat-card-header>
+            <div class="icon-circle primary"><mat-icon>chat</mat-icon></div>
+            <div class="stat-info">
+                <mat-card-title>Messages</mat-card-title>
+                <mat-card-subtitle>Conversations</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="stat-value">{{ kpiMessagesCount }}</div>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Secteurs -->
+    <mat-card class="glass-card stat-card">
+        <mat-card-header>
+            <div class="icon-circle accent"><mat-icon>business</mat-icon></div>
+            <div class="stat-info">
+                <mat-card-title>Secteurs</mat-card-title>
+                <mat-card-subtitle>Zones couvertes</mat-card-subtitle>
+            </div>
+        </mat-card-header>
+        <mat-card-content>
+            <div class="stat-value">{{ kpiSectorsCount }}</div>
+        </mat-card-content>
+    </mat-card>
+
+</div>
+
+<!-- (Secteur Card et Graphiques déplacés vers Historique des Trajets) -->
+
+<!-- ── DRIVER DETAIL PANEL (visible quand un chauffeur est sélectionné) ── -->
+<div class="mgr-driver-detail animate-fade-up" *ngIf="selectedDriverId !== null" style="animation-delay:.22s">
+    <div class="mgr-dd-header">
+        <div class="mgr-dd-avatar">{{ getDriverInitials(selectedDriver!) }}</div>
+        <div class="mgr-dd-info">
+            <h3>{{ selectedDriver?.prenom }} {{ selectedDriver?.nom }}</h3>
+            <span class="mgr-dd-sector">{{ sectorStats?.nom || 'Secteur Ouest' }}</span>
+        </div>
+        <span class="mgr-dd-status-pill" [class.mgr-dd-pill--active]="recentTrips.length > 0"
+            [class.mgr-dd-pill--empty]="recentTrips.length === 0">
+            {{ recentTrips.length }} trajet(s) associé(s)
+        </span>
+    </div>
+
+    <!-- Stats row -->
+    <div class="mgr-dd-stats">
+        <div class="mgr-dd-stat mgr-dd-stat--indigo">
+            <mat-icon>route</mat-icon>
+            <div>
+                <strong>{{ activeTripCount }}</strong>
+                <span>En cours</span>
+            </div>
+        </div>
+        <div class="mgr-dd-stat mgr-dd-stat--emerald">
+            <mat-icon>task_alt</mat-icon>
+            <div>
+                <strong>{{ kpiCompletedTrips }}</strong>
+                <span>Terminées</span>
+            </div>
+        </div>
+        <div class="mgr-dd-stat mgr-dd-stat--cyan">
+            <mat-icon>social_distance</mat-icon>
+            <div>
+                <strong>{{ kpiTotalDistance | number }} km</strong>
+                <span>Distance</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top 3 trajets (aperçu rapide) -->
+    <div class="mgr-dd-trips" *ngIf="recentTrips.length > 0">
+        <div class="mgr-dd-trips-title">
+            <mat-icon>history</mat-icon>
+            <span>Derniers trajets</span>
+        </div>
+        <div class="mgr-dd-trip-row" *ngFor="let trip of recentTrips.slice(0,3)">
+            <span class="mgr-dd-trip-date">{{ trip.date }}</span>
+            <div class="mgr-dd-trip-route">
+                <span>{{ trip.from || '—' }}</span>
+                <mat-icon>arrow_forward</mat-icon>
+                <span>{{ trip.to || '—' }}</span>
+            </div>
+            <span class="mgr-dd-trip-badge" [ngClass]="'mgr-badge--' + getStatusClass(trip.status)">
+                {{ trip.status }}
+            </span>
+        </div>
+    </div>
+</div>

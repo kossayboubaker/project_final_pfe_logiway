@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MessengerMessage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.entities</a> &gt; <span class="el_source">MessengerMessage.java</span></div><h1>MessengerMessage.java</h1><pre class="source lang-java linenums">package com.logiway.entities;
+
+import com.logiway.entities.enums.MessengerMessageStatus;
+import com.logiway.entities.enums.MessengerMessageType;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;messenger_messages&quot;)
+@Getter
+<span class="fc" id="L13">@Setter</span>
+<span class="fc" id="L14">@NoArgsConstructor</span>
+<span class="fc" id="L15">@AllArgsConstructor</span>
+<span class="pc" id="L16">@Builder</span>
+public class MessengerMessage {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+<span class="fc" id="L21">    private Long id;</span>
+
+    @Column(name = &quot;expediteur_id&quot;, nullable = false)
+<span class="fc" id="L24">    private Long expediteurId;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;expediteur_id&quot;, insertable = false, updatable = false)
+<span class="fc" id="L28">    private Utilisateur expediteur;</span>
+
+    @Column(name = &quot;destinataire_id&quot;, nullable = false)
+<span class="fc" id="L31">    private Long destinataireId;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;destinataire_id&quot;, insertable = false, updatable = false)
+<span class="fc" id="L35">    private Utilisateur destinataire;</span>
+
+    @Lob
+    @Column(columnDefinition = &quot;LONGTEXT&quot;)
+<span class="fc" id="L39">    private String contenu;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+<span class="fc" id="L43">    private MessengerMessageType type;</span>
+
+    @Column(name = &quot;chemin_fichier&quot;, length = 500)
+<span class="fc" id="L46">    private String cheminFichier;</span>
+
+    @Column(name = &quot;nom_fichier_original&quot;, length = 255)
+<span class="fc" id="L49">    private String nomFichierOriginal;</span>
+
+    @Column(name = &quot;taille_fichier&quot;)
+<span class="fc" id="L52">    private Long tailleFichier;</span>
+
+    @Column(name = &quot;duree_vocale&quot;)
+<span class="fc" id="L55">    private Integer dureeVocale;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+<span class="fc" id="L59">    private MessengerMessageStatus statut;</span>
+
+    @Column(name = &quot;date_envoi&quot;, nullable = false)
+<span class="fc" id="L62">    private LocalDateTime dateEnvoi;</span>
+
+    @Column(name = &quot;date_lecture&quot;)
+<span class="fc" id="L65">    private LocalDateTime dateLecture;</span>
+
+    @Column(name = &quot;modifie&quot;, nullable = true)
+<span class="fc" id="L68">    private Boolean modifie;</span>
+
+    @Column(name = &quot;date_modification&quot;)
+<span class="fc" id="L71">    private LocalDateTime dateModification;</span>
+
+    @Lob
+    @Column(name = &quot;contenu_original&quot;, columnDefinition = &quot;LONGTEXT&quot;)
+<span class="fc" id="L75">    private String contenuOriginal;</span>
+
+    @Column(name = &quot;supprime&quot;, nullable = true)
+<span class="fc" id="L78">    private Boolean supprime;</span>
+
+    @Column(name = &quot;date_suppression&quot;)
+<span class="fc" id="L81">    private LocalDateTime dateSuppression;</span>
+
+    @Column(name = &quot;connecte&quot;)
+<span class="fc" id="L84">    private Boolean connecte;</span>
+
+    @Column(name = &quot;derniere_activite&quot;)
+<span class="fc" id="L87">    private LocalDateTime derniereActivite;</span>
+
+    @PrePersist
+    void onCreate() {
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if (dateEnvoi == null) {</span>
+<span class="fc" id="L92">            dateEnvoi = LocalDateTime.now();</span>
+        }
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (statut == null) {</span>
+<span class="fc" id="L95">            statut = MessengerMessageStatus.NON_LU;</span>
+        }
+<span class="fc bfc" id="L97" title="All 2 branches covered.">        if (connecte == null) {</span>
+<span class="fc" id="L98">            connecte = Boolean.TRUE;</span>
+        }
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (derniereActivite == null) {</span>
+<span class="fc" id="L101">            derniereActivite = LocalDateTime.now();</span>
+        }
+<span class="fc bfc" id="L103" title="All 2 branches covered.">        if (modifie == null) {</span>
+<span class="fc" id="L104">            modifie = Boolean.FALSE;</span>
+        }
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (supprime == null) {</span>
+<span class="fc" id="L107">            supprime = Boolean.FALSE;</span>
+        }
+<span class="fc" id="L109">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,719 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MessengerServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">MessengerServiceImpl.java</span></div><h1>MessengerServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.request.MessengerTextRequest;
+import com.logiway.dto.request.MessengerMessageUpdateRequest;
+import com.logiway.dto.response.*;
+import com.logiway.entities.MessengerMessage;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.enums.MessengerMessageStatus;
+import com.logiway.entities.enums.MessengerMessageType;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.exceptions.ForbiddenException;
+import com.logiway.exceptions.ResourceNotFoundException;
+import com.logiway.repositories.MessengerMessageRepository;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.MessengerRealtimeService;
+import com.logiway.services.MessengerService;
+import com.logiway.services.NotificationRealtimeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+@Service
+<span class="fc" id="L57">@RequiredArgsConstructor</span>
+@Transactional
+public class MessengerServiceImpl implements MessengerService {
+
+    private static final int DEFAULT_PAGE_SIZE = 30;
+    private static final long MAX_IMAGE_SIZE = 5L * 1024L * 1024L;
+    private static final long MAX_PDF_SIZE = 10L * 1024L * 1024L;
+    private static final long MAX_VOCAL_SIZE = 20L * 1024L * 1024L;
+<span class="fc" id="L65">    private static final DateTimeFormatter FILE_MONTH_FORMAT = DateTimeFormatter.ofPattern(&quot;yyyy/MM&quot;);</span>
+<span class="fc" id="L66">    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern(&quot;HH:mm&quot;, Locale.FRANCE);</span>
+
+    private final AuthenticatedUserService authenticatedUserService;
+    private final UtilisateurRepository utilisateurRepository;
+    private final MessengerMessageRepository messengerMessageRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationRealtimeService notificationRealtimeService;
+    private final MessengerRealtimeService messengerRealtimeService;
+
+<span class="fc" id="L75">    private final ConcurrentMap&lt;Long, PresenceSnapshot&gt; presenceCache = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @Override
+    public List&lt;MessengerConversationResponse&gt; getConversations(String search) {
+        try {
+<span class="fc" id="L80">            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L81">            List&lt;MessengerMessage&gt; messages = messengerMessageRepository.findConversationSeed(currentUser.getId());</span>
+<span class="fc" id="L82">            Map&lt;Long, List&lt;MessengerMessage&gt;&gt; grouped = groupByCounterpart(currentUser.getId(), messages);</span>
+<span class="fc" id="L83">            Map&lt;Long, Utilisateur&gt; participantsById = loadParticipants(grouped.keySet());</span>
+
+<span class="fc" id="L85">            String normalizedSearch = normalize(search);</span>
+
+<span class="fc" id="L87">            return grouped.entrySet().stream()</span>
+<span class="fc" id="L88">                .map(entry -&gt; {</span>
+                    try {
+<span class="fc" id="L90">                        return toConversationResponse(currentUser.getId(), participantsById.get(entry.getKey()), entry.getValue());</span>
+<span class="fc" id="L91">                    } catch (RuntimeException ex) {</span>
+<span class="fc" id="L92">                        return null;</span>
+                    }
+                })
+<span class="fc" id="L95">                .filter(Objects::nonNull)</span>
+<span class="fc" id="L96">                .filter(conversation -&gt; matchesSearch(conversation.prenom(), conversation.nom(), normalizedSearch))</span>
+<span class="fc" id="L97">                .sorted(Comparator</span>
+<span class="fc" id="L98">                    .comparing(MessengerConversationResponse::dateDernierMessage, Comparator.nullsLast(Comparator.naturalOrder()))</span>
+<span class="fc" id="L99">                    .reversed())</span>
+<span class="fc" id="L100">                .toList();</span>
+<span class="fc" id="L101">        } catch (Exception ex) {</span>
+<span class="fc" id="L102">            return List.of();</span>
+        }
+    }
+
+    @Override
+    public MessengerMessagePageResponse getConversationMessages(Long destinataireId, int page, int size) {
+<span class="fc" id="L108">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L109">        getRequiredUser(destinataireId);</span>
+
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        int safeSize = size &gt; 0 ? Math.min(size, 100) : DEFAULT_PAGE_SIZE;</span>
+<span class="fc" id="L112">        int safePage = Math.max(page, 0);</span>
+<span class="fc" id="L113">        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, &quot;dateEnvoi&quot;));</span>
+<span class="fc" id="L114">        Page&lt;MessengerMessage&gt; result = messengerMessageRepository.findConversationMessages(currentUser.getId(), destinataireId, pageable);</span>
+<span class="fc" id="L115">        List&lt;MessengerMessageResponse&gt; messages = result.getContent().stream()</span>
+<span class="fc" id="L116">            .map(message -&gt; toMessageResponse(message, currentUser.getId()))</span>
+<span class="fc" id="L117">            .toList();</span>
+
+<span class="fc" id="L119">        return new MessengerMessagePageResponse(messages, safePage, safeSize, result.getTotalElements(), result.hasNext());</span>
+    }
+
+    @Override
+    public MessengerMessageResponse sendTextMessage(MessengerTextRequest request) {
+<span class="fc bfc" id="L124" title="All 4 branches covered.">        if (request == null || request.destinataireId() == null) {</span>
+<span class="fc" id="L125">            throw new BadRequestException(&quot;Le destinataire est obligatoire&quot;);</span>
+        }
+
+<span class="fc bfc" id="L128" title="All 2 branches covered.">        String contenu = request.contenu() == null ? &quot;&quot; : request.contenu().trim();</span>
+<span class="fc bfc" id="L129" title="All 2 branches covered.">        if (contenu.isBlank()) {</span>
+<span class="fc" id="L130">            throw new BadRequestException(&quot;Le message texte ne peut pas etre vide&quot;);</span>
+        }
+
+<span class="fc" id="L133">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L134">        Utilisateur destinataire = getRequiredUser(request.destinataireId());</span>
+
+<span class="fc" id="L136">        MessengerMessage message = MessengerMessage.builder()</span>
+<span class="fc" id="L137">            .expediteurId(currentUser.getId())</span>
+<span class="fc" id="L138">            .destinataireId(destinataire.getId())</span>
+<span class="fc" id="L139">            .contenu(contenu)</span>
+<span class="fc" id="L140">            .type(MessengerMessageType.TEXTE)</span>
+<span class="fc" id="L141">            .statut(MessengerMessageStatus.NON_LU)</span>
+<span class="fc" id="L142">            .connecte(Boolean.TRUE)</span>
+<span class="fc" id="L143">            .derniereActivite(LocalDateTime.now())</span>
+<span class="fc" id="L144">            .build();</span>
+
+<span class="fc" id="L146">        MessengerMessage saved = messengerMessageRepository.save(message);</span>
+<span class="fc" id="L147">        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</span>
+<span class="fc" id="L148">        emitMessageSideEffects(currentUser, destinataire, saved);</span>
+<span class="fc" id="L149">        return toMessageResponse(saved, currentUser.getId());</span>
+    }
+
+    @Override
+    public MessengerMessageResponse sendFileMessage(Long destinataireId, MultipartFile file) {
+<span class="fc" id="L154">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L155">        Utilisateur destinataire = getRequiredUser(destinataireId);</span>
+
+<span class="fc bfc" id="L157" title="All 4 branches covered.">        if (file == null || file.isEmpty()) {</span>
+<span class="fc" id="L158">            throw new BadRequestException(&quot;Le fichier est obligatoire&quot;);</span>
+        }
+
+<span class="fc" id="L161">        String contentType = Optional.ofNullable(file.getContentType()).orElse(&quot;&quot;).toLowerCase(Locale.ROOT);</span>
+        MessengerMessageType type;
+        long maxSize;
+<span class="fc bfc" id="L164" title="All 2 branches covered.">        if (contentType.contains(&quot;pdf&quot;)) {</span>
+<span class="fc" id="L165">            type = MessengerMessageType.PDF;</span>
+<span class="fc" id="L166">            maxSize = MAX_PDF_SIZE;</span>
+<span class="fc bfc" id="L167" title="All 2 branches covered.">        } else if (contentType.startsWith(&quot;image/&quot;)) {</span>
+<span class="fc" id="L168">            type = MessengerMessageType.IMAGE;</span>
+<span class="fc" id="L169">            maxSize = MAX_IMAGE_SIZE;</span>
+        } else {
+<span class="fc" id="L171">            throw new BadRequestException(&quot;Seuls les fichiers image JPG, PNG, GIF ou PDF sont autorises&quot;);</span>
+        }
+
+<span class="fc bfc" id="L174" title="All 2 branches covered.">        if (file.getSize() &gt; maxSize) {</span>
+<span class="fc bfc" id="L175" title="All 2 branches covered.">            throw new BadRequestException(type == MessengerMessageType.PDF</span>
+<span class="fc" id="L176">                ? &quot;Le document PDF ne doit pas depasser 10 Mo&quot;</span>
+<span class="fc" id="L177">                : &quot;L'image ne doit pas depasser 5 Mo&quot;);</span>
+        }
+
+<span class="fc" id="L180">        Path storedPath = storeMessengerFile(file);</span>
+<span class="fc" id="L181">        MessengerMessage saved = messengerMessageRepository.save(MessengerMessage.builder()</span>
+<span class="fc" id="L182">            .expediteurId(currentUser.getId())</span>
+<span class="fc" id="L183">            .destinataireId(destinataire.getId())</span>
+<span class="fc" id="L184">            .type(type)</span>
+<span class="fc" id="L185">            .contenu(null)</span>
+<span class="fc" id="L186">            .cheminFichier(storedPath.toString().replace('\\', '/'))</span>
+<span class="fc" id="L187">            .nomFichierOriginal(StringUtils.cleanPath(Optional.ofNullable(file.getOriginalFilename()).orElse(&quot;fichier&quot;)))</span>
+<span class="fc" id="L188">            .tailleFichier(file.getSize())</span>
+<span class="fc" id="L189">            .statut(MessengerMessageStatus.NON_LU)</span>
+<span class="fc" id="L190">            .connecte(Boolean.TRUE)</span>
+<span class="fc" id="L191">            .derniereActivite(LocalDateTime.now())</span>
+<span class="fc" id="L192">            .build());</span>
+
+<span class="fc" id="L194">        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</span>
+<span class="fc" id="L195">        emitMessageSideEffects(currentUser, destinataire, saved);</span>
+<span class="fc" id="L196">        return toMessageResponse(saved, currentUser.getId());</span>
+    }
+
+    @Override
+    public MessengerMessageResponse sendVocalMessage(Long destinataireId, MultipartFile file, Integer dureeVocale) {
+<span class="fc" id="L201">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L202">        Utilisateur destinataire = getRequiredUser(destinataireId);</span>
+
+<span class="fc bfc" id="L204" title="All 4 branches covered.">        if (file == null || file.isEmpty()) {</span>
+<span class="fc" id="L205">            throw new BadRequestException(&quot;Le message vocal est obligatoire&quot;);</span>
+        }
+
+<span class="fc" id="L208">        String contentType = Optional.ofNullable(file.getContentType()).orElse(&quot;&quot;).toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L209" title="All 6 branches covered.">        boolean validType = contentType.contains(&quot;webm&quot;) || contentType.contains(&quot;mpeg&quot;) || contentType.contains(&quot;mp3&quot;);</span>
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (!validType) {</span>
+<span class="fc" id="L211">            throw new BadRequestException(&quot;Le vocal doit etre au format WebM ou MP3&quot;);</span>
+        }
+
+<span class="fc bfc" id="L214" title="All 2 branches covered.">        if (file.getSize() &gt; MAX_VOCAL_SIZE) {</span>
+<span class="fc" id="L215">            throw new BadRequestException(&quot;Le message vocal est trop volumineux&quot;);</span>
+        }
+
+<span class="fc bfc" id="L218" title="All 4 branches covered.">        if (dureeVocale != null &amp;&amp; dureeVocale &gt; 120) {</span>
+<span class="fc" id="L219">            throw new BadRequestException(&quot;La duree du message vocal ne doit pas depasser 2 minutes&quot;);</span>
+        }
+
+<span class="fc" id="L222">        Path storedPath = storeMessengerFile(file);</span>
+<span class="fc" id="L223">        MessengerMessage saved = messengerMessageRepository.save(MessengerMessage.builder()</span>
+<span class="fc" id="L224">            .expediteurId(currentUser.getId())</span>
+<span class="fc" id="L225">            .destinataireId(destinataire.getId())</span>
+<span class="fc" id="L226">            .type(MessengerMessageType.VOCAL)</span>
+<span class="fc" id="L227">            .contenu(null)</span>
+<span class="fc" id="L228">            .cheminFichier(storedPath.toString().replace('\\', '/'))</span>
+<span class="fc" id="L229">            .nomFichierOriginal(StringUtils.cleanPath(Optional.ofNullable(file.getOriginalFilename()).orElse(&quot;vocal.webm&quot;)))</span>
+<span class="fc" id="L230">            .tailleFichier(file.getSize())</span>
+<span class="fc" id="L231">            .dureeVocale(dureeVocale)</span>
+<span class="fc" id="L232">            .statut(MessengerMessageStatus.NON_LU)</span>
+<span class="fc" id="L233">            .connecte(Boolean.TRUE)</span>
+<span class="fc" id="L234">            .derniereActivite(LocalDateTime.now())</span>
+<span class="fc" id="L235">            .build());</span>
+
+<span class="fc" id="L237">        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</span>
+<span class="fc" id="L238">        emitMessageSideEffects(currentUser, destinataire, saved);</span>
+<span class="fc" id="L239">        return toMessageResponse(saved, currentUser.getId());</span>
+    }
+
+    @Override
+    public Resource loadFile(String filename) {
+<span class="fc bfc" id="L244" title="All 4 branches covered.">        if (filename == null || filename.isBlank()) {</span>
+<span class="fc" id="L245">            throw new ResourceNotFoundException(&quot;Fichier introuvable&quot;);</span>
+        }
+
+<span class="fc" id="L248">        MessengerMessage message = messengerMessageRepository.findFirstByCheminFichierEndingWith(filename)</span>
+<span class="fc" id="L249">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Fichier introuvable&quot;));</span>
+
+<span class="fc" id="L251">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L252" title="All 2 branches covered.">        if (!Objects.equals(currentUser.getId(), message.getExpediteurId())</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">            &amp;&amp; !Objects.equals(currentUser.getId(), message.getDestinataireId())) {</span>
+<span class="fc" id="L254">            throw new BadRequestException(&quot;Vous n'etes pas autorise a acceder a ce fichier&quot;);</span>
+        }
+
+        try {
+<span class="fc" id="L258">            Path path = Paths.get(message.getCheminFichier());</span>
+<span class="fc" id="L259">            Resource resource = new UrlResource(path.toUri());</span>
+<span class="pc bpc" id="L260" title="1 of 4 branches missed.">            if (!resource.exists() || !resource.isReadable()) {</span>
+<span class="fc" id="L261">                throw new ResourceNotFoundException(&quot;Fichier introuvable&quot;);</span>
+            }
+<span class="fc" id="L263">            return resource;</span>
+<span class="nc" id="L264">        } catch (MalformedURLException ex) {</span>
+<span class="nc" id="L265">            throw new BadRequestException(&quot;Chemin de fichier invalide&quot;);</span>
+        }
+    }
+
+    @Override
+    public MessengerReadResponse markConversationAsRead(Long destinataireId) {
+<span class="fc" id="L271">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L272">        Utilisateur destinataire = getRequiredUser(destinataireId);</span>
+
+<span class="fc" id="L274">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="fc" id="L275">        List&lt;MessengerMessageResponse&gt; updatedMessages = messengerMessageRepository</span>
+<span class="fc" id="L276">            .findUnreadMessagesFromSender(currentUser.getId(), destinataire.getId(), MessengerMessageStatus.NON_LU)</span>
+<span class="fc" id="L277">            .stream()</span>
+<span class="fc" id="L278">            .map(message -&gt; {</span>
+<span class="fc" id="L279">                message.setStatut(MessengerMessageStatus.LU);</span>
+<span class="fc" id="L280">                message.setDateLecture(now);</span>
+<span class="fc" id="L281">                return toMessageResponse(message, currentUser.getId());</span>
+            })
+<span class="fc" id="L283">            .toList();</span>
+<span class="fc" id="L284">        int updated = messengerMessageRepository.markConversationAsRead(destinataire.getId(), currentUser.getId(), MessengerMessageStatus.LU, now);</span>
+
+<span class="fc bfc" id="L286" title="All 2 branches covered.">        if (!updatedMessages.isEmpty()) {</span>
+<span class="fc" id="L287">            messengerRealtimeService.publishStatusToUsers(List.of(destinataire.getId()), updatedMessages);</span>
+        }
+
+<span class="fc" id="L290">        messengerRealtimeService.publishConversationToUsers(List.of(destinataire.getId(), currentUser.getId()),</span>
+<span class="fc" id="L291">            new MessengerConversationResponse(destinataire.getId(), destinataire.getPrenom(), destinataire.getNom(), destinataire.getEmail(), destinataire.getImage(), destinataire.getRole(), resolvePresence(destinataire.getId(), destinataire.getId(), currentUser.getId(), destinataire).connecte(), now, null, null, now, 0L));</span>
+<span class="fc" id="L292">        return new MessengerReadResponse(destinataire.getId(), (long) updated, now);</span>
+    }
+
+    @Override
+    public List&lt;MessengerUserResponse&gt; getAuthorizedUsers(String search) {
+<span class="fc" id="L297">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L298">        String normalizedSearch = normalize(search);</span>
+
+        // Return ALL users (online or offline), excluding self
+<span class="fc" id="L301">        List&lt;Utilisateur&gt; candidates = utilisateurRepository.findAll().stream()</span>
+<span class="fc bfc" id="L302" title="All 2 branches covered.">            .filter(candidate -&gt; !Objects.equals(candidate.getId(), currentUser.getId()))</span>
+<span class="fc" id="L303">            .filter(candidate -&gt; matchesSearch(candidate.getPrenom(), candidate.getNom(), normalizedSearch))</span>
+<span class="fc" id="L304">            .toList();</span>
+
+<span class="fc" id="L306">        Map&lt;Long, MessengerConversationResponse&gt; conversationMap = getConversations(null).stream()</span>
+<span class="pc" id="L307">            .collect(Collectors.toMap(MessengerConversationResponse::destinataireId, Function.identity(), (left, right) -&gt; left, LinkedHashMap::new));</span>
+
+<span class="fc" id="L309">        return candidates.stream()</span>
+<span class="fc" id="L310">            .sorted((user1, user2) -&gt; {</span>
+<span class="fc bfc" id="L311" title="All 4 branches covered.">                String user1Name = (user1.getPrenom() == null ? &quot;&quot; : user1.getPrenom()) + &quot; &quot; + (user1.getNom() == null ? &quot;&quot; : user1.getNom());</span>
+<span class="pc bpc" id="L312" title="2 of 4 branches missed.">                String user2Name = (user2.getPrenom() == null ? &quot;&quot; : user2.getPrenom()) + &quot; &quot; + (user2.getNom() == null ? &quot;&quot; : user2.getNom());</span>
+<span class="fc" id="L313">                return user1Name.trim().compareToIgnoreCase(user2Name.trim());</span>
+            })
+<span class="fc" id="L315">            .map(candidate -&gt; {</span>
+<span class="fc" id="L316">                MessengerConversationResponse conversation = conversationMap.get(candidate.getId());</span>
+                PresenceSnapshot presence;
+                try {
+<span class="fc" id="L319">                    presence = resolvePresence(candidate.getId(), candidate.getId(), currentUser.getId(), candidate);</span>
+<span class="fc" id="L320">                } catch (RuntimeException ex) {</span>
+<span class="fc" id="L321">                    presence = new PresenceSnapshot(false, null);</span>
+<span class="fc" id="L322">                }</span>
+<span class="fc" id="L323">                return new MessengerUserResponse(</span>
+<span class="fc" id="L324">                    candidate.getId(),</span>
+<span class="fc" id="L325">                    candidate.getPrenom(),</span>
+<span class="fc" id="L326">                    candidate.getNom(),</span>
+<span class="fc" id="L327">                    candidate.getEmail(),</span>
+<span class="fc" id="L328">                    candidate.getImage(),</span>
+<span class="fc" id="L329">                    candidate.getRole(),</span>
+<span class="fc" id="L330">                    presence.connecte(),</span>
+<span class="fc" id="L331">                    presence.derniereActivite(),</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">                    conversation != null ? conversation.dernierMessage() : null,</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">                    conversation != null ? conversation.dateDernierMessage() : null,</span>
+<span class="fc bfc" id="L334" title="All 2 branches covered.">                    conversation != null ? conversation.messagesNonLus() : 0L</span>
+                );
+            })
+<span class="fc" id="L337">            .toList();</span>
+    }
+
+    @Override
+    public MessengerPresenceResponse heartbeat() {
+<span class="fc" id="L342">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L343">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="fc" id="L344">        touchPresence(currentUser.getId(), true, now);</span>
+<span class="fc" id="L345">        messengerMessageRepository.updatePresenceForSender(currentUser.getId(), true, now);</span>
+<span class="fc" id="L346">        messengerRealtimeService.publishPresenceToAll(new MessengerPresenceResponse(currentUser.getId(), true, now));</span>
+<span class="fc" id="L347">        return new MessengerPresenceResponse(currentUser.getId(), true, now);</span>
+    }
+
+    @Override
+    public void disconnectPresence() {
+<span class="fc" id="L352">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L353">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="fc" id="L354">        touchPresence(currentUser.getId(), false, now.minusSeconds(91));</span>
+<span class="fc" id="L355">        messengerMessageRepository.updatePresenceForSender(currentUser.getId(), false, now);</span>
+<span class="fc" id="L356">        messengerRealtimeService.publishPresenceToAll(new MessengerPresenceResponse(currentUser.getId(), false, now));</span>
+<span class="fc" id="L357">    }</span>
+
+    @Override
+    public MessengerMessageResponse updateMessage(Long messageId, MessengerMessageUpdateRequest request) {
+<span class="fc bfc" id="L361" title="All 2 branches covered.">        if (messageId == null) {</span>
+<span class="fc" id="L362">            throw new BadRequestException(&quot;Message introuvable&quot;);</span>
+        }
+
+<span class="fc" id="L365">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L366">        MessengerMessage message = messengerMessageRepository.findById(messageId)</span>
+<span class="fc" id="L367">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Message introuvable&quot;));</span>
+
+        // Allow any user to modify messages regardless of sender role/ownership
+<span class="fc" id="L370">        ensureMessageEditable(message);</span>
+
+<span class="fc" id="L372">        String newContent = request.contenu().trim();</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">        if (newContent.isBlank()) {</span>
+<span class="fc" id="L374">            throw new BadRequestException(&quot;Le message texte ne peut pas etre vide&quot;);</span>
+        }
+
+<span class="fc bfc" id="L377" title="All 2 branches covered.">        if (message.getContenuOriginal() == null) {</span>
+<span class="fc" id="L378">            message.setContenuOriginal(message.getContenu());</span>
+        }
+
+<span class="fc" id="L381">        message.setContenu(newContent);</span>
+<span class="fc" id="L382">        message.setModifie(Boolean.TRUE);</span>
+<span class="fc" id="L383">        message.setDateModification(LocalDateTime.now());</span>
+
+<span class="fc" id="L385">        MessengerMessage saved = messengerMessageRepository.save(message);</span>
+<span class="fc" id="L386">        MessengerMessageResponse response = toMessageResponse(saved, currentUser.getId());</span>
+<span class="fc" id="L387">        messengerRealtimeService.publishNamedEventToUsers(List.of(message.getDestinataireId()), &quot;MESSAGE_MODIFIE&quot;, Map.of(</span>
+<span class="fc" id="L388">            &quot;messageId&quot;, saved.getId(),</span>
+<span class="fc" id="L389">            &quot;contenu&quot;, saved.getContenu(),</span>
+<span class="fc" id="L390">            &quot;dateModification&quot;, saved.getDateModification()</span>
+        ));
+<span class="fc" id="L392">        messengerRealtimeService.publishMessageToUsers(List.of(saved.getExpediteurId(), saved.getDestinataireId()), response);</span>
+<span class="fc" id="L393">        publishConversationSnapshot(currentUser.getId(), saved.getDestinataireId());</span>
+<span class="fc" id="L394">        return response;</span>
+    }
+
+    @Override
+    public void deleteMessage(Long messageId) {
+<span class="fc bfc" id="L399" title="All 2 branches covered.">        if (messageId == null) {</span>
+<span class="fc" id="L400">            throw new BadRequestException(&quot;Message introuvable&quot;);</span>
+        }
+
+<span class="fc" id="L403">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L404">        MessengerMessage message = messengerMessageRepository.findById(messageId)</span>
+<span class="fc" id="L405">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Message introuvable&quot;));</span>
+
+        // Allow any user to delete messages regardless of sender role/ownership
+<span class="fc bfc" id="L408" title="All 2 branches covered.">        if (Boolean.TRUE.equals(message.getSupprime())) {</span>
+<span class="fc" id="L409">            throw new ForbiddenException(&quot;Ce message a deja ete supprime&quot;);</span>
+        }
+
+<span class="fc" id="L412">        deleteMessageFileIfPresent(message);</span>
+<span class="fc" id="L413">        message.setSupprime(Boolean.TRUE);</span>
+<span class="fc" id="L414">        message.setDateSuppression(LocalDateTime.now());</span>
+<span class="fc" id="L415">        message.setContenu(&quot;Message supprimé&quot;);</span>
+<span class="fc" id="L416">        MessengerMessage saved = messengerMessageRepository.save(message);</span>
+
+<span class="fc" id="L418">        MessengerMessageResponse response = toMessageResponse(saved, currentUser.getId());</span>
+<span class="fc" id="L419">        messengerRealtimeService.publishNamedEventToUsers(List.of(message.getDestinataireId()), &quot;MESSAGE_SUPPRIME&quot;, Map.of(</span>
+<span class="fc" id="L420">            &quot;messageId&quot;, saved.getId(),</span>
+<span class="fc" id="L421">            &quot;dateSuppression&quot;, saved.getDateSuppression()</span>
+        ));
+<span class="fc" id="L423">        messengerRealtimeService.publishMessageToUsers(List.of(saved.getExpediteurId(), saved.getDestinataireId()), response);</span>
+<span class="fc" id="L424">        publishConversationSnapshot(currentUser.getId(), saved.getDestinataireId());</span>
+<span class="fc" id="L425">    }</span>
+
+    private void emitMessageSideEffects(Utilisateur currentUser, Utilisateur destinataire, MessengerMessage saved) {
+<span class="fc" id="L428">        MessengerMessageResponse response = toMessageResponse(saved, currentUser.getId());</span>
+<span class="fc" id="L429">        messengerRealtimeService.publishMessageToUsers(List.of(currentUser.getId(), destinataire.getId()), response);</span>
+<span class="fc" id="L430">        messengerRealtimeService.publishConversationToUsers(List.of(currentUser.getId(), destinataire.getId()),</span>
+<span class="fc" id="L431">            toConversationResponse(currentUser.getId(), destinataire, List.of(saved)));</span>
+
+<span class="fc" id="L433">        messengerMessageRepository.updatePresenceForSender(currentUser.getId(), true, saved.getDerniereActivite());</span>
+<span class="fc" id="L434">        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</span>
+
+<span class="fc bfc" id="L436" title="All 2 branches covered.">        if (!messengerRealtimeService.hasActiveConnection(destinataire.getId())) {</span>
+<span class="fc" id="L437">            Notification notification = Notification.builder()</span>
+<span class="fc" id="L438">                .type(TypeNotif.NOTIF_MESSAGE)</span>
+<span class="fc" id="L439">                .message(buildMessageNotification(currentUser, saved))</span>
+<span class="fc" id="L440">                .utilisateur(destinataire)</span>
+<span class="fc" id="L441">                .estLu(false)</span>
+<span class="fc" id="L442">                .build();</span>
+<span class="fc" id="L443">            notificationRepository.save(notification);</span>
+<span class="fc" id="L444">            notificationRealtimeService.publishToUsers(List.of(destinataire.getId()), notification);</span>
+        }
+<span class="fc" id="L446">    }</span>
+
+    private String buildMessageNotification(Utilisateur sender, MessengerMessage message) {
+<span class="fc" id="L449">        String fullName = buildFullName(sender);</span>
+<span class="fc bfc" id="L450" title="All 5 branches covered.">        return switch (message.getType()) {</span>
+<span class="fc" id="L451">            case IMAGE -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a envoye une photo.&quot;;</span>
+<span class="fc" id="L452">            case PDF -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a envoye un document.&quot;;</span>
+<span class="fc" id="L453">            case VOCAL -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a envoye un message vocal.&quot;;</span>
+<span class="fc" id="L454">            case APPEL -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a partage un appel.&quot;;</span>
+<span class="fc" id="L455">            case TEXTE -&gt; &quot;Nouveau message de &quot; + fullName + &quot;.&quot;;</span>
+        };
+    }
+
+    private void publishConversationSnapshot(Long currentUserId, Long participantId) {
+<span class="fc" id="L460">        Utilisateur participant = getRequiredUser(participantId);</span>
+<span class="fc" id="L461">        List&lt;MessengerMessage&gt; messages = messengerMessageRepository.findConversationSeed(currentUserId).stream()</span>
+<span class="pc bpc" id="L462" title="1 of 2 branches missed.">            .filter(message -&gt; Objects.equals(message.getExpediteurId(), participantId)</span>
+<span class="pc bpc" id="L463" title="1 of 2 branches missed.">                || Objects.equals(message.getDestinataireId(), participantId))</span>
+<span class="fc" id="L464">            .toList();</span>
+
+<span class="fc" id="L466">        messengerRealtimeService.publishConversationToUsers(List.of(currentUserId, participantId),</span>
+<span class="fc" id="L467">            toConversationResponse(currentUserId, participant, messages));</span>
+<span class="fc" id="L468">    }</span>
+
+    private void touchPresence(Long userId, boolean connected, LocalDateTime lastActivity) {
+<span class="pc bpc" id="L471" title="1 of 2 branches missed.">        if (userId != null) {</span>
+<span class="fc" id="L472">            presenceCache.put(userId, new PresenceSnapshot(connected, lastActivity));</span>
+        }
+<span class="fc" id="L474">    }</span>
+
+    private PresenceSnapshot resolvePresence(Long userId, Long fallbackUserId, Long currentUserId, Utilisateur user) {
+<span class="fc bfc" id="L477" title="All 2 branches covered.">        if (userId == null) {</span>
+<span class="fc" id="L478">            return new PresenceSnapshot(false, null);</span>
+        }
+<span class="fc" id="L480">        PresenceSnapshot snapshot = presenceCache.get(userId);</span>
+<span class="fc bfc" id="L481" title="All 2 branches covered.">        if (snapshot != null) {</span>
+<span class="pc bpc" id="L482" title="1 of 4 branches missed.">            if (snapshot.connecte() &amp;&amp; snapshot.derniereActivite() != null</span>
+<span class="fc bfc" id="L483" title="All 2 branches covered.">                &amp;&amp; snapshot.derniereActivite().isBefore(LocalDateTime.now().minusSeconds(90))) {</span>
+<span class="fc" id="L484">                PresenceSnapshot inactive = new PresenceSnapshot(false, snapshot.derniereActivite());</span>
+<span class="fc" id="L485">                presenceCache.put(userId, inactive);</span>
+<span class="fc" id="L486">                return inactive;</span>
+            }
+<span class="fc" id="L488">            return snapshot;</span>
+        }
+
+<span class="fc" id="L491">        MessengerMessage latest = messengerMessageRepository.findConversationSeed(userId).stream()</span>
+<span class="fc" id="L492">            .filter(message -&gt; Objects.equals(message.getExpediteurId(), userId))</span>
+<span class="fc" id="L493">            .findFirst()</span>
+<span class="fc" id="L494">            .orElse(null);</span>
+
+<span class="fc bfc" id="L496" title="All 4 branches covered.">        if (latest != null &amp;&amp; latest.getDerniereActivite() != null) {</span>
+<span class="pc bpc" id="L497" title="2 of 4 branches missed.">            boolean connecte = latest.getConnecte() != null &amp;&amp; latest.getConnecte()</span>
+<span class="pc bpc" id="L498" title="1 of 2 branches missed.">                &amp;&amp; latest.getDerniereActivite().isAfter(LocalDateTime.now().minusSeconds(90));</span>
+<span class="fc" id="L499">            PresenceSnapshot resolved = new PresenceSnapshot(connecte, latest.getDerniereActivite());</span>
+<span class="fc" id="L500">            presenceCache.put(userId, resolved);</span>
+<span class="fc" id="L501">            return resolved;</span>
+        }
+
+<span class="fc" id="L504">        return new PresenceSnapshot(false, null);</span>
+    }
+
+    private MessengerMessageResponse toMessageResponse(MessengerMessage message, Long currentUserId) {
+<span class="fc" id="L508">        Utilisateur expediteur = getRequiredUser(message.getExpediteurId());</span>
+<span class="fc" id="L509">        Utilisateur destinataire = getRequiredUser(message.getDestinataireId());</span>
+<span class="fc bfc" id="L510" title="All 2 branches covered.">        String fichierUrl = message.getCheminFichier() == null ? null : &quot;/api/messenger/fichiers/&quot; + Paths.get(message.getCheminFichier()).getFileName();</span>
+<span class="fc" id="L511">        return new MessengerMessageResponse(</span>
+<span class="fc" id="L512">            message.getId(),</span>
+<span class="fc" id="L513">            expediteur.getId(),</span>
+<span class="fc" id="L514">            expediteur.getPrenom(),</span>
+<span class="fc" id="L515">            expediteur.getNom(),</span>
+<span class="fc" id="L516">            expediteur.getEmail(),</span>
+<span class="fc" id="L517">            expediteur.getImage(),</span>
+<span class="fc" id="L518">            expediteur.getRole(),</span>
+<span class="fc" id="L519">            destinataire.getId(),</span>
+<span class="fc" id="L520">            destinataire.getPrenom(),</span>
+<span class="fc" id="L521">            destinataire.getNom(),</span>
+<span class="fc" id="L522">            destinataire.getEmail(),</span>
+<span class="fc" id="L523">            destinataire.getImage(),</span>
+<span class="fc" id="L524">            destinataire.getRole(),</span>
+<span class="fc" id="L525">            message.getType(),</span>
+<span class="fc" id="L526">            message.getContenu(),</span>
+<span class="fc" id="L527">            message.getCheminFichier(),</span>
+<span class="fc" id="L528">            message.getNomFichierOriginal(),</span>
+<span class="fc" id="L529">            message.getTailleFichier(),</span>
+<span class="fc" id="L530">            message.getDureeVocale(),</span>
+<span class="fc" id="L531">            message.getStatut(),</span>
+<span class="fc" id="L532">            message.getDateEnvoi(),</span>
+<span class="fc" id="L533">            message.getDateLecture(),</span>
+<span class="fc" id="L534">            message.getModifie(),</span>
+<span class="fc" id="L535">            message.getDateModification(),</span>
+<span class="fc" id="L536">            message.getContenuOriginal(),</span>
+<span class="fc" id="L537">            message.getSupprime(),</span>
+<span class="fc" id="L538">            message.getDateSuppression(),</span>
+<span class="fc" id="L539">            message.getConnecte(),</span>
+<span class="fc" id="L540">            message.getDerniereActivite(),</span>
+            fichierUrl,
+<span class="fc bfc" id="L542" title="All 2 branches covered.">            message.getDateEnvoi() != null ? message.getDateEnvoi().format(TIME_FORMAT) : &quot;&quot;</span>
+        );
+    }
+
+    private MessengerConversationResponse toConversationResponse(Long currentUserId, Utilisateur participant, List&lt;MessengerMessage&gt; messages) {
+<span class="fc bfc" id="L547" title="All 6 branches covered.">        if (participant == null || messages == null || messages.isEmpty()) {</span>
+<span class="fc" id="L548">            return null;</span>
+        }
+
+<span class="fc" id="L551">        MessengerMessage latest = messages.stream()</span>
+<span class="fc" id="L552">            .max(Comparator.comparing(MessengerMessage::getDateEnvoi, Comparator.nullsLast(Comparator.naturalOrder())))</span>
+<span class="fc" id="L553">            .orElse(messages.get(0));</span>
+<span class="fc" id="L554">        MessengerMessage visibleLatest = messages.stream()</span>
+<span class="fc bfc" id="L555" title="All 2 branches covered.">            .filter(message -&gt; !Boolean.TRUE.equals(message.getSupprime()))</span>
+<span class="fc" id="L556">            .max(Comparator.comparing(MessengerMessage::getDateEnvoi, Comparator.nullsLast(Comparator.naturalOrder())))</span>
+<span class="fc" id="L557">            .orElse(latest);</span>
+
+<span class="fc" id="L559">        long unreadCount = messages.stream()</span>
+<span class="fc" id="L560">            .filter(message -&gt; Objects.equals(message.getDestinataireId(), currentUserId))</span>
+<span class="pc bpc" id="L561" title="1 of 2 branches missed.">            .filter(message -&gt; !Boolean.TRUE.equals(message.getSupprime()))</span>
+<span class="fc bfc" id="L562" title="All 2 branches covered.">            .filter(message -&gt; message.getStatut() == MessengerMessageStatus.NON_LU)</span>
+<span class="fc" id="L563">            .count();</span>
+
+<span class="fc" id="L565">        PresenceSnapshot presence = resolvePresence(participant.getId(), participant.getId(), currentUserId, participant);</span>
+
+<span class="fc" id="L567">        return new MessengerConversationResponse(</span>
+<span class="fc" id="L568">            participant.getId(),</span>
+<span class="fc" id="L569">            participant.getPrenom(),</span>
+<span class="fc" id="L570">            participant.getNom(),</span>
+<span class="fc" id="L571">            participant.getEmail(),</span>
+<span class="fc" id="L572">            participant.getImage(),</span>
+<span class="fc" id="L573">            participant.getRole(),</span>
+<span class="fc" id="L574">            presence.connecte(),</span>
+<span class="fc" id="L575">            presence.derniereActivite(),</span>
+<span class="fc" id="L576">            visibleLatest.getType(),</span>
+<span class="fc" id="L577">            resolvePreview(visibleLatest),</span>
+<span class="fc" id="L578">            visibleLatest.getDateEnvoi(),</span>
+<span class="fc" id="L579">            unreadCount</span>
+        );
+    }
+
+    private String resolvePreview(MessengerMessage message) {
+<span class="fc bfc" id="L584" title="All 2 branches covered.">        if (message == null) {</span>
+<span class="fc" id="L585">            return null;</span>
+        }
+
+<span class="fc bfc" id="L588" title="All 2 branches covered.">        if (Boolean.TRUE.equals(message.getSupprime())) {</span>
+<span class="fc" id="L589">            return &quot;Message supprimé&quot;;</span>
+        }
+
+<span class="fc bfc" id="L592" title="All 2 branches covered.">        if (message.getType() == MessengerMessageType.TEXTE) {</span>
+<span class="fc" id="L593">            return message.getContenu();</span>
+        }
+
+<span class="fc bfc" id="L596" title="All 5 branches covered.">        return switch (message.getType()) {</span>
+<span class="fc" id="L597">            case IMAGE -&gt; &quot;Photo envoyee&quot;;</span>
+<span class="fc" id="L598">            case PDF -&gt; &quot;Document PDF envoye&quot;;</span>
+<span class="fc" id="L599">            case VOCAL -&gt; &quot;Message vocal envoye&quot;;</span>
+<span class="fc" id="L600">            case APPEL -&gt; message.getContenu();</span>
+<span class="fc" id="L601">            case TEXTE -&gt; message.getContenu();</span>
+        };
+    }
+
+    private Map&lt;Long, List&lt;MessengerMessage&gt;&gt; groupByCounterpart(Long currentUserId, List&lt;MessengerMessage&gt; messages) {
+<span class="fc" id="L606">        Map&lt;Long, List&lt;MessengerMessage&gt;&gt; grouped = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L607" title="All 2 branches covered.">        for (MessengerMessage message : messages) {</span>
+<span class="fc bfc" id="L608" title="All 2 branches covered.">            Long counterpartId = Objects.equals(message.getExpediteurId(), currentUserId)</span>
+<span class="fc" id="L609">                ? message.getDestinataireId()</span>
+<span class="fc" id="L610">                : message.getExpediteurId();</span>
+<span class="fc bfc" id="L611" title="All 2 branches covered.">            if (counterpartId != null) {</span>
+<span class="fc" id="L612">                grouped.computeIfAbsent(counterpartId, key -&gt; new ArrayList&lt;&gt;()).add(message);</span>
+            }
+<span class="fc" id="L614">        }</span>
+<span class="fc" id="L615">        return grouped;</span>
+    }
+
+    private Map&lt;Long, Utilisateur&gt; loadParticipants(Set&lt;Long&gt; participantIds) {
+<span class="fc bfc" id="L619" title="All 4 branches covered.">        if (participantIds == null || participantIds.isEmpty()) {</span>
+<span class="fc" id="L620">            return Map.of();</span>
+        }
+
+<span class="fc" id="L623">        Set&lt;Long&gt; safeIds = participantIds.stream().filter(Objects::nonNull).collect(Collectors.toSet());</span>
+<span class="fc bfc" id="L624" title="All 2 branches covered.">        if (safeIds.isEmpty()) {</span>
+<span class="fc" id="L625">            return Map.of();</span>
+        }
+
+<span class="fc" id="L628">        return utilisateurRepository.findAllById(safeIds).stream()</span>
+<span class="pc" id="L629">            .collect(Collectors.toMap(Utilisateur::getId, Function.identity(), (existing, replacement) -&gt; existing));</span>
+    }
+
+    private void ensureMessageEditable(MessengerMessage message) {
+<span class="fc bfc" id="L633" title="All 2 branches covered.">        if (Boolean.TRUE.equals(message.getSupprime())) {</span>
+<span class="fc" id="L634">            throw new ForbiddenException(&quot;Ce message a deja ete supprime&quot;);</span>
+        }
+<span class="fc bfc" id="L636" title="All 2 branches covered.">        if (message.getType() != MessengerMessageType.TEXTE) {</span>
+<span class="fc" id="L637">            throw new ForbiddenException(&quot;Seuls les messages texte peuvent etre modifies&quot;);</span>
+        }
+        // No time-based restriction: allow modification regardless of send time
+<span class="fc" id="L640">    }</span>
+
+    private void deleteMessageFileIfPresent(MessengerMessage message) {
+<span class="fc bfc" id="L643" title="All 4 branches covered.">        if (message.getCheminFichier() == null || message.getCheminFichier().isBlank()) {</span>
+<span class="fc" id="L644">            return;</span>
+        }
+
+        try {
+<span class="fc" id="L648">            Files.deleteIfExists(Paths.get(message.getCheminFichier()));</span>
+<span class="fc" id="L649">        } catch (IOException ex) {</span>
+<span class="fc" id="L650">            throw new BadRequestException(&quot;Impossible de supprimer le fichier associe&quot;);</span>
+<span class="fc" id="L651">        }</span>
+<span class="fc" id="L652">    }</span>
+
+    private Utilisateur getRequiredUser(Long userId) {
+<span class="fc bfc" id="L655" title="All 2 branches covered.">        if (userId == null) {</span>
+<span class="fc" id="L656">            throw new BadRequestException(&quot;Utilisateur introuvable&quot;);</span>
+        }
+<span class="fc" id="L658">        return utilisateurRepository.findById(userId)</span>
+<span class="fc" id="L659">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Utilisateur introuvable&quot;));</span>
+    }
+
+    private Path storeMessengerFile(MultipartFile file) {
+<span class="fc" id="L663">        String monthFolder = FILE_MONTH_FORMAT.format(LocalDateTime.now());</span>
+<span class="fc" id="L664">        String extension = getExtension(file.getOriginalFilename());</span>
+<span class="fc" id="L665">        String safeName = UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;) + extension;</span>
+<span class="fc" id="L666">        Path baseDir = Paths.get(&quot;uploads&quot;, &quot;messenger&quot;, monthFolder);</span>
+<span class="fc" id="L667">        Path targetPath = baseDir.resolve(safeName);</span>
+
+        try {
+<span class="fc" id="L670">            Files.createDirectories(baseDir);</span>
+<span class="fc" id="L671">            Files.copy(file.getInputStream(), targetPath);</span>
+<span class="fc" id="L672">            return targetPath;</span>
+<span class="fc" id="L673">        } catch (IOException ex) {</span>
+<span class="fc" id="L674">            throw new BadRequestException(&quot;Impossible de stocker le fichier envoye&quot;);</span>
+        }
+    }
+
+    private String getExtension(String originalFilename) {
+<span class="fc bfc" id="L679" title="All 4 branches covered.">        if (originalFilename == null || !originalFilename.contains(&quot;.&quot;)) {</span>
+<span class="fc" id="L680">            return &quot;&quot;;</span>
+        }
+<span class="fc" id="L682">        return originalFilename.substring(originalFilename.lastIndexOf('.')).toLowerCase(Locale.ROOT);</span>
+    }
+
+    private String buildFullName(Utilisateur user) {
+<span class="fc bfc" id="L686" title="All 4 branches covered.">        String fullName = ((user.getPrenom() != null ? user.getPrenom() : &quot;&quot;) + &quot; &quot; + (user.getNom() != null ? user.getNom() : &quot;&quot;)).trim();</span>
+<span class="fc bfc" id="L687" title="All 4 branches covered.">        return fullName.isEmpty() ? (user.getEmail() != null ? user.getEmail() : &quot;#&quot; + user.getId()) : fullName;</span>
+    }
+
+    private boolean matchesSearch(String prenom, String nom, String search) {
+<span class="fc bfc" id="L691" title="All 4 branches covered.">        if (search == null || search.isBlank()) {</span>
+<span class="fc" id="L692">            return true;</span>
+        }
+
+<span class="fc" id="L695">        String normalizedPrenom = normalize(prenom);</span>
+<span class="fc" id="L696">        String normalizedNom = normalize(nom);</span>
+<span class="pc bpc" id="L697" title="1 of 6 branches missed.">        return (normalizedPrenom != null &amp;&amp; normalizedPrenom.contains(search))</span>
+<span class="fc bfc" id="L698" title="All 2 branches covered.">            || (normalizedNom != null &amp;&amp; normalizedNom.contains(search))</span>
+<span class="fc bfc" id="L699" title="All 2 branches covered.">            || ((normalizedPrenom + &quot; &quot; + normalizedNom).trim().contains(search));</span>
+    }
+
+    private String normalize(String value) {
+<span class="fc bfc" id="L703" title="All 2 branches covered.">        if (value == null) {</span>
+<span class="fc" id="L704">            return null;</span>
+        }
+
+<span class="fc" id="L707">        return value.trim().toLowerCase(Locale.ROOT);</span>
+    }
+
+
+
+
+
+
+
+<span class="fc" id="L716">    private record PresenceSnapshot(boolean connecte, LocalDateTime derniereActivite) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

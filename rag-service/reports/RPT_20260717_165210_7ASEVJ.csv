@@ -1,0 +1,10 @@
+﻿# Rapport Chauffeurs - Toutes périodes (statut ACTIF, DISPONIBLE, LIBRE)
+# Généré le: 17/07/2026 16:52:10
+# Domaine: chauffeurs
+# Période: Toutes périodes
+# Nombre d'enregistrements: 3
+#
+id,statut_conducteur,manager_id,nom,prenom,email
+49,LIBRE,41,ali,Ahmed,kossay.boubaker@esprit.tn
+45,LIBRE,41,sedik,mohamed,kossayboubaker45@gmail.com
+42,LIBRE,50,abdou,ali,s29791869@gmail.com

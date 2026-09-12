@@ -1,0 +1,91 @@
+.profile-page {
+    padding: 16px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    margin-bottom: 24px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.section-title h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.company-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.info-item {
+    background: rgba(15, 23, 42, 0.4);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+.info-item.wide {
+    grid-column: 1 / -1;
+}
+
+.info-item .label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.info-item .value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: white;
+}
+
+.company-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.actions {
+    display: flex;
+    gap: 16px;
+    justify-content: flex-end;
+}
+
+/* Reductions compared to global profile css */
+.p-4 {
+    padding: 16px !important;
+}
+
+.mt-4 {
+    margin-top: 16px !important;
+}

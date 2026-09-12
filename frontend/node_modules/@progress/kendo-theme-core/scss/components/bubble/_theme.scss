@@ -1,0 +1,35 @@
+@use "./_variables.scss" as *;
+@use "../../mixins/index.scss" as *;
+
+@use "../../spacing/index.scss" as *;
+@use "../../color-system/_functions.scss" as *;
+@use "../../_variables.scss" as *;
+
+@mixin kendo-bubble--theme-base() {
+    .k-bubble {
+        @include fill(
+            $kendo-bubble-text,
+            $kendo-bubble-bg,
+            $kendo-bubble-border
+        );
+        @include box-shadow( $kendo-bubble-shadow );
+
+        &:active,
+        &.k-active,
+        &.k-selected {
+            @include fill( $bg: $kendo-bubble-active-bg, $border: $kendo-bubble-active-border );
+        }
+
+        &:focus,
+        &:focus-visible,
+        &.k-focus {
+            @include fill( $bg: $kendo-bubble-focus-bg, $border: $kendo-bubble-focus-border );
+            @include focus-indicator( $kendo-bubble-focus-shadow, true, true );
+        }
+
+        &:hover,
+        &.k-hover {
+            @include fill( $bg: $kendo-bubble-hover-bg, $border: $kendo-bubble-hover-border );
+        }
+    }
+}

@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RefreshToken.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.entities</a> &gt; <span class="el_source">RefreshToken.java</span></div><h1>RefreshToken.java</h1><pre class="source lang-java linenums">package com.logiway.entities;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;refresh_tokens&quot;)
+public class RefreshToken {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, unique = true, columnDefinition = &quot;VARCHAR(500)&quot;)
+    private String token;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;user_id&quot;, nullable = false)
+    private Utilisateur utilisateur;
+
+    @Column(nullable = false)
+    private LocalDateTime expiryDate;
+
+<span class="fc" id="L23">    @Column(nullable = false, columnDefinition = &quot;BOOLEAN DEFAULT FALSE&quot;)</span>
+<span class="fc" id="L24">    private Boolean revoked = false;</span>
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+<span class="fc" id="L31">        createdAt = LocalDateTime.now();</span>
+<span class="fc" id="L32">    }</span>
+
+    // Constructors
+<span class="fc" id="L35">    public RefreshToken() {</span>
+<span class="fc" id="L36">    }</span>
+
+<span class="fc" id="L38">    public RefreshToken(String token, Utilisateur utilisateur, LocalDateTime expiryDate) {</span>
+<span class="fc" id="L39">        this.token = token;</span>
+<span class="fc" id="L40">        this.utilisateur = utilisateur;</span>
+<span class="fc" id="L41">        this.expiryDate = expiryDate;</span>
+<span class="fc" id="L42">        this.revoked = false;</span>
+<span class="fc" id="L43">        this.createdAt = LocalDateTime.now();</span>
+<span class="fc" id="L44">    }</span>
+
+    // Getters &amp; Setters
+    public Long getId() {
+<span class="fc" id="L48">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="fc" id="L52">        this.id = id;</span>
+<span class="fc" id="L53">    }</span>
+
+    public String getToken() {
+<span class="fc" id="L56">        return token;</span>
+    }
+
+    public void setToken(String token) {
+<span class="fc" id="L60">        this.token = token;</span>
+<span class="fc" id="L61">    }</span>
+
+    public Utilisateur getUtilisateur() {
+<span class="fc" id="L64">        return utilisateur;</span>
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+<span class="fc" id="L68">        this.utilisateur = utilisateur;</span>
+<span class="fc" id="L69">    }</span>
+
+    public LocalDateTime getExpiryDate() {
+<span class="fc" id="L72">        return expiryDate;</span>
+    }
+
+    public void setExpiryDate(LocalDateTime expiryDate) {
+<span class="fc" id="L76">        this.expiryDate = expiryDate;</span>
+<span class="fc" id="L77">    }</span>
+
+    public Boolean getRevoked() {
+<span class="fc" id="L80">        return revoked;</span>
+    }
+
+    public void setRevoked(Boolean revoked) {
+<span class="fc" id="L84">        this.revoked = revoked;</span>
+<span class="fc" id="L85">    }</span>
+
+    public LocalDateTime getCreatedAt() {
+<span class="fc" id="L88">        return createdAt;</span>
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+<span class="fc" id="L92">        this.createdAt = createdAt;</span>
+<span class="fc" id="L93">    }</span>
+
+    public boolean isExpired() {
+<span class="fc" id="L96">        return LocalDateTime.now().isAfter(expiryDate);</span>
+    }
+
+    public boolean isValid() {
+<span class="fc bfc" id="L100" title="All 4 branches covered.">        return !revoked &amp;&amp; !isExpired();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

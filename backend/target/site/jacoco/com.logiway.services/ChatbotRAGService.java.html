@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChatbotRAGService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services</a> &gt; <span class="el_source">ChatbotRAGService.java</span></div><h1>ChatbotRAGService.java</h1><pre class="source lang-java linenums">package com.logiway.services;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.*;
+
+@Service
+<span class="fc" id="L12">@RequiredArgsConstructor</span>
+<span class="fc" id="L13">@Slf4j</span>
+public class ChatbotRAGService {
+
+    private final ChatbotToolsService chatbotToolsService;
+    private final GeminiService geminiService;
+    private final ObjectMapper objectMapper;
+
+    /**
+     * Exécute les outils nécessaires selon les questions posées.
+     */
+    public String executeOutils(List&lt;String&gt; questions, String utilisateur, Long entrepriseId) {
+<span class="fc" id="L24">        StringBuilder resultBuilder = new StringBuilder();</span>
+
+        // Définir la période de recherche par défaut
+<span class="fc" id="L27">        LocalDate dateFin = LocalDate.now();</span>
+<span class="fc" id="L28">        LocalDate dateDebut = dateFin.minusMonths(1);</span>
+
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        for (String question : questions) {</span>
+<span class="fc" id="L31">            String q = question.toLowerCase();</span>
+
+<span class="fc bfc" id="L33" title="All 6 branches covered.">            if (q.contains(&quot;utilisateur&quot;) || q.contains(&quot;statistique&quot;) || q.contains(&quot;global&quot;)) {</span>
+<span class="fc" id="L34">                resultBuilder.append(chatbotToolsService.getStatistiquesGlobales(entrepriseId)).append(&quot;\n&quot;);</span>
+            }
+<span class="fc bfc" id="L36" title="All 8 branches covered.">            if (q.contains(&quot;congé&quot;) || q.contains(&quot;conge&quot;) || q.contains(&quot;absence&quot;) || q.contains(&quot;permission&quot;)) {</span>
+<span class="pc bpc" id="L37" title="2 of 6 branches missed.">                if (q.contains(&quot;attente&quot;) || q.contains(&quot;en attente&quot;) || q.contains(&quot;validation&quot;)) {</span>
+<span class="fc" id="L38">                    resultBuilder.append(chatbotToolsService.getCongesEnAttente(null)).append(&quot;\n&quot;);</span>
+<span class="pc bpc" id="L39" title="1 of 4 branches missed.">                } else if (q.contains(&quot;semaine&quot;) || q.contains(&quot;cette semaine&quot;)) {</span>
+<span class="fc" id="L40">                    resultBuilder.append(chatbotToolsService.getCongesSemaine()).append(&quot;\n&quot;);</span>
+<span class="pc bpc" id="L41" title="2 of 6 branches missed.">                } else if (q.contains(&quot;rapport&quot;) || q.contains(&quot;période&quot;) || q.contains(&quot;periode&quot;)) {</span>
+<span class="fc" id="L42">                    resultBuilder.append(chatbotToolsService.getRapportCongesParPeriode(dateDebut, dateFin, entrepriseId)).append(&quot;\n&quot;);</span>
+                }
+            }
+<span class="fc bfc" id="L45" title="All 8 branches covered.">            if (q.contains(&quot;réclamation&quot;) || q.contains(&quot;reclamation&quot;) || q.contains(&quot;réclamer&quot;) || q.contains(&quot;plainte&quot;)) {</span>
+<span class="pc bpc" id="L46" title="1 of 6 branches missed.">                if (q.contains(&quot;ouvert&quot;) || q.contains(&quot;priorité&quot;) || q.contains(&quot;priorite&quot;)) {</span>
+<span class="fc" id="L47">                    resultBuilder.append(chatbotToolsService.getReclamationsOuvertes()).append(&quot;\n&quot;);</span>
+<span class="pc bpc" id="L48" title="1 of 6 branches missed.">                } else if (q.contains(&quot;résumé&quot;) || q.contains(&quot;resume&quot;) || q.contains(&quot;statut&quot;)) {</span>
+<span class="fc" id="L49">                    resultBuilder.append(chatbotToolsService.getResumeReclamations(entrepriseId)).append(&quot;\n&quot;);</span>
+                }
+            }
+<span class="pc bpc" id="L52" title="1 of 10 branches missed.">            if (q.contains(&quot;véhicule&quot;) || q.contains(&quot;vehicule&quot;) || q.contains(&quot;voiture&quot;) || q.contains(&quot;maintenance&quot;) || q.contains(&quot;panne&quot;)) {</span>
+<span class="pc bpc" id="L53" title="1 of 8 branches missed.">                if (q.contains(&quot;maintenance&quot;) || q.contains(&quot;panne&quot;) || q.contains(&quot;réparation&quot;) || q.contains(&quot;reparation&quot;)) {</span>
+<span class="fc" id="L54">                    resultBuilder.append(chatbotToolsService.getVehiculesEnMaintenance(entrepriseId)).append(&quot;\n&quot;);</span>
+                } else {
+<span class="fc" id="L56">                    resultBuilder.append(chatbotToolsService.getRapportVehicules(entrepriseId)).append(&quot;\n&quot;);</span>
+                }
+            }
+<span class="pc bpc" id="L59" title="1 of 6 branches missed.">            if (q.contains(&quot;chauffeur&quot;) || q.contains(&quot;conducteur&quot;) || q.contains(&quot;disponible&quot;)) {</span>
+<span class="fc" id="L60">                resultBuilder.append(chatbotToolsService.getChauffeursDisponibles(entrepriseId)).append(&quot;\n&quot;);</span>
+            }
+<span class="fc bfc" id="L62" title="All 8 branches covered.">            if (q.contains(&quot;trajet&quot;) || q.contains(&quot;livraison&quot;) || q.contains(&quot;transport&quot;) || q.contains(&quot;course&quot;)) {</span>
+<span class="fc bfc" id="L63" title="All 4 branches covered.">                if (q.contains(&quot;cours&quot;) || q.contains(&quot;actif&quot;)) {</span>
+<span class="fc" id="L64">                    resultBuilder.append(chatbotToolsService.getTrajetsEnCoursParSecteur(entrepriseId)).append(&quot;\n&quot;);</span>
+<span class="pc bpc" id="L65" title="2 of 8 branches missed.">                } else if (q.contains(&quot;rapport&quot;) || q.contains(&quot;période&quot;) || q.contains(&quot;periode&quot;) || q.contains(&quot;statistique&quot;)) {</span>
+<span class="fc" id="L66">                    resultBuilder.append(chatbotToolsService.getRapportTrajets(dateDebut, dateFin, entrepriseId)).append(&quot;\n&quot;);</span>
+                }
+            }
+<span class="pc bpc" id="L69" title="1 of 8 branches missed.">            if (q.contains(&quot;taux&quot;) &amp;&amp; (q.contains(&quot;absence&quot;) || q.contains(&quot;absenteisme&quot;) || q.contains(&quot;absentéisme&quot;))) {</span>
+<span class="fc" id="L70">                int mois = dateFin.getMonthValue();</span>
+<span class="fc" id="L71">                int annee = dateFin.getYear();</span>
+<span class="fc" id="L72">                resultBuilder.append(chatbotToolsService.getTauxAbsencesChauffeurs(mois, annee, entrepriseId)).append(&quot;\n&quot;);</span>
+            }
+<span class="fc" id="L74">        }</span>
+
+<span class="fc" id="L76">        String result = resultBuilder.toString().trim();</span>
+<span class="fc bfc" id="L77" title="All 2 branches covered.">        return result.isEmpty() ? &quot;Aucune donnée trouvée pour cette question.&quot; : result;</span>
+    }
+
+    /**
+     * Génère et exécute une requête SQL à partir d'une question en langage naturel
+     * Note: Cette méthode est maintenant dépréciée, utilisez plutôt le service RAG Gemini
+     */
+    public String generateSql(String question) {
+<span class="fc" id="L85">        log.warn(&quot;La génération SQL via Ollama est dépréciée. Utilisez le service RAG Gemini pour des réponses plus précises.&quot;);</span>
+        
+        // Retourne un message indiquant d'utiliser le chatbot RAG
+<span class="fc" id="L88">        return &quot;La génération SQL automatique n'est plus disponible via cette méthode.\n&quot; +</span>
+               &quot;Veuillez poser votre question directement au chatbot RAG Gemini qui vous fournira &quot; +
+               &quot;une réponse précise basée sur les données de votre système.&quot;;
+    }
+
+    /**
+     * Nettoie la réponse Ollama pour extraire uniquement la requête SQL
+     */
+    private String nettoyerSql(String sql) {
+<span class="fc bfc" id="L97" title="All 4 branches covered.">        if (sql == null || sql.isEmpty()) return &quot;&quot;;</span>
+
+        // Enlever les marqueurs markdown ```sql ... ```
+<span class="fc" id="L100">        sql = sql.replaceAll(&quot;```sql\\s*&quot;, &quot;&quot;);</span>
+<span class="fc" id="L101">        sql = sql.replaceAll(&quot;```\\s*&quot;, &quot;&quot;);</span>
+
+        // Enlever les lignes avant SELECT/ WITH/ SHOW
+<span class="fc" id="L104">        int selectIndex = sql.toUpperCase().indexOf(&quot;SELECT&quot;);</span>
+<span class="fc" id="L105">        int withIndex = sql.toUpperCase().indexOf(&quot;WITH&quot;);</span>
+<span class="fc" id="L106">        int showIndex = sql.toUpperCase().indexOf(&quot;SHOW&quot;);</span>
+
+<span class="fc" id="L108">        int startIndex = -1;</span>
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (selectIndex &gt;= 0) startIndex = selectIndex;</span>
+<span class="fc bfc" id="L110" title="All 6 branches covered.">        if (withIndex &gt;= 0 &amp;&amp; (startIndex &lt; 0 || withIndex &lt; startIndex)) startIndex = withIndex;</span>
+<span class="fc bfc" id="L111" title="All 6 branches covered.">        if (showIndex &gt;= 0 &amp;&amp; (startIndex &lt; 0 || showIndex &lt; startIndex)) startIndex = showIndex;</span>
+
+<span class="fc bfc" id="L113" title="All 2 branches covered.">        if (startIndex &gt;= 0) {</span>
+<span class="fc" id="L114">            sql = sql.substring(startIndex);</span>
+        }
+
+        // Enlever la partie après le point-virgule (et garder le point-virgule)
+<span class="fc" id="L118">        int semicolonIndex = sql.indexOf(';');</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (semicolonIndex &gt;= 0) {</span>
+<span class="fc" id="L120">            sql = sql.substring(0, semicolonIndex + 1);</span>
+        }
+
+<span class="fc" id="L123">        return sql.trim();</span>
+    }
+
+    /**
+     * Traite une question utilisateur via le pipeline MCP complet avec Gemini RAG
+     */
+    public String traiterQuestion(String question, String utilisateur) {
+        try {
+            // Étape 1: Détection des entités et extraction des questions
+<span class="fc" id="L132">            List&lt;String&gt; questions = detecterQuestions(question);</span>
+
+            // Étape 2: Exécution des outils MCP pour récupérer les données
+<span class="fc" id="L135">            String donneesOutils = executeOutils(questions, utilisateur, null);</span>
+
+            // Étape 3: Utilisation du service RAG Gemini
+<span class="fc" id="L138">            log.debug(&quot;Envoi de la question au service RAG Gemini&quot;);</span>
+            
+            // On passe les données des outils pour une réponse hybride
+<span class="fc" id="L141">            return geminiService.traiterQuestionHybride(question, utilisateur, null, donneesOutils);</span>
+
+<span class="fc" id="L143">        } catch (Exception e) {</span>
+<span class="fc" id="L144">            log.error(&quot;Erreur pipeline RAG: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L145">            return &quot;Désolé, une erreur est survenue lors du traitement de votre demande.&quot;;</span>
+        }
+    }
+
+    /**
+     * Détecte les questions sous-jacentes à partir d'une question utilisateur
+     */
+    private List&lt;String&gt; detecterQuestions(String question) {
+<span class="fc" id="L153">        List&lt;String&gt; questions = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L154">        questions.add(question);</span>
+
+<span class="fc" id="L156">        String q = question.toLowerCase();</span>
+
+        // Détection des thèmes pour déclencher les outils appropriés
+<span class="pc bpc" id="L159" title="4 of 12 branches missed.">        if (q.contains(&quot;tous&quot;) || q.contains(&quot;tout&quot;) || q.contains(&quot;global&quot;) || q.contains(&quot;résumé&quot;) || q.contains(&quot;resume&quot;) || q.contains(&quot;statut&quot;)) {</span>
+<span class="fc" id="L160">            questions.add(&quot;global&quot;);</span>
+        }
+
+<span class="pc bpc" id="L163" title="1 of 6 branches missed.">        if (q.contains(&quot;maintenance&quot;) || q.contains(&quot;panne&quot;) || q.contains(&quot;entretien&quot;)) {</span>
+<span class="fc" id="L164">            questions.add(&quot;maintenance&quot;);</span>
+        }
+
+<span class="pc bpc" id="L167" title="1 of 6 branches missed.">        if (q.contains(&quot;absent&quot;) || q.contains(&quot;taux&quot;) &amp;&amp; q.contains(&quot;absence&quot;)) {</span>
+<span class="fc" id="L168">            questions.add(&quot;taux absence&quot;);</span>
+        }
+
+<span class="fc" id="L171">        return questions;</span>
+    }
+
+    /**
+     * Construit le prompt enrichi pour Ollama
+     */
+    private String construirePrompt(String question, String utilisateur, String donneesOutils) {
+<span class="fc" id="L178">        StringBuilder promptBuilder = new StringBuilder();</span>
+<span class="fc" id="L179">        promptBuilder.append(&quot;Tu es LogiWay Assistant, un assistant intelligent de gestion de flotte automobile. &quot;);</span>
+<span class="fc" id="L180">        promptBuilder.append(&quot;Tu aides les gestionnaires de flotte et les chauffeurs dans leur travail quotidien.\n\n&quot;);</span>
+
+<span class="fc" id="L182">        promptBuilder.append(&quot;INFORMATIONS CLÉS:\n&quot;);</span>
+<span class="fc" id="L183">        promptBuilder.append(&quot;- Gestion de flotte: véhicules, chauffeurs, trajets, congés, réclamations, maintenance\n&quot;);</span>
+<span class="fc" id="L184">        promptBuilder.append(&quot;- Les données système sont fournies ci-dessous\n&quot;);</span>
+<span class="fc" id="L185">        promptBuilder.append(&quot;- Tu dois répondre en français naturel et concis\n&quot;);</span>
+<span class="fc" id="L186">        promptBuilder.append(&quot;- Max 5 lignes de réponse, va à l'essentiel\n&quot;);</span>
+<span class="fc" id="L187">        promptBuilder.append(&quot;- Si les données ne permettent pas de répondre, dis-le clairement\n\n&quot;);</span>
+
+<span class="fc" id="L189">        promptBuilder.append(&quot;Utilisateur: &quot;).append(utilisateur).append(&quot;\n\n&quot;);</span>
+
+<span class="fc bfc" id="L191" title="All 4 branches covered.">        if (!donneesOutils.isEmpty() &amp;&amp; !donneesOutils.equals(&quot;Aucune donnée trouvée pour cette question.&quot;)) {</span>
+<span class="fc" id="L192">            promptBuilder.append(&quot;Données disponibles dans le système :\n&quot;);</span>
+<span class="fc" id="L193">            promptBuilder.append(donneesOutils);</span>
+<span class="fc" id="L194">            promptBuilder.append(&quot;\n\n&quot;);</span>
+        }
+
+<span class="fc" id="L197">        promptBuilder.append(&quot;Question de l'utilisateur :\n&quot;).append(question).append(&quot;\n\n&quot;);</span>
+<span class="fc" id="L198">        promptBuilder.append(&quot;Réponse :&quot;);</span>
+
+<span class="fc" id="L200">        return promptBuilder.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

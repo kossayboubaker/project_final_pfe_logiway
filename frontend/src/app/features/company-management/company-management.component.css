@@ -1,0 +1,147 @@
+.company-page {
+    padding: 24px;
+}
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.table-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.search-field.compact {
+    width: 300px;
+    margin-bottom: 0;
+}
+
+.company-name-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 500;
+}
+
+.comp-icon {
+    color: var(--accent);
+    opacity: 0.7;
+}
+
+.fleet-count {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.premium-table-container {
+    overflow-x: auto;
+}
+
+.premium-table {
+    min-width: 1500px;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-badge.actif {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.inactif {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-badge.en-attente {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.action-btn {
+    color: var(--text-secondary);
+}
+
+.menu-divider {
+    border: 0;
+    border-top: 1px solid var(--glass-border);
+    margin: 4px 0;
+}
+
+@media (max-width: 768px) {
+    .header-section {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .search-field.compact {
+        width: 100%;
+    }
+}
+
+.company-thumb {
+    width: 54px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid var(--glass-border);
+}
+
+.pdf-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    color: #f87171;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.pdf-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    color: #f87171;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+}
+
+.status-badge.suspendu {
+    background: rgba(168, 85, 247, 0.12);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}

@@ -1,0 +1,263 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > NotificationServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: NotificationServiceImpl (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NotificationServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (8/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    97,9%
+  </span>
+  <span class="absValue">
+    (47/48)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    98,5%
+  </span>
+  <span class="absValue">
+    (65/66)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services.impl;
+&nbsp;
+&nbsp;import com.logiway.dto.response.NotificationResponse;
+&nbsp;import com.logiway.entities.Chauffeur;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.enums.Role;
+&nbsp;import com.logiway.repositories.ChauffeurRepository;
+&nbsp;import com.logiway.repositories.NotificationRepository;
+&nbsp;import com.logiway.security.AuthenticatedUserService;
+&nbsp;import com.logiway.services.NotificationService;
+&nbsp;import com.logiway.utils.NotificationMessageResolver;
+&nbsp;import com.logiway.utils.NotificationToneResolver;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.LinkedHashSet;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Objects;
+&nbsp;import java.util.Set;
+&nbsp;
+&nbsp;@Service
+<b class="fc">&nbsp;@RequiredArgsConstructor</b>
+&nbsp;public class NotificationServiceImpl implements NotificationService {
+&nbsp;
+&nbsp;    private final NotificationRepository notificationRepository;
+&nbsp;    private final AuthenticatedUserService authenticatedUserService;
+&nbsp;    private final ChauffeurRepository chauffeurRepository;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public List&lt;NotificationResponse&gt; getCurrentUserNotifications() {
+<b class="fc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="fc">&nbsp;        return getScopedNotifications(currentUser, false).stream()</b>
+<b class="fc">&nbsp;            .map(n -&gt; safeToResponse(currentUser, n))</b>
+<b class="fc">&nbsp;            .filter(java.util.Objects::nonNull)</b>
+<b class="fc">&nbsp;            .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    @Transactional(readOnly = true)
+&nbsp;    public List&lt;NotificationResponse&gt; getCurrentUserUnreadNotifications() {
+<b class="fc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="fc">&nbsp;        return getScopedNotifications(currentUser, true).stream()</b>
+<b class="fc">&nbsp;            .map(n -&gt; safeToResponse(currentUser, n))</b>
+<b class="fc">&nbsp;            .filter(java.util.Objects::nonNull)</b>
+<b class="fc">&nbsp;            .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private NotificationResponse safeToResponse(Utilisateur currentUser, com.logiway.entities.Notification notification) {
+&nbsp;        try {
+<b class="fc">&nbsp;            return toResponse(currentUser, notification);</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private NotificationResponse toResponse(Utilisateur currentUser, com.logiway.entities.Notification notification) {
+<b class="fc">&nbsp;        if (currentUser.getRole() == Role.MANAGER &amp;&amp; !isVisibleToManager(currentUser, notification)) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (notification == null || notification.getId() == null) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String resolvedMessage = NotificationMessageResolver.resolveForRecipient(currentUser, notification);</b>
+<b class="fc">&nbsp;        return new NotificationResponse(</b>
+<b class="fc">&nbsp;            notification.getId(),</b>
+<b class="fc">&nbsp;            notification.getType(),</b>
+&nbsp;            resolvedMessage,
+<b class="fc">&nbsp;            notification.getDateCreation(),</b>
+<b class="fc">&nbsp;            notification.getEstLu(),</b>
+<b class="fc">&nbsp;            NotificationToneResolver.resolve(notification.getType(), resolvedMessage)</b>
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;com.logiway.entities.Notification&gt; getScopedNotifications(Utilisateur currentUser, boolean unreadOnly) {
+<b class="fc">&nbsp;        if (currentUser.getRole() == Role.SUPERADMIN) {</b>
+<b class="fc">&nbsp;            return unreadOnly</b>
+<b class="fc">&nbsp;                ? notificationRepository.findAllByOrderByDateCreationDesc().stream().filter(n -&gt; !Boolean.TRUE.equals(n.getEstLu())).toList()</b>
+<b class="fc">&nbsp;                : notificationRepository.findAllByOrderByDateCreationDesc();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (currentUser.getRole() == Role.MANAGER) {</b>
+<b class="fc">&nbsp;            Set&lt;Long&gt; visibleUserIds = new LinkedHashSet&lt;&gt;();</b>
+<b class="fc">&nbsp;            visibleUserIds.add(currentUser.getId());</b>
+&nbsp;
+<b class="fc">&nbsp;            List&lt;Chauffeur&gt; managedDrivers = chauffeurRepository.findByManagerId(currentUser.getId());</b>
+<b class="fc">&nbsp;            Long managerCompanyId = currentUser.getEntreprise() != null ? currentUser.getEntreprise().getId() : null;</b>
+<b class="fc">&nbsp;            managedDrivers.stream()</b>
+<b class="fc">&nbsp;                .filter(driver -&gt; managerCompanyId == null</b>
+<b class="fc">&nbsp;                    || (driver.getEntreprise() != null &amp;&amp; Objects.equals(driver.getEntreprise().getId(), managerCompanyId)))</b>
+<b class="fc">&nbsp;                .forEach(driver -&gt; visibleUserIds.add(driver.getId()));</b>
+&nbsp;
+<b class="pc">&nbsp;            if (visibleUserIds.isEmpty()) {</b>
+<b class="nc">&nbsp;                return List.of();</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            List&lt;Utilisateur&gt; visibleUsers = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;            visibleUsers.add(currentUser);</b>
+<b class="fc">&nbsp;            visibleUsers.addAll(managedDrivers.stream()</b>
+<b class="fc">&nbsp;                .filter(driver -&gt; visibleUserIds.contains(driver.getId()))</b>
+<b class="fc">&nbsp;                .map(Utilisateur.class::cast)</b>
+<b class="fc">&nbsp;                .toList());</b>
+&nbsp;
+<b class="fc">&nbsp;            return unreadOnly</b>
+<b class="fc">&nbsp;                ? notificationRepository.findByUtilisateurInAndEstLuFalseOrderByDateCreationDesc(visibleUsers)</b>
+<b class="fc">&nbsp;                : notificationRepository.findByUtilisateurInOrderByDateCreationDesc(visibleUsers);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return unreadOnly</b>
+<b class="fc">&nbsp;            ? notificationRepository.findByUtilisateurAndEstLuFalseOrderByDateCreationDesc(currentUser)</b>
+<b class="fc">&nbsp;            : notificationRepository.findByUtilisateurOrderByDateCreationDesc(currentUser);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean isVisibleToManager(Utilisateur manager, com.logiway.entities.Notification notification) {
+<b class="fc">&nbsp;        Utilisateur target = notification.getUtilisateur();</b>
+<b class="fc">&nbsp;        if (target == null || target.getId() == null || manager.getId() == null) {</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (Objects.equals(target.getId(), manager.getId())) {</b>
+<b class="fc">&nbsp;            return true;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (!(target instanceof Chauffeur chauffeur)) {</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (chauffeur.getManager() == null || chauffeur.getManager().getId() == null) {</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (!Objects.equals(chauffeur.getManager().getId(), manager.getId())) {</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Long managerCompanyId = manager.getEntreprise() != null ? manager.getEntreprise().getId() : null;</b>
+<b class="fc">&nbsp;        if (managerCompanyId == null) {</b>
+<b class="fc">&nbsp;            return true;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return chauffeur.getEntreprise() != null &amp;&amp; Objects.equals(chauffeur.getEntreprise().getId(), managerCompanyId);</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ReclamationService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: ReclamationService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">ReclamationService$MockitoMock$eItrhZrH</td>
+  </tr>
+  <tr>
+    <td class="name">ReclamationService$MockitoMock$eItrhZrH$auxiliary$dXs9jZpW</td>
+  </tr>
+  <tr>
+    <td class="name">ReclamationService$MockitoMock$eItrhZrH$auxiliary$zSAhuzbh</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services;
+&nbsp;
+&nbsp;import com.logiway.dto.request.CreateReclamationRequest;
+&nbsp;import com.logiway.dto.request.ReclamationDecisionRequest;
+&nbsp;import com.logiway.dto.request.UpdateReclamationRequest;
+&nbsp;import com.logiway.dto.request.ValidateReclamationRequest;
+&nbsp;import com.logiway.dto.response.ReclamationResponse;
+&nbsp;import com.logiway.dto.response.ValidateReclamationResponse;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public interface ReclamationService {
+&nbsp;
+&nbsp;    ReclamationResponse createReclamation(CreateReclamationRequest request);
+&nbsp;
+&nbsp;    ReclamationResponse updateReclamation(Long id, UpdateReclamationRequest request);
+&nbsp;
+&nbsp;    void deleteReclamation(Long id);
+&nbsp;
+&nbsp;    List&lt;ReclamationResponse&gt; getAccessibleReclamations();
+&nbsp;
+&nbsp;    ReclamationResponse resolveReclamation(Long id, ReclamationDecisionRequest request);
+&nbsp;
+&nbsp;    ReclamationResponse rejectReclamation(Long id, ReclamationDecisionRequest request);
+&nbsp;
+&nbsp;    ValidateReclamationResponse validateText(ValidateReclamationRequest request);
+&nbsp;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

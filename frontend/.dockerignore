@@ -1,0 +1,60 @@
+# ========================================
+# FRONTEND - .dockerignore
+# ========================================
+
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build output
+dist/
+.angular/
+.cache/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Tests
+coverage/
+.nyc_output/
+e2e/
+*.spec.ts
+*.spec.js
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+
+# Config files non nécessaires
+.editorconfig
+.eslintrc.json
+tsconfig.spec.json
+karma.conf.js
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml

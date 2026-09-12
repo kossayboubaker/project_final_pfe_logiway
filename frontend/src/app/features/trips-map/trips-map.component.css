@@ -1,0 +1,163 @@
+.trips-map-page {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 1.75rem;
+}
+
+.eyebrow {
+    margin: 0 0 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: #7dd3fc;
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: clamp(1.7rem, 3vw, 2.6rem);
+}
+
+.subtitle {
+    margin: 0.45rem 0 0;
+    color: rgba(226, 232, 240, 0.8);
+    max-width: 60ch;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.stat-card {
+    padding: 1rem 1.2rem;
+    display: grid;
+    gap: 0.25rem;
+}
+
+.stat-card .label {
+    color: rgba(226, 232, 240, 0.72);
+    font-size: 0.9rem;
+}
+
+.stat-card .value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-card.accent .value {
+    color: #7dd3fc;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+.map-shell,
+.list-shell {
+    padding: 1rem;
+}
+
+.live-map {
+    width: 100%;
+    height: min(72vh, 760px);
+    position: relative;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.panel-header h2 {
+    margin: 0;
+}
+
+.panel-header span {
+    color: rgba(226, 232, 240, 0.72);
+}
+
+.trip-list {
+    display: grid;
+    gap: 0.8rem;
+    max-height: calc(72vh - 70px);
+    overflow: auto;
+    padding-right: 0.25rem;
+}
+
+.trip-item {
+    padding: 0.9rem 1rem;
+    border-radius: 1rem;
+    background: rgba(15, 23, 42, 0.42);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.trip-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.35rem;
+}
+
+.trip-item p,
+.trip-item small {
+    margin: 0;
+    color: rgba(226, 232, 240, 0.82);
+}
+
+.trip-route {
+    margin-bottom: 0.35rem !important;
+    font-weight: 600;
+}
+
+.trip-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    font-size: 0.78rem;
+    color: rgba(226, 232, 240, 0.68);
+}
+
+.status {
+    font-size: 0.74rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.15);
+}
+
+.status.active {
+    background: rgba(16, 185, 129, 0.18);
+    color: #6ee7b7;
+}
+
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationToneResolver.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.utils</a> &gt; <span class="el_source">NotificationToneResolver.java</span></div><h1>NotificationToneResolver.java</h1><pre class="source lang-java linenums">package com.logiway.utils;
+
+import com.logiway.entities.enums.TypeNotif;
+
+import java.util.Locale;
+
+public final class NotificationToneResolver {
+
+    private NotificationToneResolver() {
+    }
+
+    public static String resolve(TypeNotif type, String message) {
+<span class="pc bpc" id="L13" title="1 of 2 branches missed.">        if (message == null) {</span>
+<span class="nc" id="L14">            return null;</span>
+        }
+
+<span class="fc" id="L17">        String normalized = message.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L18" title="All 2 branches covered.">        if (type == TypeNotif.NOTIF_ENTREPRISE) {</span>
+            // Status-driven color policy for company lifecycle notifications.
+<span class="pc bpc" id="L20" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;statut: actif&quot;, &quot; a ete validee&quot;, &quot; est active&quot;, &quot; passe a actif&quot;, &quot;passer a actif&quot;, &quot;status: actif&quot;)) {</span>
+<span class="nc" id="L21">                return &quot;SUCCESS&quot;;</span>
+            }
+<span class="pc bpc" id="L23" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;en attente&quot;, &quot;en_attente&quot;, &quot;attente de validation&quot;, &quot;passer a en_attente&quot;, &quot;statut: en attente&quot;, &quot;status: en attente&quot;)) {</span>
+<span class="nc" id="L24">                return &quot;WARNING&quot;;</span>
+            }
+<span class="pc bpc" id="L26" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;inactif&quot;, &quot;suspendu&quot;, &quot;suspend&quot;, &quot;desactive&quot;, &quot;désactive&quot;, &quot;bloque&quot;, &quot;bloqué&quot;, &quot;statut: inactif&quot;, &quot;statut: suspendu&quot;, &quot;status: inactif&quot;, &quot;status: suspendu&quot;)) {</span>
+<span class="nc" id="L27">                return &quot;DANGER&quot;;</span>
+            }
+
+<span class="pc bpc" id="L30" title="2 of 4 branches missed.">            if (normalized.contains(&quot;supprim&quot;) || normalized.contains(&quot;delete&quot;)) {</span>
+<span class="nc" id="L31">                return &quot;DANGER&quot;;</span>
+            }
+<span class="pc bpc" id="L33" title="5 of 12 branches missed.">            if (normalized.contains(&quot;affect&quot;) || normalized.contains(&quot;cre&quot;) || normalized.contains(&quot;cré&quot;) || normalized.contains(&quot;modifi&quot;) || normalized.contains(&quot;mise a jour&quot;) || normalized.contains(&quot;mise à jour&quot;)) {</span>
+<span class="fc" id="L34">                return &quot;SUCCESS&quot;;</span>
+            }
+<span class="fc" id="L36">            return &quot;INFO&quot;;</span>
+        }
+
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        if (type == TypeNotif.NOTIF_AFFECTATION) {</span>
+            // Driver assignment/reassignment notifications color policy.
+<span class="pc bpc" id="L41" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;supprimé&quot;, &quot;supprime&quot;, &quot;retiré&quot;, &quot;retire&quot;, &quot;désaffecté&quot;, &quot;desaffecte&quot;, &quot;retiree&quot;)) {</span>
+<span class="nc" id="L42">                return &quot;DANGER&quot;;</span>
+            }
+<span class="pc bpc" id="L44" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;réassigné&quot;, &quot;reassigne&quot;, &quot;transféré&quot;, &quot;transfere&quot;, &quot;changé&quot;, &quot;change&quot;)) {</span>
+<span class="nc" id="L45">                return &quot;INFO&quot;;</span>
+            }
+<span class="pc bpc" id="L47" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;assigné&quot;, &quot;assigne&quot;, &quot;reçu&quot;, &quot;recu&quot;, &quot;charge&quot;, &quot;affecté&quot;, &quot;affecte&quot;)) {</span>
+<span class="fc" id="L48">                return &quot;SUCCESS&quot;;</span>
+            }
+<span class="nc" id="L50">            return &quot;INFO&quot;;</span>
+        }
+
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (type == TypeNotif.NOTIF_VEHICULE) {</span>
+<span class="pc bpc" id="L54" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;supprim&quot;, &quot;delete&quot;, &quot;archive&quot;, &quot;archiv&quot;)) {</span>
+<span class="nc" id="L55">                return &quot;DANGER&quot;;</span>
+            }
+<span class="pc bpc" id="L57" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;maintenance&quot;, &quot;en panne&quot;, &quot;hors service&quot;, &quot;panne&quot;)) {</span>
+<span class="nc" id="L58">                return &quot;WARNING&quot;;</span>
+            }
+<span class="pc bpc" id="L60" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;affect&quot;, &quot;assign&quot;, &quot;attrib&quot;, &quot;transfer&quot;, &quot;transfér&quot;, &quot;modifi&quot;, &quot;mise a jour&quot;, &quot;mise à jour&quot;)) {</span>
+<span class="nc" id="L61">                return &quot;SUCCESS&quot;;</span>
+            }
+<span class="fc" id="L63">            return &quot;INFO&quot;;</span>
+        }
+
+<span class="fc bfc" id="L66" title="All 2 branches covered.">        if (type == TypeNotif.NOTIF_CONGE) {</span>
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">            if (containsAny(normalized, &quot;rejet&quot;, &quot;refus&quot;, &quot;annul&quot;, &quot;supprim&quot;)) {</span>
+<span class="nc" id="L68">                return &quot;DANGER&quot;;</span>
+            }
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (containsAny(normalized, &quot;approuv&quot;, &quot;valid&quot;, &quot;accept&quot;, &quot;confirm&quot;)) {</span>
+<span class="fc" id="L71">                return &quot;SUCCESS&quot;;</span>
+            }
+<span class="fc bfc" id="L73" title="All 2 branches covered.">            if (containsAny(normalized, &quot;nouvelle demande&quot;, &quot;demande de congé&quot;, &quot;mise a jour&quot;, &quot;mise à jour&quot;, &quot;modifi&quot;)) {</span>
+<span class="fc" id="L74">                return &quot;WARNING&quot;;</span>
+            }
+<span class="fc" id="L76">            return &quot;INFO&quot;;</span>
+        }
+
+<span class="fc bfc" id="L79" title="All 2 branches covered.">        if (type != TypeNotif.NOTIF_COMPTE) {</span>
+<span class="fc" id="L80">            return null;</span>
+        }
+
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (normalized.contains(&quot;rejet&quot;)) {</span>
+<span class="nc" id="L84">            return &quot;DANGER&quot;;</span>
+        }
+<span class="pc bpc" id="L86" title="3 of 6 branches missed.">        if (normalized.contains(&quot;inactif&quot;) || normalized.contains(&quot;desactiv&quot;) || normalized.contains(&quot;désactiv&quot;)) {</span>
+<span class="nc" id="L87">            return &quot;WARNING&quot;;</span>
+        }
+<span class="pc bpc" id="L89" title="1 of 2 branches missed.">        if (normalized.contains(&quot;en attente&quot;)) {</span>
+<span class="nc" id="L90">            return &quot;WARNING&quot;;</span>
+        }
+<span class="pc bpc" id="L92" title="2 of 4 branches missed.">        if (normalized.contains(&quot;reactiv&quot;) || normalized.contains(&quot;réactiv&quot;)) {</span>
+<span class="nc" id="L93">            return &quot;INFO&quot;;</span>
+        }
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">        if (normalized.contains(&quot;activ&quot;)) {</span>
+<span class="nc" id="L96">            return &quot;SUCCESS&quot;;</span>
+        }
+<span class="fc" id="L98">        return &quot;INFO&quot;;</span>
+    }
+
+    private static boolean containsAny(String normalized, String... needles) {
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        for (String needle : needles) {</span>
+<span class="fc bfc" id="L103" title="All 2 branches covered.">            if (normalized.contains(needle)) {</span>
+<span class="fc" id="L104">                return true;</span>
+            }
+        }
+<span class="fc" id="L107">        return false;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

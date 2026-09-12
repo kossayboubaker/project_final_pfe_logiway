@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PauseReglementaire.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.entities</a> &gt; <span class="el_source">PauseReglementaire.java</span></div><h1>PauseReglementaire.java</h1><pre class="source lang-java linenums">package com.logiway.entities;
+
+import com.logiway.entities.enums.StatutPause;
+import com.logiway.entities.enums.TypePause;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = &quot;pauses_reglementaires&quot;)
+@Getter
+<span class="fc" id="L13">@Setter</span>
+<span class="fc" id="L14">@NoArgsConstructor</span>
+<span class="fc" id="L15">@AllArgsConstructor</span>
+<span class="pc" id="L16">@Builder</span>
+public class PauseReglementaire {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+<span class="fc" id="L21">    private Long id;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;trajet_id&quot;, nullable = false)
+<span class="fc" id="L25">    private Trajet trajet;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+<span class="fc" id="L29">    private TypePause type;</span>
+
+    @Column(nullable = false)
+<span class="fc" id="L32">    private Double longitude;</span>
+
+    @Column(nullable = false)
+<span class="fc" id="L35">    private Double latitude;</span>
+
+    @Column(name = &quot;distance_along_route_m&quot;)
+<span class="fc" id="L38">    private Double distanceAlongRouteM;</span>
+
+    @Column(name = &quot;heure_arrivee_planifiee&quot;)
+<span class="fc" id="L41">    private LocalDateTime heureArriveePlanifiee;</span>
+
+    @Column(name = &quot;duration_seconds&quot;)
+<span class="fc" id="L44">    private Integer durationSeconds;</span>
+
+    @Column(name = &quot;heure_reprise_estimee&quot;)
+<span class="fc" id="L47">    private LocalDateTime heureRepriseEstimee;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+<span class="fc" id="L51">    private StatutPause statut;</span>
+
+    @Column(name = &quot;nom_lieu&quot;, length = 255)
+<span class="fc" id="L54">    private String nomLieu;</span>
+
+    // AI Scoring fields (v2.0-intelligent)
+    @Column(name = &quot;ai_score&quot;)
+<span class="fc" id="L58">    private Integer aiScore;</span>
+
+    @Column(name = &quot;fatigue_score&quot;)
+<span class="fc" id="L61">    private Integer fatigueScore;</span>
+
+    @Column(name = &quot;accessibility_score&quot;)
+<span class="fc" id="L64">    private Integer accessibilityScore;</span>
+
+    @Column(name = &quot;context_score&quot;)
+<span class="fc" id="L67">    private Integer contextScore;</span>
+
+    @Column(name = &quot;reasoning&quot;, columnDefinition = &quot;TEXT&quot;)
+<span class="fc" id="L70">    private String reasoning;</span>
+
+    @Column(name = &quot;confidence&quot;)
+<span class="fc" id="L73">    private Double confidence;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,35 @@
+{
+  "cookies": [
+    {
+      "name": "kc_token",
+      "value": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICIyNWgtOFlYZ0tXN3dWcHF0YjN3a2Y2bi1IRV93OE9RZktaay1pekN4eUdRIn0.eyJleHAiOjE3ODg3NDI2NTksImlhdCI6MTc4ODc0MjM1OSwianRpIjoib25ydHJvOjExMmM4MzUzLTdhM2QtZGQ3OC03NmE5LTU2MjFmZThhZjM0NCIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODE4MC9yZWFsbXMvbG9naXdheSIsImF1ZCI6ImFjY291bnQiLCJzdWIiOiI4OTc3OWZlMS04NzY1LTQ1YjUtODI4MS0yOGJhOWYzNjgwYzciLCJ0eXAiOiJCZWFyZXIiLCJhenAiOiJsb2dpd2F5Iiwic2lkIjoiOWtDUURwOThyb3pGamR1ekJRNHZZVG16IiwiYWNyIjoiMSIsInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJDSEFVRkZFVVIiLCJvZmZsaW5lX2FjY2VzcyIsIk1BTkFHRVIiLCJkZWZhdWx0LXJvbGVzLWxvZ2l3YXkiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoicHJvZmlsZSBlbWFpbCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiQWxpIHRvdW5zaSIsInByZWZlcnJlZF91c2VybmFtZSI6Imtvc3NheWJvdWJha2VyOTZAZ21haWwuY29tIiwiZ2l2ZW5fbmFtZSI6IkFsaSIsImZhbWlseV9uYW1lIjoidG91bnNpIiwiZW1haWwiOiJrb3NzYXlib3ViYWtlcjk2QGdtYWlsLmNvbSJ9.H5dOUD4R_lrQV-vvOkhb7O5B24AmEASSRhA0eGQLmEIqij5GtS2CkiVaMnZj-owCczjS4hFTgTgII66oEq4SfxTPr4mgDOFDLhCz05S1oOJsOB23TpHs5KRT9hvB8M5XkCXol_WngJqQxtXzNLjkfiZF9Ka9GHMUlccmcCs-zgPIgT0P0XDgBIr8svPKoUkIvVh-rz23_wLVEiM9pSqq5iHwXTmeBnot3z2s6LP7md3VLFmj4lPbCYMF09oOteF-g_40vqb8hocpCALeMGO2ltPVWjnqqPos0jECJfxMcsRrxtKxwJAzcthlpnVGQYOh2ytdpX_MeIQRfJofg_gJ_Q",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1788742660.011692,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Strict"
+    },
+    {
+      "name": "kc_refresh",
+      "value": "eyJhbGciOiJIUzUxMiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJmYzVmMjcyNy1jMzBmLTRkMDctYTQyZC03N2Q5MTk1YTk5NjIifQ.eyJleHAiOjE3ODg3NDQxNTksImlhdCI6MTc4ODc0MjM1OSwianRpIjoiM2VkOTQyN2UtOWM1MC1iNzI4LTIxM2EtMzc0ODI3MWYzNzNhIiwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo4MTgwL3JlYWxtcy9sb2dpd2F5IiwiYXVkIjoiaHR0cDovL2xvY2FsaG9zdDo4MTgwL3JlYWxtcy9sb2dpd2F5Iiwic3ViIjoiODk3NzlmZTEtODc2NS00NWI1LTgyODEtMjhiYTlmMzY4MGM3IiwidHlwIjoiUmVmcmVzaCIsImF6cCI6ImxvZ2l3YXkiLCJzaWQiOiI5a0NRRHA5OHJvekZqZHV6QlE0dllUbXoiLCJzY29wZSI6IndlYi1vcmlnaW5zIHByb2ZpbGUgZW1haWwgYWNyIHJvbGVzIGJhc2ljIn0.DAjonFfPgBRNG4dAqkNYVlqHs_1sO-ntmeQxWs9MbOmIhtfnhji99dZWNDaTsGxacm7339p4vvTrlUsnibLA9g",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1788744160.012221,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Strict"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "http://localhost:4200",
+      "localStorage": [
+        {
+          "name": "theme-preference",
+          "value": "light"
+        }
+      ]
+    }
+  ]
+}

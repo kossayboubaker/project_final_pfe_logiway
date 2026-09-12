@@ -1,0 +1,203 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TrajetRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: TrajetRepository (com.logiway.repositories)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">TrajetRepository$MockitoMock$C0R8ViJ6</td>
+  </tr>
+  <tr>
+    <td class="name">TrajetRepository$MockitoMock$C0R8ViJ6$auxiliary$0V2o4MFy</td>
+  </tr>
+  <tr>
+    <td class="name">TrajetRepository$MockitoMock$C0R8ViJ6$auxiliary$1UsGe6Hi</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.repositories;
+&nbsp;
+&nbsp;import com.logiway.entities.Trajet;
+&nbsp;import com.logiway.entities.enums.StatutTrajet;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;import org.springframework.data.jpa.repository.Query;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;
+&nbsp;import java.util.Collection;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public interface TrajetRepository extends JpaRepository&lt;Trajet, Long&gt; {
+&nbsp;
+&nbsp;    List&lt;Trajet&gt; findByManagerId(Long managerId);
+&nbsp;
+&nbsp;    List&lt;Trajet&gt; findByChauffeurId(Long chauffeurId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère les trajets d&#39;un manager filtrant par son entreprise
+&nbsp;     * Utilise les jointures pour éviter les données croisées
+&nbsp;     */
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        SELECT t FROM Trajet t
+&nbsp;        JOIN t.manager m
+&nbsp;        JOIN m.entreprise e
+&nbsp;        WHERE m.id = :managerId
+&nbsp;        AND e.id = :entrepriseId
+&nbsp;        ORDER BY t.dateDepart DESC
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;Trajet&gt; findByManagerIdAndEntrepriseId(
+&nbsp;        @Param(&quot;managerId&quot;) Long managerId,
+&nbsp;        @Param(&quot;entrepriseId&quot;) Long entrepriseId
+&nbsp;    );
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère les trajets avec détails du chauffeur et du manager
+&nbsp;     * pour éviter les N+1 queries.
+&nbsp;     * LEFT JOIN FETCH utilisé pour ne pas exclure les trajets
+&nbsp;     * dont le chauffeur ou le véhicule seraient null.
+&nbsp;     */
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        SELECT DISTINCT t FROM Trajet t
+&nbsp;        LEFT JOIN FETCH t.chauffeur c
+&nbsp;        LEFT JOIN FETCH t.manager m
+&nbsp;        LEFT JOIN FETCH t.vehicule v
+&nbsp;        WHERE m.id = :managerId
+&nbsp;        AND m.entreprise.id = :entrepriseId
+&nbsp;        ORDER BY t.dateDepart DESC
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;Trajet&gt; findByManagerIdAndEntrepriseIdWithFetch(
+&nbsp;        @Param(&quot;managerId&quot;) Long managerId,
+&nbsp;        @Param(&quot;entrepriseId&quot;) Long entrepriseId
+&nbsp;    );
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère TOUS les trajets des chauffeurs supervisés par ce manager
+&nbsp;     * (via chauffeur.manager_id = managerId), qu&#39;ils aient ou non un manager_id
+&nbsp;     * directement sur le trajet. C&#39;est la requête principale pour le rôle MANAGER.
+&nbsp;     */
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        SELECT DISTINCT t FROM Trajet t
+&nbsp;        LEFT JOIN FETCH t.chauffeur c
+&nbsp;        LEFT JOIN FETCH c.manager cm
+&nbsp;        LEFT JOIN FETCH c.secteur cs
+&nbsp;        LEFT JOIN FETCH t.manager m
+&nbsp;        LEFT JOIN FETCH m.secteur ms
+&nbsp;        LEFT JOIN FETCH t.vehicule v
+&nbsp;        WHERE c.manager.id = :managerId
+&nbsp;        ORDER BY t.dateDepart DESC
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;Trajet&gt; findByChauffeurManagerIdWithFetch(@Param(&quot;managerId&quot;) Long managerId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère les trajets d&#39;un chauffeur avec les détails associés.
+&nbsp;     * LEFT JOIN FETCH utilisé pour ne pas exclure les trajets
+&nbsp;     * dont le manager ou le secteur seraient null.
+&nbsp;     */
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        SELECT DISTINCT t FROM Trajet t
+&nbsp;        LEFT JOIN FETCH t.chauffeur c
+&nbsp;        LEFT JOIN FETCH c.manager cm
+&nbsp;        LEFT JOIN FETCH c.secteur cs
+&nbsp;        LEFT JOIN FETCH t.manager m
+&nbsp;        LEFT JOIN FETCH m.secteur ms
+&nbsp;        LEFT JOIN FETCH t.vehicule v
+&nbsp;        WHERE c.id = :chauffeurId
+&nbsp;        ORDER BY t.dateDepart DESC
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;Trajet&gt; findByChauffeurIdWithFetch(@Param(&quot;chauffeurId&quot;) Long chauffeurId);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        SELECT DISTINCT t FROM Trajet t
+&nbsp;        LEFT JOIN FETCH t.chauffeur c
+&nbsp;        LEFT JOIN FETCH c.manager cm
+&nbsp;        LEFT JOIN FETCH c.secteur cs
+&nbsp;        LEFT JOIN FETCH t.manager m
+&nbsp;        LEFT JOIN FETCH m.secteur ms
+&nbsp;        JOIN FETCH t.vehicule v
+&nbsp;        WHERE v.id = :vehiculeId
+&nbsp;        ORDER BY t.dateDepart DESC
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;Trajet&gt; findByVehiculeIdWithFetch(@Param(&quot;vehiculeId&quot;) Long vehiculeId);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        SELECT DISTINCT t FROM Trajet t
+&nbsp;        LEFT JOIN FETCH t.chauffeur c
+&nbsp;        LEFT JOIN FETCH c.manager cm
+&nbsp;        LEFT JOIN FETCH c.secteur cs
+&nbsp;        JOIN FETCH t.manager m
+&nbsp;        LEFT JOIN FETCH m.secteur ms
+&nbsp;        LEFT JOIN FETCH t.vehicule v
+&nbsp;        WHERE m.id = :managerId
+&nbsp;        ORDER BY t.dateDepart DESC
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;Trajet&gt; findByManagerIdWithFetch(@Param(&quot;managerId&quot;) Long managerId);
+&nbsp;
+&nbsp;    boolean existsByVehiculeIdAndStatutIn(Long vehiculeId, Collection&lt;StatutTrajet&gt; statuts);
+&nbsp;
+&nbsp;    boolean existsByChauffeurIdAndStatutIn(Long chauffeurId, Collection&lt;StatutTrajet&gt; statuts);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère tous les trajets ayant un statut donné
+&nbsp;     * Utilisé par le scheduler de pause IA pour évaluer les trajets EN_COURS
+&nbsp;     */
+&nbsp;    List&lt;Trajet&gt; findByStatut(StatutTrajet statut);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

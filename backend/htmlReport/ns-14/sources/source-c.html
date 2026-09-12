@@ -1,0 +1,134 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > SecteurRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: SecteurRepository (com.logiway.repositories)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">SecteurRepository$MockitoMock$k6UWiixb</td>
+  </tr>
+  <tr>
+    <td class="name">SecteurRepository$MockitoMock$k6UWiixb$auxiliary$HUtMPWs6</td>
+  </tr>
+  <tr>
+    <td class="name">SecteurRepository$MockitoMock$k6UWiixb$auxiliary$qsIvVurL</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.repositories;
+&nbsp;
+&nbsp;import com.logiway.entities.Secteur;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;import org.springframework.data.jpa.repository.Query;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;public interface SecteurRepository extends JpaRepository&lt;Secteur, Long&gt; {
+&nbsp;
+&nbsp;    List&lt;Secteur&gt; findByEntreprise_Id(Long entrepriseId);
+&nbsp;
+&nbsp;    boolean existsByEntreprise_Id(Long entrepriseId);
+&nbsp;
+&nbsp;    boolean existsByNomIgnoreCaseAndEntreprise_Id(String nom, Long entrepriseId);
+&nbsp;
+&nbsp;    boolean existsByNomIgnoreCaseAndEntreprise_IdAndIdNot(String nom, Long entrepriseId, Long id);
+&nbsp;
+&nbsp;        @Query(&quot;select s from Secteur s left join fetch s.entreprise left join fetch s.managers left join fetch s.chauffeurs where s.id = :id&quot;)
+&nbsp;    Optional&lt;Secteur&gt; findByIdWithRelations(@Param(&quot;id&quot;) Long id);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère tous les secteurs avec toutes leurs relations chargées (FETCH JOIN)
+&nbsp;     * Utilisé pour SUPERADMIN - évite N+1 queries
+&nbsp;     */
+&nbsp;    @Query(&quot;SELECT DISTINCT s FROM Secteur s &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.entreprise &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.managers &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.chauffeurs &quot; +
+&nbsp;           &quot;ORDER BY s.id DESC&quot;)
+&nbsp;    List&lt;Secteur&gt; findAllWithRelations();
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère les secteurs d&#39;une entreprise avec toutes leurs relations chargées
+&nbsp;     * Utilisé pour MANAGER - résout le problème d&#39;affichage avec LAZY loading
+&nbsp;     */
+&nbsp;    @Query(&quot;SELECT DISTINCT s FROM Secteur s &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.entreprise &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.managers &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.chauffeurs &quot; +
+&nbsp;           &quot;WHERE s.entreprise.id = :entrepriseId &quot; +
+&nbsp;           &quot;ORDER BY s.id DESC&quot;)
+&nbsp;    List&lt;Secteur&gt; findByEntrepriseIdWithRelations(@Param(&quot;entrepriseId&quot;) Long entrepriseId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère un secteur avec toutes ses relations chargées
+&nbsp;     * Utilisé pour CHAUFFEUR - résout le problème d&#39;affichage avec LAZY loading
+&nbsp;     */
+&nbsp;    @Query(&quot;SELECT DISTINCT s FROM Secteur s &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.entreprise &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.managers &quot; +
+&nbsp;           &quot;LEFT JOIN FETCH s.chauffeurs &quot; +
+&nbsp;           &quot;WHERE s.id = :secteurId&quot;)
+&nbsp;    Optional&lt;Secteur&gt; findByIdWithAllRelations(@Param(&quot;secteurId&quot;) Long secteurId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+.main-footer {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    border-top: 1px solid var(--glass-border);
+    background: rgba(22, 44, 105, 0.205);
+}

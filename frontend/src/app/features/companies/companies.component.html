@@ -1,0 +1,34 @@
+<div class="companies-page animate-fade-up">
+    <div class="header">
+        <h1 class="text-gradient">Gestion des Entreprises</h1>
+        <p>Supervision des organisations partenaires</p>
+    </div>
+
+    <div class="auto-grid">
+        <mat-card class="glass-card company-card" *ngFor="let c of companies">
+            <div class="card-header">
+                <div class="company-logo">{{c.name.substring(0, 2)}}</div>
+                <div class="title-area">
+                    <h3>{{c.name}}</h3>
+                    <p>{{c.sector}}</p>
+                </div>
+            </div>
+            <mat-card-content>
+                <div class="metrics">
+                    <div class="metric">
+                        <span class="label">Flotte</span>
+                        <span class="value">{{c.fleet}}</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Chauffeurs</span>
+                        <span class="value">{{c.drivers}}</span>
+                    </div>
+                </div>
+                <div class="status-row">
+                    <span class="status-pill active">Compte Vérifié</span>
+                    <button mat-flat-button color="primary" class="detail-btn">Gérer</button>
+                </div>
+            </mat-card-content>
+        </mat-card>
+    </div>
+</div>

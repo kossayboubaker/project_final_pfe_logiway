@@ -1,0 +1,829 @@
+<!-- ════════════════════════════════════════════════════
+     LOGIWAY — Dashboard Flotte Power BI Style (V2)
+     ════════════════════════════════════════════════════ -->
+
+<div class="fc-dashboard" [class.fc-dashboard--blur]="drillDownOpen">
+
+    <!-- ── HEADER ─────────────────────────────────────── -->
+    <header class="fc-header">
+        <div class="fc-header__left">
+            <div class="fc-header__icon-wrap">
+                <mat-icon>local_shipping</mat-icon>
+            </div>
+            <div>
+                <h1 class="fc-header__title">Dashboard Flotte</h1>
+                <p class="fc-header__subtitle">Gestion et performance du parc véhicules</p>
+            </div>
+        </div>
+        <div class="fc-header__right">
+            <div class="fc-header__live-badge">
+                <span class="fc-live-dot"></span>
+                <span>{{ kpiTotal }} véhicules</span>
+            </div>
+            <div class="fc-header__stat-badge fc-header__stat-badge--green">
+                <mat-icon>speed</mat-icon>
+                <span>{{ kpiAvailabilityRate }}% disponibles</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── KPI CARDS ───────────────────────────────────── -->
+    <section class="fc-kpi-strip">
+        <div class="fc-kpi fc-kpi--violet" (click)="onKpiClick('total')" style="cursor:pointer">
+            <div class="fc-kpi__icon"><mat-icon>directions_car</mat-icon></div>
+            <div class="fc-kpi__body">
+                <span class="fc-kpi__label">Parc Total</span>
+                <span class="fc-kpi__value">{{ kpiTotal }}</span>
+                <span class="fc-kpi__trend" [class.fc-kpi__trend--up]="trendTotal > 0"
+                    [class.fc-kpi__trend--down]="trendTotal < 0">
+                    <mat-icon>{{ trendTotal > 0 ? 'trending_up' : trendTotal < 0 ? 'trending_down' : 'trending_flat'
+                            }}</mat-icon>
+                            {{ trendTotal >= 0 ? '+' : '' }}{{ trendTotal }}%
+                </span>
+            </div>
+            <div class="fc-kpi__glow"></div>
+        </div>
+
+        <div class="fc-kpi fc-kpi--emerald" (click)="onKpiClick('active')" style="cursor:pointer">
+            <div class="fc-kpi__icon"><mat-icon>check_circle</mat-icon></div>
+            <div class="fc-kpi__body">
+                <span class="fc-kpi__label">En Service</span>
+                <span class="fc-kpi__value">{{ kpiActive }}</span>
+                <span class="fc-kpi__trend" [class.fc-kpi__trend--up]="trendActive > 0"
+                    [class.fc-kpi__trend--down]="trendActive < 0">
+                    <mat-icon>{{ trendActive > 0 ? 'trending_up' : trendActive < 0 ? 'trending_down' : 'trending_flat'
+                            }}</mat-icon>
+                            {{ trendActive >= 0 ? '+' : '' }}{{ trendActive }}%
+                </span>
+            </div>
+            <div class="fc-kpi__glow"></div>
+        </div>
+
+        <div class="fc-kpi fc-kpi--amber" (click)="onKpiClick('maintenance')" style="cursor:pointer">
+            <div class="fc-kpi__icon"><mat-icon>build</mat-icon></div>
+            <div class="fc-kpi__body">
+                <span class="fc-kpi__label">En Maintenance</span>
+                <span class="fc-kpi__value">{{ kpiMaintenance }}</span>
+                <span class="fc-kpi__trend" [class.fc-kpi__trend--up]="trendMaintenance > 0"
+                    [class.fc-kpi__trend--down]="trendMaintenance < 0">
+                    <mat-icon>{{ trendMaintenance > 0 ? 'trending_up' : trendMaintenance < 0 ? 'trending_down'
+                            : 'trending_flat' }}</mat-icon>
+                            {{ trendMaintenance >= 0 ? '+' : '' }}{{ trendMaintenance }}%
+                </span>
+            </div>
+            <div class="fc-kpi__glow"></div>
+        </div>
+
+        <div class="fc-kpi fc-kpi--red" (click)="onKpiClick('inactive')" style="cursor:pointer">
+            <div class="fc-kpi__icon"><mat-icon>cancel</mat-icon></div>
+            <div class="fc-kpi__body">
+                <span class="fc-kpi__label">Hors Service</span>
+                <span class="fc-kpi__value">{{ kpiInactive }}</span>
+                <span class="fc-kpi__trend" [class.fc-kpi__trend--up]="trendInactive > 0"
+                    [class.fc-kpi__trend--down]="trendInactive < 0">
+                    <mat-icon>{{ trendInactive > 0 ? 'trending_up' : trendInactive < 0 ? 'trending_down'
+                            : 'trending_flat' }}</mat-icon>
+                            {{ trendInactive >= 0 ? '+' : '' }}{{ trendInactive }}%
+                </span>
+            </div>
+            <div class="fc-kpi__glow"></div>
+        </div>
+
+        <!-- Gauge Disponibilité -->
+        <div class="fc-kpi fc-kpi--gauge">
+            <div class="fc-gauge">
+                <svg viewBox="0 0 120 70" class="fc-gauge__svg">
+                    <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"
+                        stroke-linecap="round" />
+                    <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" [attr.stroke]="gaugeColor" stroke-width="10"
+                        stroke-linecap="round" [attr.stroke-dasharray]="(kpiAvailabilityRate / 100 * 157) + ' 157'"
+                        class="fc-gauge__fill" />
+                </svg>
+                <div class="fc-gauge__text">
+                    <span class="fc-gauge__value" [style.color]="gaugeColor">{{ kpiAvailabilityRate }}%</span>
+                    <span class="fc-gauge__label">Disponibilité</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gauge Risque de Panne -->
+        <div class="fc-kpi fc-kpi--gauge">
+            <div class="fc-gauge">
+                <svg viewBox="0 0 120 70" class="fc-gauge__svg">
+                    <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"
+                        stroke-linecap="round" />
+                    <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" [attr.stroke]="riskGaugeColor" stroke-width="10"
+                        stroke-linecap="round" [attr.stroke-dasharray]="(kpiBreakdownRiskRate / 100 * 157) + ' 157'"
+                        class="fc-gauge__fill" />
+                </svg>
+                <div class="fc-gauge__text">
+                    <span class="fc-gauge__value" [style.color]="riskGaugeColor">{{ kpiBreakdownRiskRate }}%</span>
+                    <span class="fc-gauge__label">Risque Panne</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="fc-kpi fc-kpi--blue">
+            <div class="fc-kpi__icon"><mat-icon>route</mat-icon></div>
+            <div class="fc-kpi__body">
+                <span class="fc-kpi__label">Distance Totale</span>
+                <span class="fc-kpi__value">{{ formatKm(kpiTotalDistanceKm) }}</span>
+                <span class="fc-kpi__sub">{{ kpiTotalTrips }} trajets</span>
+            </div>
+            <div class="fc-kpi__glow"></div>
+        </div>
+    </section>
+
+    <!-- ── EXTRA INSIGHT CARDS ─────────────────────────── -->
+    <section class="fc-insight-strip">
+        <div class="fc-insight-card">
+            <div class="fc-insight-card__icon fc-insight-card__icon--cyan"><mat-icon>speed</mat-icon></div>
+            <div class="fc-insight-card__body">
+                <span class="fc-insight-card__label">Vitesse Moyenne</span>
+                <span class="fc-insight-card__value">{{ kpiAvgSpeedKmh }} <small>km/h</small></span>
+            </div>
+        </div>
+        <div class="fc-insight-card">
+            <div class="fc-insight-card__icon fc-insight-card__icon--violet"><mat-icon>av_timer</mat-icon></div>
+            <div class="fc-insight-card__body">
+                <span class="fc-insight-card__label">Km Moyen / Véhicule</span>
+                <span class="fc-insight-card__value">{{ formatKm(kpiAvgMileage) }}</span>
+            </div>
+        </div>
+        <div class="fc-insight-card">
+            <div class="fc-insight-card__icon fc-insight-card__icon--pink"><mat-icon>person_off</mat-icon></div>
+            <div class="fc-insight-card__body">
+                <span class="fc-insight-card__label">Non Affectés</span>
+                <span class="fc-insight-card__value">{{ kpiUnassigned }}</span>
+                <span class="fc-insight-card__sub">véhicules sans chauffeur</span>
+            </div>
+        </div>
+        <div class="fc-insight-card">
+            <div class="fc-insight-card__icon fc-insight-card__icon--amber"><mat-icon>inventory_2</mat-icon></div>
+            <div class="fc-insight-card__body">
+                <span class="fc-insight-card__label">Capacité Totale</span>
+                <span class="fc-insight-card__value">{{ kpiTotalCapacity }} <small>t</small></span>
+                <span class="fc-insight-card__sub">moy. {{ kpiAvgCapacity }} t</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── FILTER BAR ─────────────────────────────────── -->
+    <section class="fc-filter-bar">
+        <div class="fc-filter-bar__left">
+            <mat-icon class="fc-filter-icon">tune</mat-icon>
+            <span class="fc-filter-label">Filtres</span>
+            <span class="fc-filter-badge" *ngIf="hasActiveFilters">{{ activeFilterCount }}</span>
+        </div>
+        <div class="fc-filter-bar__controls">
+            <select class="fc-select" [value]="filterStatus" (change)="onStatusChange($any($event.target).value)">
+                <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <select class="fc-select" [value]="filterBrand" (change)="onBrandChange($any($event.target).value)">
+                <option value="">Toutes les marques</option>
+                <option *ngFor="let b of brands" [value]="b">{{ b }}</option>
+            </select>
+            <select class="fc-select fc-select--vehicle" [value]="filterVehicle"
+                (change)="onVehicleChange($any($event.target).value)">
+                <option value="">Tous les véhicules</option>
+                <optgroup *ngFor="let brand of (filterBrand ? [filterBrand] : brands)" [label]="brand">
+                    <option *ngFor="let v of getVehiclesByBrand(brand)" [value]="v.id">{{ v.plate }}
+                    </option>
+                </optgroup>
+            </select>
+            <button class="fc-btn-clear" *ngIf="hasActiveFilters" (click)="clearFilters()">
+                <mat-icon>restart_alt</mat-icon> Réinitialiser
+            </button>
+        </div>
+    </section>
+
+    <!-- ── CHARTS GRID ────────────────────────────────── -->
+    <section class="fc-charts-grid">
+
+        <!-- Line: Distance + Trips dual-axis -->
+        <div class="fc-panel fc-panel--line">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--indigo"></span>
+                    <h3 class="fc-panel__title">Distance & Trajets mensuels</h3>
+                </div>
+                <span class="fc-panel__hint"><mat-icon>touch_app</mat-icon> Cliquez pour détails</span>
+            </div>
+            <div class="fc-panel__chart-wrap">
+                <canvas baseChart [data]="lineChartData" [options]="lineOptions" [type]="lineType"></canvas>
+            </div>
+        </div>
+
+        <!-- Donut statut -->
+        <div class="fc-panel fc-panel--donut">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--emerald"></span>
+                    <h3 class="fc-panel__title">Répartition par Statut</h3>
+                </div>
+                <span class="fc-panel__hint"><mat-icon>touch_app</mat-icon> Cliquez</span>
+            </div>
+            <div class="fc-donut-wrap">
+                <div class="fc-donut-center">
+                    <span class="fc-donut-center__value">{{ kpiTotal }}</span>
+                    <span class="fc-donut-center__label">véhicules</span>
+                </div>
+                <canvas baseChart [data]="donutData" [options]="donutOptions" [type]="donutType"></canvas>
+            </div>
+        </div>
+
+        <!-- Profil Multicritère par Marque (Radar) -->
+        <div class="fc-panel fc-panel--brand">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--violet"></span>
+                    <h3 class="fc-panel__title">Profil Multicritère par Marque</h3>
+                </div>
+                <span class="fc-panel__hint"><mat-icon>analytics</mat-icon> Disponibilité</span>
+            </div>
+            <div class="fc-panel__chart-wrap fc-panel__chart-wrap--sm">
+                <canvas baseChart [data]="radarChartData" [options]="radarOptions" [type]="radarType"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Kilométrage -->
+        <div class="fc-panel fc-panel--ranking">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--amber"></span>
+                    <h3 class="fc-panel__title">Top Kilométrage — Véhicules</h3>
+                </div>
+            </div>
+            <div class="fc-ranking-list">
+                <div class="fc-ranking-item" *ngFor="let v of topMileageVehicles; let i = index"
+                    (click)="openVehicleDrillDown(v)" style="cursor:pointer">
+                    <span class="fc-rank-badge" [class.fc-rank-badge--gold]="i === 0"
+                        [class.fc-rank-badge--silver]="i === 1" [class.fc-rank-badge--bronze]="i === 2">{{ i + 1
+                        }}</span>
+                    <div class="fc-ranking-item__info">
+                        <div class="fc-ranking-item__top">
+                            <span class="fc-ranking-item__name">{{ v.plate }}</span>
+                            <span class="fc-ranking-item__km">{{ formatKm(v.totalKm) }}</span>
+                        </div>
+                        <div class="fc-ranking-item__model">{{ v.model }} · {{ v.tripCount }} trajet{{ v.tripCount > 1 ?
+                            's' : '' }}</div>
+                        <div class="fc-ranking-item__bar-bg">
+                            <div class="fc-ranking-item__bar-fill" [style.width.%]="v.percentage"
+                                [class.fc-bar--gold]="i === 0" [class.fc-bar--silver]="i === 1"
+                                [class.fc-bar--bronze]="i === 2" [class.fc-bar--default]="i > 2">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="fc-ranking-empty" *ngIf="topMileageVehicles.length === 0">
+                    <mat-icon>directions_car</mat-icon>
+                    <span>Aucune donnée kilométrique</span>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ── CHARTS ROW 2 ───────────────────────────────── -->
+    <!-- ── CHARTES SECOND AIRES (Scatter + Stacked Bar) ────────── -->
+    <section class="fc-charts-row2">
+
+        <!-- Scatter : Capacité vs Kilométrage -->
+        <div class="fc-panel fc-panel--chart fc-panel--scatter">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--pink"></span>
+                    <h3 class="fc-panel__title">Capacité vs Kilométrage</h3>
+                    <span class="fc-panel__subtitle">corrélation par statut</span>
+                </div>
+                <span class="fc-panel__badge">
+                    <mat-icon>scatter_plot</mat-icon> Nuage de points
+                </span>
+            </div>
+            <div class="fc-panel__chart">
+                <canvas baseChart [data]="scatterData" [options]="scatterOptions" [type]="scatterType"></canvas>
+            </div>
+            <div class="fc-panel__footer">
+                <span class="fc-panel__footer-hint">
+                    <mat-icon>touch_app</mat-icon> Cliquez sur un point pour les détails
+                </span>
+                <span class="fc-panel__footer-stats">
+                    {{ kpiTotal }} véhicules
+                </span>
+            </div>
+        </div>
+
+        <!-- Stacked Bar : Trajets par Statut (mensuel) -->
+        <div class="fc-panel fc-panel--chart fc-panel--tripbar">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--cyan"></span>
+                    <h3 class="fc-panel__title">Trajets par statut</h3>
+                    <span class="fc-panel__subtitle">répartition mensuelle</span>
+                </div>
+                <span class="fc-panel__badge">
+                    <mat-icon>bar_chart</mat-icon> Histogramme empilé
+                </span>
+            </div>
+            <div class="fc-panel__chart">
+                <canvas baseChart [data]="tripBarData" [options]="tripBarOptions" [type]="barType"></canvas>
+            </div>
+            <div class="fc-panel__footer">
+                <span class="fc-panel__footer-hint">
+                    <mat-icon>event</mat-icon> {{ getTripBarMonthCount() }} mois de données
+                </span>
+                <span class="fc-panel__footer-stats">
+                    {{ getTripBarTotalTrips() }} trajets au total
+                </span>
+            </div>
+        </div>
+
+    </section>
+    <!-- ── AVAILABILITY + WATERFALL + BRAND STRIP (Triple Layout) ──── -->
+    <section class="fc-paired-row fc-paired-row--triple">
+
+        <!-- Panel 1: Availability RING GAUGES (nouveau style pro) -->
+        <div class="fc-panel fc-panel--availability-kpi">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--emerald"></span>
+                    <h3 class="fc-panel__title">Facteurs de Disponibilité</h3>
+                </div>
+                <span class="fc-panel__badge">Jauges · IA</span>
+            </div>
+            <div class="fc-availability-rings">
+
+                <!-- 1. Opérationnel -->
+                <div class="fc-ring-item">
+                    <div class="fc-ring" [style.--percentage]="(availabilityOperational / 40) * 100">
+                        <svg viewBox="0 0 120 120" class="fc-ring__svg">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)"
+                                stroke-width="8" />
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--ring-color)" stroke-width="8"
+                                stroke-linecap="round" stroke-dasharray="314.159"
+                                [attr.stroke-dashoffset]="314.159 * (1 - (availabilityOperational / 40))" />
+                        </svg>
+                        <div class="fc-ring__center">
+                            <span class="fc-ring__value">{{ availabilityOperational }}</span>
+                            <span class="fc-ring__label">/ 40 pts</span>
+                        </div>
+                    </div>
+                    <span class="fc-ring__name">État Opérationnel</span>
+                </div>
+
+                <!-- 2. Carburant -->
+                <div class="fc-ring-item">
+                    <div class="fc-ring" [style.--percentage]="(availabilityFuel / 15) * 100">
+                        <svg viewBox="0 0 120 120" class="fc-ring__svg">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)"
+                                stroke-width="8" />
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--ring-color)" stroke-width="8"
+                                stroke-linecap="round" stroke-dasharray="314.159"
+                                [attr.stroke-dashoffset]="314.159 * (1 - (availabilityFuel / 15))" />
+                        </svg>
+                        <div class="fc-ring__center">
+                            <span class="fc-ring__value">{{ availabilityFuel }}</span>
+                            <span class="fc-ring__label">/ 15 pts</span>
+                        </div>
+                    </div>
+                    <span class="fc-ring__name">Carburant ({{ availabilityFuelPct }}%)</span>
+                </div>
+
+                <!-- 3. Maintenance -->
+                <div class="fc-ring-item">
+                    <div class="fc-ring" [style.--percentage]="(availabilityMaintenance / 20) * 100">
+                        <svg viewBox="0 0 120 120" class="fc-ring__svg">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)"
+                                stroke-width="8" />
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--ring-color)" stroke-width="8"
+                                stroke-linecap="round" stroke-dasharray="314.159"
+                                [attr.stroke-dashoffset]="314.159 * (1 - (availabilityMaintenance / 20))" />
+                        </svg>
+                        <div class="fc-ring__center">
+                            <span class="fc-ring__value">{{ availabilityMaintenance }}</span>
+                            <span class="fc-ring__label">/ 20 pts</span>
+                        </div>
+                    </div>
+                    <span class="fc-ring__name">Maintenance & Usure</span>
+                </div>
+
+                <!-- 4. Repos -->
+                <div class="fc-ring-item">
+                    <div class="fc-ring" [style.--percentage]="(availabilityRepos / 10) * 100">
+                        <svg viewBox="0 0 120 120" class="fc-ring__svg">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)"
+                                stroke-width="8" />
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--ring-color)" stroke-width="8"
+                                stroke-linecap="round" stroke-dasharray="314.159"
+                                [attr.stroke-dashoffset]="314.159 * (1 - (availabilityRepos / 10))" />
+                        </svg>
+                        <div class="fc-ring__center">
+                            <span class="fc-ring__value">{{ availabilityRepos }}</span>
+                            <span class="fc-ring__label">/ 10 pts</span>
+                        </div>
+                    </div>
+                    <span class="fc-ring__name">Temps de Repos</span>
+                </div>
+
+                <!-- 5. Fiabilité -->
+                <div class="fc-ring-item">
+                    <div class="fc-ring" [style.--percentage]="(availabilityReliability / 10) * 100">
+                        <svg viewBox="0 0 120 120" class="fc-ring__svg">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)"
+                                stroke-width="8" />
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--ring-color)" stroke-width="8"
+                                stroke-linecap="round" stroke-dasharray="314.159"
+                                [attr.stroke-dashoffset]="314.159 * (1 - (availabilityReliability / 10))" />
+                        </svg>
+                        <div class="fc-ring__center">
+                            <span class="fc-ring__value">{{ availabilityReliability }}</span>
+                            <span class="fc-ring__label">/ 10 pts</span>
+                        </div>
+                    </div>
+                    <span class="fc-ring__name">Fiabilité Constructeur</span>
+                </div>
+
+                <!-- 6. Proximité -->
+                <div class="fc-ring-item">
+                    <div class="fc-ring" [style.--percentage]="(availabilityProximity / 5) * 100">
+                        <svg viewBox="0 0 120 120" class="fc-ring__svg">
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)"
+                                stroke-width="8" />
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--ring-color)" stroke-width="8"
+                                stroke-linecap="round" stroke-dasharray="314.159"
+                                [attr.stroke-dashoffset]="314.159 * (1 - (availabilityProximity / 5))" />
+                        </svg>
+                        <div class="fc-ring__center">
+                            <span class="fc-ring__value">{{ availabilityProximity }}</span>
+                            <span class="fc-ring__label">/ 5 pts</span>
+                        </div>
+                    </div>
+                    <span class="fc-ring__name">Proximité Logistique</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Panel 2: Waterfall Chart (inchangé) -->
+        <div class="fc-panel fc-panel--waterfall">
+            <div class="fc-panel__header">
+                <div class="fc-panel__title-group">
+                    <span class="fc-panel__dot fc-panel__dot--indigo"></span>
+                    <h3 class="fc-panel__title">Décomposition du Score Global</h3>
+                </div>
+                <span class="fc-panel__badge">Waterfall</span>
+            </div>
+            <div class="fc-waterfall">
+                <div class="fc-waterfall__bars">
+                    <div class="fc-waterfall__col" *ngFor="let step of waterfallSteps; let i = index">
+                        <div class="fc-waterfall__bar-track">
+                            <div class="fc-waterfall__bar-ghost" [style.height.%]="(step.cumulative - step.value)">
+                            </div>
+                            <div class="fc-waterfall__bar-fill" [ngClass]="step.colorClass"
+                                [style.height.%]="step.value / step.maxValue * (step.maxValue / 100 * 100)"
+                                [style.bottom.%]="step.cumulative - step.value"></div>
+                        </div>
+                        <span class="fc-waterfall__value">+{{ step.value }}</span>
+                        <span class="fc-waterfall__label">{{ step.label }}</span>
+                    </div>
+
+                    <div class="fc-waterfall__col fc-waterfall__col--total">
+                        <div class="fc-waterfall__bar-track">
+                            <div class="fc-waterfall__bar-fill fc-waterfall__bar-fill--total"
+                                [style.height.%]="waterfallTotal"></div>
+                        </div>
+                        <span class="fc-waterfall__value fc-waterfall__value--total">{{ waterfallTotal }}</span>
+                        <span class="fc-waterfall__label">Total</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 3: Brand Strip (inchangé) -->
+        <div class="fc-brand-strip" *ngIf="brandStats.length > 0">
+            <div class="fc-brand-strip__header">
+                <mat-icon>category</mat-icon>
+                <h3>Capacité &amp; Fiabilité par Marque</h3>
+                <span class="fc-brand-strip__sub">Capacité totale · Nombre · Fiabilité IA</span>
+            </div>
+            <div class="fc-brand-strip__table">
+                <div class="fc-brand-strip__thead">
+                    <span>Marque</span>
+                    <span>Véhicules</span>
+                    <span>Cap. totale</span>
+                    <span>Fiabilité</span>
+                    <span>Part</span>
+                </div>
+                <div class="fc-brand-strip__row" *ngFor="let b of brandStats; let i = index"
+                    (click)="openBrandDrillDown(b.brand)" style="cursor:pointer">
+                    <span class="fc-brand-strip__name">
+                        <span class="fc-brand-color-dot" [style.background]="getBrandColor(i)"></span>
+                        {{ b.brand }}
+                    </span>
+                    <span class="fc-brand-strip__count">{{ b.count }}</span>
+                    <span class="fc-brand-strip__cap">{{ b.totalCapacity > 0 ? b.totalCapacity + ' t' : '—' }}</span>
+
+                    <span class="fc-brand-strip__reliability" *ngIf="getReliabilityEntry(b.brand) as rel"
+                        [title]="getConfidenceLabel(rel.confidence)">
+                        {{ rel.score }}/10
+                        <small class="fc-reliability-confidence"
+                            [ngClass]="'fc-confidence--' + rel.confidence">●</small>
+                    </span>
+
+                    <div class="fc-brand-strip__bar-wrap">
+                        <div class="fc-brand-strip__bar" [style.width.%]="b.percentage"
+                            [style.background]="getBrandColor(i)"></div>
+                        <span class="fc-brand-strip__pct">{{ b.percentage }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </section>
+    <!-- ── SELECTED VEHICLE INFO BANNER ────────────── -->
+    <section class="fc-vehicle-banner" *ngIf="selectedVehicleInfo">
+        <div class="fc-vehicle-banner__left">
+            <div class="fc-vehicle-banner__avatar"><mat-icon>local_shipping</mat-icon></div>
+            <div class="fc-vehicle-banner__info">
+                <span class="fc-vehicle-banner__plate">{{ selectedVehicleInfo.plate }}</span>
+                <span class="fc-vehicle-banner__model">{{ selectedVehicleInfo.model }} — {{ selectedVehicleInfo.brand
+                    }}</span>
+            </div>
+        </div>
+        <div class="fc-vehicle-banner__stats">
+            <div class="fc-vehicle-banner__stat">
+                <mat-icon>speed</mat-icon>
+                <span>{{ selectedVehicleInfo.mileage ? formatKm(selectedVehicleInfo.mileage) : '—' }}</span>
+            </div>
+            <div class="fc-vehicle-banner__stat">
+                <mat-icon>inventory_2</mat-icon>
+                <span>{{ selectedVehicleInfo.capacity ? selectedVehicleInfo.capacity + ' t' : '—' }}</span>
+            </div>
+            <div class="fc-vehicle-banner__stat">
+                <mat-icon>person</mat-icon>
+                <span>{{ selectedVehicleInfo.driverName || 'Non affecté' }}</span>
+            </div>
+            <span class="fc-status-pill" [ngClass]="'fc-status-pill--' + getStatusClass(selectedVehicleInfo.status)">
+                <mat-icon>{{ getStatusIcon(selectedVehicleInfo.status) }}</mat-icon> {{ selectedVehicleInfo.status }}
+            </span>
+        </div>
+        <button class="fc-vehicle-banner__close" (click)="filterVehicle=''; refreshAll()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </section>
+
+    <!-- ── DATA TABLE ─────────────────────────────────── -->
+    <section class="fc-table-section" [ngClass]="kpiHighlightClass">
+        <div class="fc-table-header">
+            <div class="fc-table-title-group">
+                <mat-icon>table_chart</mat-icon>
+                <h3>Inventaire détaillé du parc</h3>
+                <span class="fc-table-count">{{ totalElements }}</span>
+                <span class="fc-table-filter-label" *ngIf="filterStatus">
+                    <mat-icon>{{ getStatusIcon(filterStatus) }}</mat-icon> {{ filterStatus }}
+                </span>
+                <span class="fc-table-filter-label fc-table-filter-label--brand" *ngIf="filterBrand">
+                    <mat-icon>category</mat-icon> {{ filterBrand }}
+                </span>
+            </div>
+        </div>
+        <div class="fc-table-container">
+            <table mat-table [dataSource]="dataSource" class="fc-table">
+                <ng-container matColumnDef="plate">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="fc-th"><mat-icon>badge</mat-icon> Plaque</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="fc-cell-plate">{{ row.plate }}</span></td>
+                </ng-container>
+                <ng-container matColumnDef="model">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="fc-th"><mat-icon>directions_car</mat-icon> Véhicule</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="fc-cell-model">
+                            <span class="fc-cell-model__name">{{ row.model }}</span>
+                            <span class="fc-cell-model__brand-tag"
+                                (click)="onBrandChange(row.brand); $event.stopPropagation()" style="cursor:pointer">
+                                <mat-icon>category</mat-icon> {{ row.brand }}
+                            </span>
+                        </div>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="fc-th"><mat-icon>flag</mat-icon> Statut</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="fc-status-pill" [ngClass]="'fc-status-pill--' + row.statusClass"><mat-icon>{{
+                                getStatusIcon(row.status) }}</mat-icon> {{ row.status }}</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="driver">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="fc-th"><mat-icon>person</mat-icon> Chauffeur</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="fc-cell-driver" *ngIf="row.driverName !== '-'">{{ row.driverName }}</span>
+                        <span class="fc-cell-none" *ngIf="row.driverName === '-'">Non affecté</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="mileage">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="fc-th"><mat-icon>speed</mat-icon> Kilométrage</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="fc-cell-km">{{ row.mileage > 0 ?
+                            formatKm(row.mileage) : '—' }}</span></td>
+                </ng-container>
+                <ng-container matColumnDef="capacity">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="fc-th"><mat-icon>inventory</mat-icon> Capacité</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="fc-cell-capacity">{{ row.capacity > 0 ? row.capacity
+                            + ' t' : '—' }}</span></td>
+                </ng-container>
+                <ng-container matColumnDef="distance">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="fc-th"><mat-icon>route</mat-icon> Distance</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="fc-cell-dist">{{ row.totalDistanceKm > 0 ?
+                            formatKm(row.totalDistanceKm) : '—' }}</span></td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="fc-table-row"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell fc-no-data" [attr.colspan]="displayedColumns.length">
+                        <div class="fc-empty-state"><mat-icon>local_shipping</mat-icon>
+                            <h4>Aucun véhicule trouvé</h4>
+                            <p>Modifiez vos filtres.</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="fc-paginator">
+            <mat-paginator [length]="totalElements" [pageIndex]="pageIndex" [pageSize]="pageSize"
+                [pageSizeOptions]="[5, 10, 20, 50]" (page)="onPageChange($event)" aria-label="Pagination véhicules">
+            </mat-paginator>
+        </div>
+    </section>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     DRILL-DOWN OVERLAY + PANEL
+     ══════════════════════════════════════════════════════ -->
+<div class="fc-dd-overlay" [class.fc-dd-overlay--open]="drillDownOpen" (click)="closeDrillDown()"></div>
+
+<div class="fc-dd-panel" [class.fc-dd-panel--open]="drillDownOpen">
+
+    <!-- ── MONTH drill-down ──────────────────────────── -->
+    <ng-container *ngIf="drillDownType === 'month' && drillMonth">
+        <div class="fc-dd__header">
+            <div class="fc-dd__title-group">
+                <div class="fc-dd__icon-wrap fc-dd__icon-wrap--indigo"><mat-icon>calendar_month</mat-icon></div>
+                <div>
+                    <h2 class="fc-dd__title">{{ drillMonth.monthLabel }}</h2>
+                    <p class="fc-dd__subtitle">{{ drillMonth.tripCount }} trajet{{ drillMonth.tripCount > 1 ? 's' : ''
+                        }} · {{ drillMonth.vehicleCount }} véhicule{{ drillMonth.vehicleCount > 1 ? 's' : '' }}</p>
+                </div>
+            </div>
+            <button class="fc-dd__close" (click)="closeDrillDown()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="fc-dd-mini-kpis">
+            <div class="fc-dd-mini-kpi"><mat-icon>route</mat-icon><span class="fc-dd-mini-kpi__val">{{
+                    formatKm(drillMonth.totalKm) }}</span><span class="fc-dd-mini-kpi__label">Distance</span></div>
+            <div class="fc-dd-mini-kpi"><mat-icon>straighten</mat-icon><span class="fc-dd-mini-kpi__val">{{
+                    formatKm(drillMonth.avgKmPerTrip) }}</span><span class="fc-dd-mini-kpi__label">Moy. / trajet</span>
+            </div>
+            <div class="fc-dd-mini-kpi"><mat-icon>local_shipping</mat-icon><span class="fc-dd-mini-kpi__val">{{
+                    drillMonth.vehicleCount }}</span><span class="fc-dd-mini-kpi__label">Véhicules</span></div>
+        </div>
+        <div class="fc-dd-list">
+            <div class="fc-dd-card" *ngFor="let t of drillMonth.trips">
+                <div class="fc-dd-card__left">
+                    <div class="fc-dd-card__avatar"><mat-icon>local_shipping</mat-icon></div>
+                    <div class="fc-dd-card__info">
+                        <span class="fc-dd-card__name">{{ t.vehiclePlate }}</span>
+                        <span class="fc-dd-card__dates"><mat-icon>person</mat-icon> {{ t.driverName }}</span>
+                        <span class="fc-dd-card__meta">{{ t.from }} → {{ t.to }} · {{ t.distanceKm }} km</span>
+                    </div>
+                </div>
+                <span class="fc-dd-status" [ngClass]="getTripStatusClass(t.status)"><mat-icon>{{
+                        getTripStatusIcon(t.status) }}</mat-icon> {{ t.statusLabel }}</span>
+            </div>
+            <div class="fc-dd-empty" *ngIf="drillMonth.trips.length === 0"><mat-icon>info</mat-icon><span>Aucun trajet
+                    ce mois-ci</span></div>
+        </div>
+    </ng-container>
+
+    <!-- ── STATUS drill-down ─────────────────────────── -->
+    <ng-container *ngIf="drillDownType === 'status' && drillStatus">
+        <div class="fc-dd__header">
+            <div class="fc-dd__title-group">
+                <div class="fc-dd__icon-wrap" [ngClass]="'fc-dd__icon-wrap--' + drillStatus.statusClass"><mat-icon>{{
+                        drillStatus.statusIcon }}</mat-icon></div>
+                <div>
+                    <h2 class="fc-dd__title">{{ drillStatus.statusLabel }}</h2>
+                    <p class="fc-dd__subtitle">{{ drillStatus.count }} véhicule{{ drillStatus.count > 1 ? 's' : '' }} ·
+                        {{ drillStatus.percentage }}% du parc</p>
+                </div>
+            </div>
+            <button class="fc-dd__close" (click)="closeDrillDown()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="fc-dd-list">
+            <div class="fc-dd-card" *ngFor="let v of drillStatus.vehicles">
+                <div class="fc-dd-card__left">
+                    <div class="fc-dd-card__avatar"><mat-icon>directions_car</mat-icon></div>
+                    <div class="fc-dd-card__info">
+                        <span class="fc-dd-card__name">{{ v.plate }}</span>
+                        <span class="fc-dd-card__dates"><mat-icon>category</mat-icon> {{ v.model }} — {{ v.brand
+                            }}</span>
+                        <span class="fc-dd-card__meta"><mat-icon>person</mat-icon> {{ v.driverName }} · {{ v.mileage > 0
+                            ? formatKm(v.mileage) : '—' }} · {{ v.capacity > 0 ? v.capacity + ' t' : '—' }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="fc-dd-empty" *ngIf="drillStatus.vehicles.length === 0"><mat-icon>info</mat-icon><span>Aucun
+                    véhicule</span></div>
+        </div>
+    </ng-container>
+
+    <!-- ── BRAND drill-down ──────────────────────────── -->
+    <ng-container *ngIf="drillDownType === 'brand' && drillBrand">
+        <div class="fc-dd__header">
+            <div class="fc-dd__title-group">
+                <div class="fc-dd__icon-wrap fc-dd__icon-wrap--violet"><mat-icon>category</mat-icon></div>
+                <div>
+                    <h2 class="fc-dd__title">{{ drillBrand.brand }}</h2>
+                    <p class="fc-dd__subtitle">{{ drillBrand.count }} véhicule{{ drillBrand.count > 1 ? 's' : '' }} · {{
+                        drillBrand.totalCapacity }}t total · {{ drillBrand.avgCapacity }}t moy.</p>
+                </div>
+            </div>
+            <button class="fc-dd__close" (click)="closeDrillDown()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="fc-dd-list">
+            <div class="fc-dd-card" *ngFor="let v of drillBrand.vehicles">
+                <div class="fc-dd-card__left">
+                    <div class="fc-dd-card__avatar"><mat-icon>directions_car</mat-icon></div>
+                    <div class="fc-dd-card__info">
+                        <span class="fc-dd-card__name">{{ v.plate }}</span>
+                        <span class="fc-dd-card__dates">{{ v.model }} · {{ v.capacity > 0 ? v.capacity + ' t' : '—'
+                            }}</span>
+                        <span class="fc-dd-card__meta"><mat-icon>person</mat-icon> {{ v.driverName }} · {{ v.mileage > 0
+                            ? formatKm(v.mileage) : '—' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+
+    <!-- ── VEHICLE drill-down ────────────────────────── -->
+    <ng-container *ngIf="drillDownType === 'vehicle' && drillVehicle">
+        <div class="fc-dd__header">
+            <div class="fc-dd__title-group">
+                <div class="fc-dd__icon-wrap fc-dd__icon-wrap--amber"><mat-icon>local_shipping</mat-icon></div>
+                <div>
+                    <h2 class="fc-dd__title">{{ drillVehicle.vehicle.plate }}</h2>
+                    <p class="fc-dd__subtitle">{{ drillVehicle.vehicle.model }} — {{ drillVehicle.vehicle.brand }}</p>
+                </div>
+            </div>
+            <button class="fc-dd__close" (click)="closeDrillDown()"><mat-icon>close</mat-icon></button>
+        </div>
+        <div class="fc-dd-mini-kpis">
+            <div class="fc-dd-mini-kpi"><mat-icon>route</mat-icon><span class="fc-dd-mini-kpi__val">{{
+                    formatKm(drillVehicle.totalKm) }}</span><span class="fc-dd-mini-kpi__label">Distance</span></div>
+            <div class="fc-dd-mini-kpi"><mat-icon>map</mat-icon><span class="fc-dd-mini-kpi__val">{{
+                    drillVehicle.tripCount }}</span><span class="fc-dd-mini-kpi__label">Trajets</span></div>
+            <div class="fc-dd-mini-kpi">
+                <mat-icon>{{ getStatusIcon(drillVehicle.status) }}</mat-icon>
+                <span class="fc-dd-mini-kpi__val">{{ drillVehicle.status }}</span>
+                <span class="fc-dd-mini-kpi__label">Statut</span>
+            </div>
+        </div>
+        <div class="fc-dd-vehicle-info">
+            <div class="fc-dd-vehicle-row"><mat-icon>person</mat-icon><span>{{ drillVehicle.vehicle.driverName }}</span>
+            </div>
+            <div class="fc-dd-vehicle-row"><mat-icon>inventory_2</mat-icon><span>{{ drillVehicle.vehicle.capacity > 0 ?
+                    drillVehicle.vehicle.capacity + ' t' : '—' }}</span></div>
+            <div class="fc-dd-vehicle-row"><mat-icon>speed</mat-icon><span>{{ drillVehicle.vehicle.mileage > 0 ?
+                    formatKm(drillVehicle.vehicle.mileage) : '—' }}</span></div>
+        </div>
+        <h4 class="fc-dd-section-title"><mat-icon>history</mat-icon> Historique des trajets</h4>
+        <div class="fc-dd-list">
+            <div class="fc-dd-card" *ngFor="let t of drillVehicle.trips">
+                <div class="fc-dd-card__left">
+                    <div class="fc-dd-card__avatar fc-dd-card__avatar--small"><mat-icon>navigation</mat-icon></div>
+                    <div class="fc-dd-card__info">
+                        <span class="fc-dd-card__name">{{ t.from }} → {{ t.to }}</span>
+                        <span class="fc-dd-card__meta">{{ t.date }} · {{ t.distanceKm }} km · {{ t.driverName }}</span>
+                    </div>
+                </div>
+                <span class="fc-dd-status" [ngClass]="getTripStatusClass(t.status)"><mat-icon>{{
+                        getTripStatusIcon(t.status) }}</mat-icon> {{ t.statusLabel }}</span>
+            </div>
+            <div class="fc-dd-empty" *ngIf="drillVehicle.trips.length === 0"><mat-icon>info</mat-icon><span>Aucun trajet
+                    enregistré</span></div>
+        </div>
+    </ng-container>
+
+</div>

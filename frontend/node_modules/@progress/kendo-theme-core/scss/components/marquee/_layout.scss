@@ -1,0 +1,18 @@
+@use "../../z-index/index.scss" as *;
+
+@mixin kendo-marquee--layout-base() {
+    // Marquee
+    .k-marquee {
+        position: absolute;
+        z-index: k-z-index("top");
+    }
+
+    .k-marquee-color,
+    .k-marquee-text {
+        position: absolute;
+        inset-block-start: 0;
+        inset-inline-start: 0;
+        width: 100%;
+        height: 100%;
+    }
+}

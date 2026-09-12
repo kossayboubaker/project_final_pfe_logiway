@@ -1,0 +1,532 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>UserServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">UserServiceImpl.java</span></div><h1>UserServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.request.CreateUserRequest;
+import com.logiway.dto.request.UpdateUserRequest;
+import com.logiway.dto.response.ApiMessageResponse;
+import com.logiway.dto.response.UserResponse;
+import com.logiway.entities.Chauffeur;
+import com.logiway.entities.Manager;
+import com.logiway.entities.SuperAdministrateur;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutChauffeur;
+import com.logiway.entities.enums.StatutCompte;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.exceptions.ResourceNotFoundException;
+import com.logiway.mappers.UserMapper;
+import com.logiway.repositories.ChauffeurRepository;
+import com.logiway.repositories.CongeRepository;
+import com.logiway.repositories.EntrepriseRepository;
+import com.logiway.repositories.ManagerRepository;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.repositories.RefreshTokenRepository;
+import com.logiway.repositories.ResetTokenRepository;
+import com.logiway.repositories.TrajetRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.KeycloakService;
+import com.logiway.services.MailService;
+import com.logiway.services.NotificationRealtimeService;
+import com.logiway.services.UserService;
+import com.logiway.utils.PasswordGenerator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+<span class="fc" id="L45">@Slf4j</span>
+<span class="fc" id="L46">@RequiredArgsConstructor</span>
+public class UserServiceImpl implements UserService {
+
+    private final UtilisateurRepository utilisateurRepository;
+    private final ChauffeurRepository chauffeurRepository;
+    private final ManagerRepository managerRepository;
+    private final EntrepriseRepository entrepriseRepository;
+    private final CongeRepository congeRepository;
+    private final TrajetRepository trajetRepository;
+    private final ResetTokenRepository resetTokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final NotificationRepository notificationRepository;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final KeycloakService keycloakService;
+    private final MailService mailService;
+    private final NotificationRealtimeService notificationRealtimeService;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+
+    @Override
+    @Transactional
+    public UserResponse createUser(CreateUserRequest request) {
+<span class="fc" id="L68">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L69">        validateCreatePermissions(currentUser, request.role());</span>
+
+<span class="fc bfc" id="L71" title="All 2 branches covered.">        if (utilisateurRepository.existsByEmailIgnoreCase(request.email())) {</span>
+<span class="fc" id="L72">            throw new BadRequestException(&quot;Email already exists&quot;);</span>
+        }
+
+<span class="fc" id="L75">        String temporaryPassword = PasswordGenerator.generate(12);</span>
+        // Managers cannot explicitly set active status for chauffeurs
+        // Manager-created chauffeurs default to INACTIF (EN ATTENTE) for SuperAdmin approval
+<span class="pc bpc" id="L78" title="1 of 4 branches missed.">        boolean active = currentUser.getRole() == Role.MANAGER &amp;&amp; request.role() == Role.CHAUFFEUR</span>
+<span class="fc" id="L79">            ? false</span>
+<span class="fc bfc" id="L80" title="All 4 branches covered.">            : (request.estActif() == null || request.estActif());</span>
+
+<span class="fc" id="L82">        Utilisateur user = buildByRole(request, currentUser, temporaryPassword, active);</span>
+<span class="fc" id="L83">        user.setCreatedBy(currentUser);</span>
+        
+<span class="fc" id="L85">        String keycloakId = keycloakService.createUserAccount(</span>
+<span class="fc" id="L86">            user.getEmail(),</span>
+            temporaryPassword,
+<span class="fc" id="L88">            user.getPrenom(),</span>
+<span class="fc" id="L89">            user.getNom(),</span>
+<span class="fc" id="L90">            user.getRole().name(),</span>
+            active
+        );
+
+<span class="fc bfc" id="L94" title="All 4 branches covered.">        if (keycloakId == null || keycloakId.isBlank()) {</span>
+<span class="fc" id="L95">            log.error(&quot;Failed to retrieve Keycloak ID for user [{}] — user will not be able to authenticate&quot;, user.getEmail());</span>
+        } else {
+<span class="fc" id="L97">            user.setKeycloakId(keycloakId);</span>
+        }
+
+<span class="fc" id="L100">        utilisateurRepository.save(user);</span>
+
+        try {
+<span class="fc" id="L103">            mailService.sendActivationEmail(user, temporaryPassword);</span>
+<span class="fc" id="L104">        } catch (Exception ex) {</span>
+            // User creation should not fail if SMTP is unavailable.
+<span class="fc" id="L106">            log.warn(&quot;Activation email could not be sent for user {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L107">        }</span>
+
+        // Emit assignment notification if driver is created with a manager
+<span class="pc bpc" id="L110" title="1 of 4 branches missed.">        if (user instanceof Chauffeur chauffeur &amp;&amp; chauffeur.getManager() != null) {</span>
+            try {
+<span class="fc" id="L112">                emitAffectationNotifications(chauffeur, null, chauffeur.getManager());</span>
+<span class="fc" id="L113">            } catch (Exception ex) {</span>
+<span class="fc" id="L114">                log.warn(&quot;Assignment notification could not be saved for chauffeur {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L115">            }</span>
+        }
+
+<span class="fc" id="L118">        return userMapper.toResponse(user);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;UserResponse&gt; getUsers() {
+<span class="fc" id="L124">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L127">            return utilisateurRepository.findAll().stream()</span>
+<span class="fc" id="L128">                .sorted(Comparator.comparing(Utilisateur::getDateCreation).reversed())</span>
+<span class="fc" id="L129">                .map(userMapper::toResponse)</span>
+<span class="fc" id="L130">                .toList();</span>
+        }
+
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L134">            return chauffeurRepository.findByManagerId(currentUser.getId()).stream()</span>
+<span class="fc" id="L135">                .map(Utilisateur.class::cast)</span>
+<span class="fc" id="L136">                .sorted(Comparator.comparing(Utilisateur::getDateCreation).reversed())</span>
+<span class="fc" id="L137">                .map(userMapper::toResponse)</span>
+<span class="fc" id="L138">                .toList();</span>
+        }
+
+<span class="fc" id="L141">        throw new BadRequestException(&quot;You are not allowed to list users&quot;);</span>
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUser(Long id, UpdateUserRequest request) {
+<span class="fc" id="L147">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L148">        Utilisateur user = utilisateurRepository.findById(id)</span>
+<span class="fc" id="L149">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User not found&quot;));</span>
+
+<span class="fc" id="L151">        validateUpdatePermissions(currentUser, user);</span>
+<span class="fc" id="L152">        StatutCompte previousStatus = user.getEstActif();</span>
+<span class="fc" id="L153">        Manager previousManager = null;</span>
+
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if (request.prenom() != null) user.setPrenom(request.prenom());</span>
+<span class="fc bfc" id="L156" title="All 2 branches covered.">        if (request.nom() != null) user.setNom(request.nom());</span>
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (request.telephone() != null) user.setTelephone(request.telephone());</span>
+<span class="fc bfc" id="L158" title="All 2 branches covered.">        if (request.pays() != null) user.setPays(request.pays());</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        if (request.image() != null) user.setImage(request.image());</span>
+
+<span class="fc bfc" id="L161" title="All 4 branches covered.">        if (request.email() != null &amp;&amp; !request.email().equalsIgnoreCase(user.getEmail())) {</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">            if (utilisateurRepository.existsByEmailIgnoreCase(request.email())) {</span>
+<span class="fc" id="L163">                throw new BadRequestException(&quot;Email already exists&quot;);</span>
+            }
+<span class="fc" id="L165">            user.setEmail(request.email());</span>
+        }
+
+<span class="fc bfc" id="L168" title="All 2 branches covered.">        if (request.role() != null) {</span>
+<span class="fc" id="L169">            user.setRole(request.role());</span>
+        }
+
+<span class="fc bfc" id="L172" title="All 4 branches covered.">        if (user instanceof Chauffeur chauffeur &amp;&amp; request.managerId() != null) {</span>
+<span class="fc" id="L173">            previousManager = chauffeur.getManager();</span>
+<span class="fc" id="L174">            Manager manager = managerRepository.findById(request.managerId())</span>
+<span class="pc" id="L175">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Manager not found&quot;));</span>
+<span class="fc" id="L176">            chauffeur.setManager(manager);</span>
+<span class="pc bpc" id="L177" title="1 of 2 branches missed.">            chauffeur.setEntreprise(manager != null ? manager.getEntreprise() : null);</span>
+        }
+
+<span class="fc bfc" id="L180" title="All 2 branches covered.">        if (request.estActif() != null) {</span>
+<span class="fc" id="L181">            boolean enabled = request.estActif();</span>
+<span class="fc bfc" id="L182" title="All 2 branches covered.">            if (enabled) {</span>
+<span class="fc" id="L183">                user.setEstActif(StatutCompte.ACTIF);</span>
+<span class="fc" id="L184">                user.setRejectionReason(null);</span>
+            } else {
+<span class="fc bfc" id="L186" title="All 4 branches covered.">                if (request.rejectionReason() != null &amp;&amp; !request.rejectionReason().isBlank()) {</span>
+<span class="fc" id="L187">                    user.setEstActif(StatutCompte.REJETE);</span>
+<span class="fc" id="L188">                    user.setRejectionReason(request.rejectionReason().trim());</span>
+                } else {
+<span class="fc" id="L190">                    user.setEstActif(StatutCompte.INACTIF);</span>
+<span class="fc" id="L191">                    user.setRejectionReason(null);</span>
+                }
+            }
+        }
+
+<span class="fc" id="L196">        utilisateurRepository.save(user);</span>
+
+        // Emit assignment notifications if manager was changed
+<span class="fc bfc" id="L199" title="All 4 branches covered.">        if (user instanceof Chauffeur chauffeur &amp;&amp; request.managerId() != null) {</span>
+            try {
+<span class="fc" id="L201">                emitAffectationNotifications(chauffeur, previousManager, chauffeur.getManager());</span>
+<span class="fc" id="L202">            } catch (Exception ex) {</span>
+<span class="fc" id="L203">                log.warn(&quot;Assignment notification could not be saved for chauffeur {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L204">            }</span>
+        }
+
+<span class="fc bfc" id="L207" title="All 2 branches covered.">        boolean reactivateAccount = request.estActif() != null</span>
+<span class="fc bfc" id="L208" title="All 4 branches covered.">            &amp;&amp; request.estActif()</span>
+            &amp;&amp; previousStatus != StatutCompte.ACTIF;
+
+<span class="fc bfc" id="L211" title="All 2 branches covered.">        if (reactivateAccount) {</span>
+            try {
+<span class="fc" id="L213">                mailService.sendAccountReactivationEmail(user);</span>
+<span class="fc" id="L214">            } catch (Exception ex) {</span>
+<span class="fc" id="L215">                log.warn(&quot;Reactivation email could not be sent for user {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L216">            }</span>
+
+            try {
+<span class="pc bpc" id="L219" title="1 of 4 branches missed.">                String message = (previousStatus == StatutCompte.REJETE || previousStatus == StatutCompte.INACTIF)</span>
+<span class="fc" id="L220">                    ? &quot;Votre compte a ete reactive avec succes.&quot;</span>
+<span class="pc" id="L221">                    : &quot;Votre compte a ete active avec succes.&quot;;</span>
+<span class="fc" id="L222">                sendAccountStatusNotifications(user, message);</span>
+<span class="fc" id="L223">            } catch (Exception ex) {</span>
+<span class="fc" id="L224">                log.warn(&quot;Reactivation notification could not be saved for user {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L225">            }</span>
+        }
+
+<span class="fc bfc" id="L228" title="All 6 branches covered.">        if (request.estActif() != null &amp;&amp; !request.estActif() &amp;&amp; user.getEstActif() == StatutCompte.REJETE) {</span>
+            try {
+<span class="fc" id="L230">                mailService.sendAccountRejectionEmail(user, user.getRejectionReason());</span>
+<span class="fc" id="L231">            } catch (Exception ex) {</span>
+<span class="fc" id="L232">                log.warn(&quot;Rejection email could not be sent for user {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L233">            }</span>
+
+            try {
+<span class="fc" id="L236">                sendAccountStatusNotifications(user, &quot;Votre compte a ete rejete.&quot;);</span>
+<span class="fc" id="L237">            } catch (Exception ex) {</span>
+<span class="fc" id="L238">                log.warn(&quot;Rejection notification could not be saved for user {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L239">            }</span>
+        }
+
+<span class="fc bfc" id="L242" title="All 6 branches covered.">        if (request.estActif() != null &amp;&amp; !request.estActif() &amp;&amp; user.getEstActif() == StatutCompte.INACTIF) {</span>
+            try {
+<span class="fc" id="L244">                mailService.sendAccountDeactivationEmail(user);</span>
+<span class="fc" id="L245">            } catch (Exception ex) {</span>
+<span class="fc" id="L246">                log.warn(&quot;Deactivation email could not be sent for user {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L247">            }</span>
+
+            try {
+<span class="fc" id="L250">                sendAccountStatusNotifications(user, &quot;Votre compte est passe au statut inactif (EN ATTENTE).&quot;);</span>
+<span class="fc" id="L251">            } catch (Exception ex) {</span>
+<span class="fc" id="L252">                log.warn(&quot;Deactivation notification could not be saved for user {}&quot;, user.getEmail(), ex);</span>
+<span class="fc" id="L253">            }</span>
+        }
+
+<span class="fc" id="L256">        return userMapper.toResponse(user);</span>
+    }
+
+    @Override
+    @Transactional
+    public ApiMessageResponse deleteUser(Long id) {
+<span class="fc" id="L262">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L263">        Utilisateur user = utilisateurRepository.findById(id)</span>
+<span class="fc" id="L264">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;User not found&quot;));</span>
+
+<span class="fc bfc" id="L266" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">            if (!(user instanceof Chauffeur chauffeur)) {</span>
+<span class="fc" id="L268">                throw new BadRequestException(&quot;Managers can only remove drivers from their list&quot;);</span>
+            }
+
+<span class="fc bfc" id="L271" title="All 4 branches covered.">            if (chauffeur.getManager() == null || !chauffeur.getManager().getId().equals(currentUser.getId())) {</span>
+<span class="fc" id="L272">                throw new BadRequestException(&quot;You can only remove drivers assigned to you&quot;);</span>
+            }
+
+<span class="fc" id="L275">            chauffeur.setManager(null);</span>
+<span class="fc" id="L276">            utilisateurRepository.save(chauffeur);</span>
+<span class="fc" id="L277">            return new ApiMessageResponse(&quot;Driver removed from your list&quot;);</span>
+        }
+
+<span class="fc bfc" id="L280" title="All 2 branches covered.">        if (currentUser.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L281">            throw new BadRequestException(&quot;Only superadmin can delete users&quot;);</span>
+        }
+
+<span class="fc bfc" id="L284" title="All 2 branches covered.">        if (user.getId().equals(currentUser.getId())) {</span>
+<span class="fc" id="L285">            throw new BadRequestException(&quot;You cannot delete your own account&quot;);</span>
+        }
+
+        // Notify manager before deleting driver
+<span class="fc bfc" id="L289" title="All 4 branches covered.">        if (user instanceof Chauffeur chauffeur &amp;&amp; chauffeur.getManager() != null) {</span>
+            try {
+<span class="fc" id="L291">                emitDriverDeletionNotification(chauffeur, chauffeur.getManager());</span>
+<span class="fc" id="L292">            } catch (Exception ex) {</span>
+<span class="fc" id="L293">                log.warn(&quot;Driver deletion notification could not be saved for manager {}&quot;, chauffeur.getManager().getEmail(), ex);</span>
+<span class="fc" id="L294">            }</span>
+        }
+
+<span class="fc" id="L297">        cleanupUserDependencies(user);</span>
+
+<span class="fc" id="L299">        utilisateurRepository.delete(user);</span>
+<span class="fc" id="L300">        return new ApiMessageResponse(&quot;User deleted&quot;);</span>
+    }
+
+    private void cleanupUserDependencies(Utilisateur user) {
+<span class="fc" id="L304">        resetTokenRepository.deleteByUtilisateur(user);</span>
+<span class="fc" id="L305">        refreshTokenRepository.deleteAllByUtilisateur(user);</span>
+<span class="fc" id="L306">        notificationRepository.deleteByUtilisateur(user);</span>
+
+<span class="fc bfc" id="L308" title="All 2 branches covered.">        if (user instanceof Manager manager) {</span>
+<span class="fc" id="L309">            chauffeurRepository.findByManagerId(manager.getId()).forEach(chauffeur -&gt; {</span>
+<span class="fc" id="L310">                chauffeur.setManager(null);</span>
+<span class="fc" id="L311">                utilisateurRepository.save(chauffeur);</span>
+<span class="fc" id="L312">            });</span>
+
+<span class="fc" id="L314">            congeRepository.findByManager_IdOrderByDateDebutDesc(manager.getId()).forEach(conge -&gt; conge.setManager(null));</span>
+<span class="fc" id="L315">            trajetRepository.findByManagerId(manager.getId()).forEach(trajet -&gt; trajet.setManager(null));</span>
+<span class="fc" id="L316">            congeRepository.flush();</span>
+<span class="fc" id="L317">            trajetRepository.flush();</span>
+
+<span class="fc" id="L319">            entrepriseRepository.findByProprietaire_Id(manager.getId()).ifPresent(entreprise -&gt; {</span>
+<span class="fc" id="L320">                entreprise.setProprietaire(null);</span>
+<span class="fc" id="L321">                entrepriseRepository.save(entreprise);</span>
+<span class="fc" id="L322">            });</span>
+        }
+
+<span class="fc bfc" id="L325" title="All 2 branches covered.">        if (user instanceof Chauffeur chauffeur) {</span>
+<span class="fc" id="L326">            congeRepository.findByChauffeur_IdOrderByDateDebutDesc(chauffeur.getId()).forEach(conge -&gt; conge.setChauffeur(null));</span>
+<span class="fc" id="L327">            trajetRepository.findByChauffeurId(chauffeur.getId()).forEach(trajet -&gt; trajet.setChauffeur(null));</span>
+<span class="fc" id="L328">            congeRepository.flush();</span>
+<span class="fc" id="L329">            trajetRepository.flush();</span>
+        }
+<span class="fc" id="L331">    }</span>
+
+    private void validateCreatePermissions(Utilisateur currentUser, Role targetRole) {
+<span class="fc bfc" id="L334" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc bfc" id="L335" title="All 6 branches covered.">            if (targetRole == Role.MANAGER || targetRole == Role.CHAUFFEUR || targetRole == Role.SUPERADMIN) {</span>
+<span class="fc" id="L336">                return;</span>
+            }
+        }
+
+<span class="fc bfc" id="L340" title="All 4 branches covered.">        if (currentUser.getRole() == Role.MANAGER &amp;&amp; targetRole == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L341">            return;</span>
+        }
+
+<span class="fc" id="L344">        throw new BadRequestException(&quot;You are not allowed to create this user role&quot;);</span>
+    }
+
+    private void validateUpdatePermissions(Utilisateur currentUser, Utilisateur target) {
+<span class="fc bfc" id="L348" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L349">            return;</span>
+        }
+
+<span class="fc bfc" id="L352" title="All 4 branches covered.">        if (currentUser.getRole() == Role.MANAGER &amp;&amp; target instanceof Chauffeur chauffeur) {</span>
+<span class="fc bfc" id="L353" title="All 4 branches covered.">            if (chauffeur.getManager() != null &amp;&amp; chauffeur.getManager().getId().equals(currentUser.getId())) {</span>
+<span class="fc" id="L354">                return;</span>
+            }
+        }
+<span class="fc" id="L357">        throw new BadRequestException(&quot;You are not allowed to update this user&quot;);</span>
+    }
+
+    private void sendAccountStatusNotifications(Utilisateur targetUser, String message) {
+<span class="fc" id="L361">        Notification notification = Notification.builder()</span>
+<span class="fc" id="L362">            .type(TypeNotif.NOTIF_COMPTE)</span>
+<span class="fc" id="L363">            .message(message)</span>
+<span class="fc" id="L364">            .utilisateur(targetUser)</span>
+<span class="fc" id="L365">            .estLu(false)</span>
+<span class="fc" id="L366">            .build();</span>
+<span class="fc" id="L367">        notificationRepository.save(notification);</span>
+<span class="fc" id="L368">        notificationRealtimeService.publishToUsers(List.of(targetUser.getId()), notification);</span>
+<span class="fc" id="L369">    }</span>
+
+    private void emitAffectationNotifications(Chauffeur chauffeur, Manager oldManager, Manager newManager) {
+<span class="fc bfc" id="L372" title="All 2 branches covered.">        String driverFullName = (chauffeur.getPrenom() != null ? chauffeur.getPrenom() : &quot;&quot;) + &quot; &quot; +</span>
+<span class="fc bfc" id="L373" title="All 2 branches covered.">                                 (chauffeur.getNom() != null ? chauffeur.getNom() : &quot;&quot;);</span>
+<span class="fc" id="L374">        driverFullName = driverFullName.trim();</span>
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        if (driverFullName.isEmpty()) {</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">            driverFullName = chauffeur.getEmail() != null ? chauffeur.getEmail() : &quot;#&quot; + chauffeur.getId();</span>
+        }
+
+<span class="fc bfc" id="L379" title="All 2 branches covered.">        String newManagerFullName = (newManager.getPrenom() != null ? newManager.getPrenom() : &quot;&quot;) + &quot; &quot; +</span>
+<span class="fc bfc" id="L380" title="All 2 branches covered.">                                    (newManager.getNom() != null ? newManager.getNom() : &quot;&quot;);</span>
+<span class="fc" id="L381">        newManagerFullName = newManagerFullName.trim();</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">        if (newManagerFullName.isEmpty()) {</span>
+<span class="fc bfc" id="L383" title="All 2 branches covered.">            newManagerFullName = newManager.getEmail() != null ? newManager.getEmail() : &quot;#&quot; + newManager.getId();</span>
+        }
+
+<span class="fc bfc" id="L386" title="All 2 branches covered.">        if (oldManager == null) {</span>
+            // First assignment: notify driver and new manager
+<span class="fc" id="L388">            Notification notifDriver = Notification.builder()</span>
+<span class="fc" id="L389">                .type(TypeNotif.NOTIF_AFFECTATION)</span>
+<span class="fc" id="L390">                .message(&quot;Vous avez été assigné au manager &quot; + newManagerFullName)</span>
+<span class="fc" id="L391">                .utilisateur(chauffeur)</span>
+<span class="fc" id="L392">                .estLu(false)</span>
+<span class="fc" id="L393">                .build();</span>
+<span class="fc" id="L394">            notificationRepository.save(notifDriver);</span>
+<span class="fc" id="L395">            notificationRealtimeService.publishToUsers(List.of(chauffeur.getId()), notifDriver);</span>
+
+<span class="fc" id="L397">            Notification notifManager = Notification.builder()</span>
+<span class="fc" id="L398">                .type(TypeNotif.NOTIF_AFFECTATION)</span>
+<span class="fc" id="L399">                .message(&quot;Vous avez reçu la charge du chauffeur &quot; + driverFullName)</span>
+<span class="fc" id="L400">                .utilisateur(newManager)</span>
+<span class="fc" id="L401">                .estLu(false)</span>
+<span class="fc" id="L402">                .build();</span>
+<span class="fc" id="L403">            notificationRepository.save(notifManager);</span>
+<span class="fc" id="L404">            notificationRealtimeService.publishToUsers(List.of(newManager.getId()), notifManager);</span>
+<span class="fc bfc" id="L405" title="All 2 branches covered.">        } else if (!oldManager.getId().equals(newManager.getId())) {</span>
+            // Reassignment: notify driver, old manager, and new manager
+<span class="fc bfc" id="L407" title="All 2 branches covered.">            String oldManagerFullName = (oldManager.getPrenom() != null ? oldManager.getPrenom() : &quot;&quot;) + &quot; &quot; +</span>
+<span class="fc bfc" id="L408" title="All 2 branches covered.">                                        (oldManager.getNom() != null ? oldManager.getNom() : &quot;&quot;);</span>
+<span class="fc" id="L409">            oldManagerFullName = oldManagerFullName.trim();</span>
+<span class="fc bfc" id="L410" title="All 2 branches covered.">            if (oldManagerFullName.isEmpty()) {</span>
+<span class="fc bfc" id="L411" title="All 2 branches covered.">                oldManagerFullName = oldManager.getEmail() != null ? oldManager.getEmail() : &quot;#&quot; + oldManager.getId();</span>
+            }
+
+<span class="fc" id="L414">            Notification notifDriver = Notification.builder()</span>
+<span class="fc" id="L415">                .type(TypeNotif.NOTIF_AFFECTATION)</span>
+<span class="fc" id="L416">                .message(&quot;Vous avez été réassigné du manager &quot; + oldManagerFullName + &quot; au manager &quot; + newManagerFullName)</span>
+<span class="fc" id="L417">                .utilisateur(chauffeur)</span>
+<span class="fc" id="L418">                .estLu(false)</span>
+<span class="fc" id="L419">                .build();</span>
+<span class="fc" id="L420">            notificationRepository.save(notifDriver);</span>
+<span class="fc" id="L421">            notificationRealtimeService.publishToUsers(List.of(chauffeur.getId()), notifDriver);</span>
+
+<span class="fc" id="L423">            Notification notifOldManager = Notification.builder()</span>
+<span class="fc" id="L424">                .type(TypeNotif.NOTIF_AFFECTATION)</span>
+<span class="fc" id="L425">                .message(&quot;Le chauffeur &quot; + driverFullName + &quot; a été transféré vers la gestion d'un autre manager&quot;)</span>
+<span class="fc" id="L426">                .utilisateur(oldManager)</span>
+<span class="fc" id="L427">                .estLu(false)</span>
+<span class="fc" id="L428">                .build();</span>
+<span class="fc" id="L429">            notificationRepository.save(notifOldManager);</span>
+<span class="fc" id="L430">            notificationRealtimeService.publishToUsers(List.of(oldManager.getId()), notifOldManager);</span>
+
+<span class="fc" id="L432">            Notification notifNewManager = Notification.builder()</span>
+<span class="fc" id="L433">                .type(TypeNotif.NOTIF_AFFECTATION)</span>
+<span class="fc" id="L434">                .message(&quot;Vous avez reçu la charge du chauffeur &quot; + driverFullName + &quot;, précédemment assigné à &quot; + oldManagerFullName)</span>
+<span class="fc" id="L435">                .utilisateur(newManager)</span>
+<span class="fc" id="L436">                .estLu(false)</span>
+<span class="fc" id="L437">                .build();</span>
+<span class="fc" id="L438">            notificationRepository.save(notifNewManager);</span>
+<span class="fc" id="L439">            notificationRealtimeService.publishToUsers(List.of(newManager.getId()), notifNewManager);</span>
+        }
+<span class="fc" id="L441">    }</span>
+
+    private void emitDriverDeletionNotification(Chauffeur chauffeur, Manager manager) {
+<span class="fc bfc" id="L444" title="All 2 branches covered.">        String driverFullName = (chauffeur.getPrenom() != null ? chauffeur.getPrenom() : &quot;&quot;) + &quot; &quot; +</span>
+<span class="fc bfc" id="L445" title="All 2 branches covered.">                                 (chauffeur.getNom() != null ? chauffeur.getNom() : &quot;&quot;);</span>
+<span class="fc" id="L446">        driverFullName = driverFullName.trim();</span>
+<span class="fc bfc" id="L447" title="All 2 branches covered.">        if (driverFullName.isEmpty()) {</span>
+<span class="fc bfc" id="L448" title="All 2 branches covered.">            driverFullName = chauffeur.getEmail() != null ? chauffeur.getEmail() : &quot;#&quot; + chauffeur.getId();</span>
+        }
+
+<span class="fc" id="L451">        Notification notification = Notification.builder()</span>
+<span class="fc" id="L452">            .type(TypeNotif.NOTIF_AFFECTATION)</span>
+<span class="fc" id="L453">            .message(&quot;Le chauffeur &quot; + driverFullName + &quot; a été supprimé du système&quot;)</span>
+<span class="fc" id="L454">            .utilisateur(manager)</span>
+<span class="fc" id="L455">            .estLu(false)</span>
+<span class="fc" id="L456">            .build();</span>
+<span class="fc" id="L457">        notificationRepository.save(notification);</span>
+<span class="fc" id="L458">        notificationRealtimeService.publishToUsers(List.of(manager.getId()), notification);</span>
+<span class="fc" id="L459">    }</span>
+
+    private Utilisateur buildByRole(CreateUserRequest request, Utilisateur creator, String temporaryPassword, boolean active) {
+<span class="fc" id="L462">        String passwordHash = passwordEncoder.encode(temporaryPassword);</span>
+<span class="fc bfc" id="L463" title="All 2 branches covered.">        StatutCompte statutCompte = active ? StatutCompte.ACTIF : StatutCompte.INACTIF;</span>
+
+<span class="fc bfc" id="L465" title="All 2 branches covered.">        if (request.role() == Role.MANAGER) {</span>
+<span class="fc" id="L466">            return Manager.builder()</span>
+<span class="fc" id="L467">                .prenom(request.prenom())</span>
+<span class="fc" id="L468">                .nom(request.nom())</span>
+<span class="fc" id="L469">                .email(request.email())</span>
+<span class="fc" id="L470">                .telephone(request.telephone())</span>
+<span class="fc" id="L471">                .pays(request.pays())</span>
+<span class="fc" id="L472">                .image(request.image())</span>
+<span class="fc" id="L473">                .role(Role.MANAGER)</span>
+<span class="fc" id="L474">                .passwordHash(passwordHash)</span>
+<span class="fc" id="L475">                .estActif(statutCompte)</span>
+<span class="fc" id="L476">                .verificationToken(UUID.randomUUID().toString())</span>
+<span class="fc" id="L477">                .build();</span>
+        }
+
+<span class="fc bfc" id="L480" title="All 2 branches covered.">        if (request.role() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L481">            Manager manager = resolveDriverManager(request, creator);</span>
+<span class="fc" id="L482">            return Chauffeur.builder()</span>
+<span class="fc" id="L483">                .prenom(request.prenom())</span>
+<span class="fc" id="L484">                .nom(request.nom())</span>
+<span class="fc" id="L485">                .email(request.email())</span>
+<span class="fc" id="L486">                .telephone(request.telephone())</span>
+<span class="fc" id="L487">                .pays(request.pays())</span>
+<span class="fc" id="L488">                .image(request.image())</span>
+<span class="fc" id="L489">                .role(Role.CHAUFFEUR)</span>
+<span class="fc" id="L490">                .passwordHash(passwordHash)</span>
+<span class="fc" id="L491">                .estActif(statutCompte)</span>
+<span class="fc" id="L492">                .verificationToken(UUID.randomUUID().toString())</span>
+<span class="fc" id="L493">                .manager(manager)</span>
+<span class="pc bpc" id="L494" title="1 of 2 branches missed.">                .entreprise(manager != null ? manager.getEntreprise() : null)</span>
+<span class="fc" id="L495">                .statutConducteur(StatutChauffeur.LIBRE)</span>
+<span class="fc" id="L496">                .build();</span>
+        }
+
+<span class="pc bpc" id="L499" title="1 of 2 branches missed.">        if (request.role() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L500">            return SuperAdministrateur.builder()</span>
+<span class="fc" id="L501">                .prenom(request.prenom())</span>
+<span class="fc" id="L502">                .nom(request.nom())</span>
+<span class="fc" id="L503">                .email(request.email())</span>
+<span class="fc" id="L504">                .telephone(request.telephone())</span>
+<span class="fc" id="L505">                .pays(request.pays())</span>
+<span class="fc" id="L506">                .image(request.image())</span>
+<span class="fc" id="L507">                .role(Role.SUPERADMIN)</span>
+<span class="fc" id="L508">                .passwordHash(passwordHash)</span>
+<span class="fc" id="L509">                .estActif(statutCompte)</span>
+<span class="fc" id="L510">                .verificationToken(UUID.randomUUID().toString())</span>
+<span class="fc" id="L511">                .build();</span>
+        }
+
+<span class="nc" id="L514">        throw new BadRequestException(&quot;Unsupported role&quot;);</span>
+    }
+
+    private Manager resolveDriverManager(CreateUserRequest request, Utilisateur creator) {
+<span class="fc bfc" id="L518" title="All 2 branches covered.">        if (creator.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L519">            return managerRepository.findById(creator.getId())</span>
+<span class="fc" id="L520">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Manager profile not found&quot;));</span>
+        }
+
+<span class="fc bfc" id="L523" title="All 2 branches covered.">        if (request.managerId() == null) {</span>
+<span class="fc" id="L524">            throw new BadRequestException(&quot;managerId is required to create a chauffeur as superadmin&quot;);</span>
+        }
+
+<span class="fc" id="L527">        return managerRepository.findById(request.managerId())</span>
+<span class="fc" id="L528">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Manager not found&quot;));</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

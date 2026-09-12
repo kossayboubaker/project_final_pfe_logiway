@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationRealtimeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">NotificationRealtimeServiceImpl.java</span></div><h1>NotificationRealtimeServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.response.NotificationResponse;
+import com.logiway.entities.Chauffeur;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.services.NotificationRealtimeService;
+import com.logiway.utils.NotificationMessageResolver;
+import com.logiway.utils.NotificationToneResolver;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+@Service
+<span class="fc" id="L28">@RequiredArgsConstructor</span>
+public class NotificationRealtimeServiceImpl implements NotificationRealtimeService {
+
+<span class="fc" id="L31">    private static final long EMITTER_TIMEOUT_MS = Duration.ofMinutes(30).toMillis();</span>
+
+    private final UtilisateurRepository utilisateurRepository;
+<span class="fc" id="L34">    private final Map&lt;Long, CopyOnWriteArrayList&lt;SseEmitter&gt;&gt; emittersByUser = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @Override
+    public SseEmitter register(Long userId) {
+<span class="fc bfc" id="L38" title="All 2 branches covered.">        if (userId == null) {</span>
+<span class="fc" id="L39">            throw new com.logiway.exceptions.UnauthorizedException(&quot;User id is missing for realtime registration&quot;);</span>
+        }
+
+<span class="fc" id="L42">        SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);</span>
+<span class="fc" id="L43">        emittersByUser.computeIfAbsent(userId, key -&gt; new CopyOnWriteArrayList&lt;&gt;()).add(emitter);</span>
+
+<span class="fc" id="L45">        emitter.onCompletion(() -&gt; removeEmitter(userId, emitter));</span>
+<span class="fc" id="L46">        emitter.onTimeout(() -&gt; removeEmitter(userId, emitter));</span>
+<span class="fc" id="L47">        emitter.onError((ignored) -&gt; removeEmitter(userId, emitter));</span>
+
+        try {
+<span class="fc" id="L50">            emitter.send(SseEmitter.event().name(&quot;connected&quot;).data(&quot;ok&quot;));</span>
+<span class="fc" id="L51">        } catch (IOException ex) {</span>
+<span class="fc" id="L52">            removeEmitter(userId, emitter);</span>
+<span class="fc" id="L53">        }</span>
+
+<span class="fc" id="L55">        return emitter;</span>
+    }
+
+    @Override
+    public void publishToUsers(Collection&lt;Long&gt; userIds, Notification notification) {
+<span class="fc bfc" id="L60" title="All 6 branches covered.">        if (userIds == null || userIds.isEmpty() || notification == null) {</span>
+<span class="fc" id="L61">            return;</span>
+        }
+
+<span class="fc" id="L64">        Set&lt;Long&gt; audience = new LinkedHashSet&lt;&gt;(userIds);</span>
+<span class="fc" id="L65">        audience.addAll(resolveAuditAudience(notification));</span>
+<span class="fc" id="L66">        Map&lt;Long, Utilisateur&gt; audienceUsers = utilisateurRepository.findAllById(audience).stream()</span>
+<span class="fc" id="L67">            .collect(java.util.stream.Collectors.toMap(Utilisateur::getId, user -&gt; user));</span>
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (Long userId : audience) {</span>
+<span class="fc" id="L70">            List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</span>
+<span class="fc bfc" id="L71" title="All 4 branches covered.">            if (emitters == null || emitters.isEmpty()) {</span>
+<span class="fc" id="L72">                continue;</span>
+            }
+
+<span class="fc" id="L75">            NotificationResponse response = toResponse(notification, audienceUsers.get(userId));</span>
+
+<span class="fc bfc" id="L77" title="All 2 branches covered.">            for (SseEmitter emitter : emitters) {</span>
+                try {
+<span class="fc" id="L79">                    emitter.send(SseEmitter.event().name(&quot;notification&quot;).data(response));</span>
+<span class="fc" id="L80">                } catch (IOException ex) {</span>
+<span class="fc" id="L81">                    removeEmitter(userId, emitter);</span>
+<span class="fc" id="L82">                }</span>
+<span class="fc" id="L83">            }</span>
+<span class="fc" id="L84">        }</span>
+<span class="fc" id="L85">    }</span>
+
+    @Override
+    public void publishNamedEventToUsers(Collection&lt;Long&gt; userIds, String eventName, Object payload) {
+<span class="fc bfc" id="L89" title="All 10 branches covered.">        if (userIds == null || userIds.isEmpty() || eventName == null || eventName.isBlank() || payload == null) {</span>
+<span class="fc" id="L90">            return;</span>
+        }
+
+<span class="fc" id="L93">        Set&lt;Long&gt; audience = new LinkedHashSet&lt;&gt;(userIds);</span>
+
+<span class="fc bfc" id="L95" title="All 2 branches covered.">        for (Long userId : audience) {</span>
+<span class="fc" id="L96">            List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</span>
+<span class="fc bfc" id="L97" title="All 4 branches covered.">            if (emitters == null || emitters.isEmpty()) {</span>
+<span class="fc" id="L98">                continue;</span>
+            }
+
+<span class="fc bfc" id="L101" title="All 2 branches covered.">            for (SseEmitter emitter : emitters) {</span>
+                try {
+<span class="fc" id="L103">                    emitter.send(SseEmitter.event().name(eventName).data(payload));</span>
+<span class="fc" id="L104">                } catch (Exception ex) {</span>
+                    // Catch any exception (IO or otherwise) to ensure one bad emitter doesn't break the loop
+<span class="fc" id="L106">                    removeEmitter(userId, emitter);</span>
+<span class="fc" id="L107">                }</span>
+<span class="fc" id="L108">            }</span>
+<span class="fc" id="L109">        }</span>
+<span class="fc" id="L110">    }</span>
+
+    @Override
+    public void disconnectUser(Long userId) {
+<span class="fc" id="L114">        List&lt;SseEmitter&gt; emitters = emittersByUser.remove(userId);</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        if (emitters == null) {</span>
+<span class="fc" id="L116">            return;</span>
+        }
+
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        for (SseEmitter emitter : emitters) {</span>
+<span class="fc" id="L120">            emitter.complete();</span>
+<span class="fc" id="L121">        }</span>
+<span class="fc" id="L122">    }</span>
+
+    private void removeEmitter(Long userId, SseEmitter emitter) {
+<span class="fc" id="L125">        List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</span>
+<span class="fc bfc" id="L126" title="All 2 branches covered.">        if (emitters == null) {</span>
+<span class="fc" id="L127">            return;</span>
+        }
+
+<span class="fc" id="L130">        emitters.remove(emitter);</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        if (emitters.isEmpty()) {</span>
+<span class="fc" id="L132">            emittersByUser.remove(userId);</span>
+        }
+<span class="fc" id="L134">    }</span>
+
+    private NotificationResponse toResponse(Notification notification, Utilisateur recipient) {
+<span class="fc" id="L137">        String message = NotificationMessageResolver.resolveForRecipient(recipient, notification);</span>
+<span class="fc" id="L138">        String tone = NotificationToneResolver.resolve(notification.getType(), message);</span>
+<span class="fc" id="L139">        return new NotificationResponse(</span>
+<span class="fc" id="L140">            notification.getId(),</span>
+<span class="fc" id="L141">            notification.getType(),</span>
+            message,
+<span class="fc" id="L143">            notification.getDateCreation(),</span>
+<span class="fc" id="L144">            notification.getEstLu(),</span>
+            tone
+        );
+    }
+
+    private Set&lt;Long&gt; resolveAuditAudience(Notification notification) {
+<span class="fc" id="L150">        Set&lt;Long&gt; audience = new LinkedHashSet&lt;&gt;();</span>
+
+        // Do not broadcast message notifications to audit audience (SuperAdmins).
+        // Only keep audit audience for specific notification types when needed.
+<span class="fc bfc" id="L154" title="All 6 branches covered.">        if (notification.getType() == TypeNotif.NOTIF_VEHICULE || notification.getType() == TypeNotif.NOTIF_RECLAMATION || notification.getType() == TypeNotif.NOTIF_ENTREPRISE) {</span>
+<span class="fc" id="L155">            utilisateurRepository.findByRole(Role.SUPERADMIN)</span>
+<span class="fc" id="L156">                .forEach(superAdmin -&gt; audience.add(superAdmin.getId()));</span>
+        }
+
+<span class="fc" id="L159">        Utilisateur target = notification.getUtilisateur();</span>
+<span class="fc bfc" id="L160" title="All 4 branches covered.">        if (target instanceof Chauffeur chauffeur &amp;&amp; chauffeur.getManager() != null) {</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">            if (chauffeur.getManager().getEntreprise() == null</span>
+<span class="fc bfc" id="L162" title="All 2 branches covered.">                || chauffeur.getEntreprise() == null</span>
+<span class="fc bfc" id="L163" title="All 2 branches covered.">                || chauffeur.getManager().getEntreprise().getId().equals(chauffeur.getEntreprise().getId())) {</span>
+<span class="fc" id="L164">                audience.add(chauffeur.getManager().getId());</span>
+            }
+        }
+
+<span class="fc bfc" id="L168" title="All 6 branches covered.">        if (target != null &amp;&amp; target.getCreatedBy() != null &amp;&amp; target.getCreatedBy().getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L169">            audience.add(target.getCreatedBy().getId());</span>
+        }
+
+<span class="fc" id="L172">        return audience;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

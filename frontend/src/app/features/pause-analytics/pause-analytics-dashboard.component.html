@@ -1,0 +1,504 @@
+<div class="pad-container">
+
+  <header class="pad-header">
+    <div class="pad-header__left">
+      <div class="pad-header__icon-wrap">
+        <mat-icon>analytics</mat-icon>
+      </div>
+      <div>
+        <h1 class="pad-header__title">Dashboard Analytique des Pauses</h1>
+        <p class="pad-header__subtitle">Analyse ML des pauses réglementaires et prédictions IA</p>
+      </div>
+    </div>
+    <div class="pad-header__right">
+      <button class="pad-btn" (click)="loadDashboard()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon> Actualiser
+      </button>
+      <button class="pad-btn-export" (click)="exportToCSV()">
+        <mat-icon>download</mat-icon> CSV
+      </button>
+      <button class="pad-btn-pdf" (click)="generatePdf()" [disabled]="generatingPdf">
+        <mat-icon>picture_as_pdf</mat-icon> {{ generatingPdf ? 'Génération...' : 'PDF' }}
+      </button>
+    </div>
+  </header>
+
+  <!-- FILTER BAR -->
+  <section class="pad-filter-bar">
+    <div class="pad-filter-bar__left">
+      <mat-icon class="pad-filter-icon">tune</mat-icon>
+      <span class="pad-filter-label">Filtres</span>
+    </div>
+    <div class="pad-filter-bar__controls">
+      <select class="pad-select" [(ngModel)]="selectedPeriod" (ngModelChange)="onPeriodChange($event)">
+        <option *ngFor="let opt of periodOptions" [value]="opt.value">{{ opt.label }}</option>
+      </select>
+      <input class="pad-input" *ngIf="showCustomDates" type="date" [ngModel]="filters.startDate | date:'yyyy-MM-dd'"
+        (ngModelChange)="filters.startDate = $event">
+      <input class="pad-input" *ngIf="showCustomDates" type="date" [ngModel]="filters.endDate | date:'yyyy-MM-dd'"
+        (ngModelChange)="filters.endDate = $event">
+      <button class="pad-btn-accent" *ngIf="showCustomDates" (click)="applyCustomDates()">
+        <mat-icon>search</mat-icon> Appliquer
+      </button>
+      <button class="pad-btn-reset" (click)="resetFilters()">
+        <mat-icon>restart_alt</mat-icon> Réinitialiser
+      </button>
+    </div>
+  </section>
+
+  <!-- LOADING -->
+  <div class="pad-loading" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Chargement des statistiques...</span>
+  </div>
+
+  <!-- DASHBOARD CONTENT -->
+  <ng-container *ngIf="!loading && dashboard">
+
+    <!-- KPI STRIP -->
+    <section class="pad-kpi-strip">
+      <div class="pad-kpi pad-kpi--violet">
+        <div class="pad-kpi__icon"><mat-icon>notification_important</mat-icon></div>
+        <div class="pad-kpi__body">
+          <span class="pad-kpi__label">Pauses Recommandées</span>
+          <span class="pad-kpi__value">{{ dashboard.totalPausesRecommandees }}</span>
+        </div>
+        <div class="pad-kpi__glow"></div>
+      </div>
+      <div class="pad-kpi pad-kpi--emerald">
+        <div class="pad-kpi__icon"><mat-icon>check_circle</mat-icon></div>
+        <div class="pad-kpi__body">
+          <span class="pad-kpi__label">Effectuées</span>
+          <span class="pad-kpi__value">{{ dashboard.pausesEffectuees }}</span>
+        </div>
+        <div class="pad-kpi__glow"></div>
+      </div>
+      <div class="pad-kpi pad-kpi--red">
+        <div class="pad-kpi__icon"><mat-icon>cancel</mat-icon></div>
+        <div class="pad-kpi__body">
+          <span class="pad-kpi__label">Ignorées</span>
+          <span class="pad-kpi__value">{{ dashboard.pausesIgnorees }}</span>
+        </div>
+        <div class="pad-kpi__glow"></div>
+      </div>
+      <div class="pad-kpi pad-kpi--gauge">
+        <div class="pad-gauge">
+          <svg viewBox="0 0 120 70" class="pad-gauge__svg">
+            <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"
+              stroke-linecap="round" />
+            <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none"
+              [attr.stroke]="getConformiteColor(dashboard.tauxConformite)" stroke-width="10" stroke-linecap="round"
+              [attr.stroke-dasharray]="(dashboard.tauxConformite / 100 * 157) + ' 157'" class="pad-gauge__fill" />
+          </svg>
+          <div class="pad-gauge__text">
+            <span class="pad-gauge__value" [style.color]="getConformiteColor(dashboard.tauxConformite)">{{
+              dashboard.tauxConformite }}%</span>
+            <span class="pad-gauge__label">Conformité</span>
+          </div>
+        </div>
+      </div>
+      <div class="pad-kpi pad-kpi--amber pad-kpi--gauge">
+        <div class="pad-gauge">
+          <svg viewBox="0 0 120 70" class="pad-gauge__svg">
+            <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"
+              stroke-linecap="round" />
+            <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none"
+              [attr.stroke]="getScoreColor(dashboard.scoreMoyenFatigue)" stroke-width="10" stroke-linecap="round"
+              [attr.stroke-dasharray]="(dashboard.scoreMoyenFatigue / 100 * 157) + ' 157'" class="pad-gauge__fill" />
+          </svg>
+          <div class="pad-gauge__text">
+            <span class="pad-gauge__value" [style.color]="getScoreColor(dashboard.scoreMoyenFatigue)">{{
+              dashboard.scoreMoyenFatigue }}</span>
+            <span class="pad-gauge__label">Fatigue Moy.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ML INSIGHTS STRIP -->
+    <section class="pad-insight-strip">
+      <div class="pad-insight-card" matTooltip="Score fatigue > 85 — seuil critique ML">
+        <div class="pad-insight-card__icon pad-insight-card__icon--red"><mat-icon>error</mat-icon></div>
+        <div class="pad-insight-card__body">
+          <span class="pad-insight-card__value">{{ chauffeurCritiquesProportion.count }}</span>
+          <span class="pad-insight-card__label">Critiques</span>
+          <span class="pad-insight-card__sub">{{ chauffeurCritiquesProportion.pct }}% des chauffeurs</span>
+        </div>
+      </div>
+      <div class="pad-insight-card" matTooltip="Score fatigue 70-85 — seuil modéré ML">
+        <div class="pad-insight-card__icon pad-insight-card__icon--amber"><mat-icon>warning</mat-icon></div>
+        <div class="pad-insight-card__body">
+          <span class="pad-insight-card__value">{{ chauffeurModeresProportion.count }}</span>
+          <span class="pad-insight-card__label">Modérés</span>
+          <span class="pad-insight-card__sub">{{ chauffeurModeresProportion.pct }}% des chauffeurs</span>
+        </div>
+      </div>
+      <div class="pad-insight-card" matTooltip="Score fatigue maximum et chauffeur le plus à risque">
+        <div class="pad-insight-card__icon pad-insight-card__icon--violet"><mat-icon>psychology</mat-icon></div>
+        <div class="pad-insight-card__body">
+          <span class="pad-insight-card__value">{{ dashboard.mlInsights?.scoreFatigueMax }}</span>
+          <span class="pad-insight-card__label label--truncate">{{ dashboard.mlInsights?.chauffeurPlusRisque }}</span>
+          <span class="pad-insight-card__sub">Score max</span>
+        </div>
+      </div>
+      <div class="pad-insight-card"
+        [matTooltip]="(dashboard.mlInsights?.tendanceConformite ?? 0) >= 0 ? 'Amélioration de la conformité' : 'Dégradation de la conformité'">
+        <div class="pad-insight-card__icon pad-insight-card__icon--emerald"><mat-icon>trending_up</mat-icon></div>
+        <div class="pad-insight-card__body">
+          <span class="pad-insight-card__value"
+            [style.color]="(dashboard.mlInsights?.tendanceConformite ?? 0) >= 0 ? '#34d399' : '#f87171'">
+            {{ (dashboard.mlInsights?.tendanceConformite ?? 0) >= 0 ? '+' : '' }}{{
+            dashboard.mlInsights?.tendanceConformite }}%
+          </span>
+          <span class="pad-insight-card__label">{{ (dashboard.mlInsights?.tendanceConformite ?? 0) >= 0 ? 'Progression'
+            : 'Baisse' }}</span>
+          <span class="pad-insight-card__sub">Fatigue: {{ (dashboard.mlInsights?.tendanceScoreFatigue ?? 0) >= 0 ? '+' :
+            '' }}{{ dashboard.mlInsights?.tendanceScoreFatigue }}</span>
+        </div>
+      </div>
+      <div class="pad-insight-card" matTooltip="Taux de recommandations IA suivies + pauses mi-parcours">
+        <div class="pad-insight-card__icon pad-insight-card__icon--cyan"><mat-icon>checklist</mat-icon></div>
+        <div class="pad-insight-card__body">
+          <span class="pad-insight-card__value">{{ dashboard.mlInsights?.tauxAcceptationAI }}%</span>
+          <span class="pad-insight-card__label">Suivi IA</span>
+          <span class="pad-insight-card__sub">{{ dashboard.mlInsights?.tauxPausesMiParcours }}% mi-parcours</span>
+        </div>
+      </div>
+      <div class="pad-insight-card" matTooltip="Pauses effectuées pendant les heures de repas / de nuit + score moyen">
+        <div class="pad-insight-card__icon pad-insight-card__icon--pink"><mat-icon>schedule</mat-icon></div>
+        <div class="pad-insight-card__body">
+          <span class="pad-insight-card__value">{{ dashboard.mlInsights?.pausesHeuresRepas }}<small>/{{
+              dashboard.mlInsights?.pausesNuit }}</small></span>
+          <span class="pad-insight-card__label">Repas/Nuit</span>
+          <span class="pad-insight-card__sub">Score: {{ dashboard.mlInsights?.scoreMoyenPausesEffectuees }}</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHARTS GRID -->
+    <section class="pad-charts-grid">
+      <div class="pad-panel pad-panel--fatigue">
+        <div class="pad-panel__header">
+          <div class="pad-panel__title-group">
+            <span class="pad-panel__dot pad-panel__dot--red"></span>
+            <h3 class="pad-panel__title">Score Fatigue &amp; Conformité</h3>
+          </div>
+        </div>
+        <div class="pad-panel__chart-wrap">
+          <canvas baseChart #fatigueChart [data]="fatigueLineData" [options]="fatigueLineOptions"
+            [type]="lineType"></canvas>
+        </div>
+      </div>
+      <div class="pad-panel pad-panel--donut">
+        <div class="pad-panel__header">
+          <div class="pad-panel__title-group">
+            <span class="pad-panel__dot pad-panel__dot--emerald"></span>
+            <h3 class="pad-panel__title">Répartition des Pauses</h3>
+          </div>
+        </div>
+        <div class="pad-donut-wrap">
+          <div class="pad-donut-center">
+            <span class="pad-donut-center__value">{{ dashboard.totalPausesRecommandees }}</span>
+            <span class="pad-donut-center__label">pauses</span>
+          </div>
+          <canvas baseChart #donutChart [data]="donutData" [options]="donutOptions" [type]="donutType"></canvas>
+        </div>
+      </div>
+      <div class="pad-panel pad-panel--access">
+        <div class="pad-panel__header">
+          <div class="pad-panel__title-group">
+            <span class="pad-panel__dot pad-panel__dot--amber"></span>
+            <h3 class="pad-panel__title">Score d'Accessibilité POI</h3>
+          </div>
+        </div>
+        <div class="pad-panel__chart-wrap">
+          <canvas baseChart #accessChart [data]="accessBarData" [options]="accessBarOptions" [type]="barType"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACCESSIBILITY TIERS + POI TYPE CHART -->
+    <section class="pad-panel pad-panel--poi-access">
+      <div class="pad-panel__header">
+        <div class="pad-panel__title-group">
+          <span class="pad-panel__dot pad-panel__dot--indigo"></span>
+          <h3 class="pad-panel__title">Accessibilité par Catégorie de POI</h3>
+        </div>
+      </div>
+      <div class="pad-poi-access-grid">
+        <div class="pad-poi-tier-cards">
+          <div class="pad-tier-card pad-tier-card--high" matTooltip="POIs avec score d'accessibilité ≥ 80">
+            <mat-icon>accessible</mat-icon>
+            <span class="pad-tier-card__value">{{ getAccessibilityTiers().high }}</span>
+            <span class="pad-tier-card__label">Haute</span>
+            <div class="pad-tier-bar">
+              <div class="pad-tier-fill pad-tier-fill--high"
+                [style.width.%]="getAccessibilityTiers().total > 0 ? (getAccessibilityTiers().high / getAccessibilityTiers().total * 100) : 0">
+              </div>
+            </div>
+          </div>
+          <div class="pad-tier-card pad-tier-card--med" matTooltip="POIs avec score 50-79">
+            <mat-icon>accessible_forward</mat-icon>
+            <span class="pad-tier-card__value">{{ getAccessibilityTiers().medium }}</span>
+            <span class="pad-tier-card__label">Moyenne</span>
+            <div class="pad-tier-bar">
+              <div class="pad-tier-fill pad-tier-fill--med"
+                [style.width.%]="getAccessibilityTiers().total > 0 ? (getAccessibilityTiers().medium / getAccessibilityTiers().total * 100) : 0">
+              </div>
+            </div>
+          </div>
+          <div class="pad-tier-card pad-tier-card--low" matTooltip="POIs avec score < 50">
+            <mat-icon>no_meeting_room</mat-icon>
+            <span class="pad-tier-card__value">{{ getAccessibilityTiers().low }}</span>
+            <span class="pad-tier-card__label">Faible</span>
+            <div class="pad-tier-bar">
+              <div class="pad-tier-fill pad-tier-fill--low"
+                [style.width.%]="getAccessibilityTiers().total > 0 ? (getAccessibilityTiers().low / getAccessibilityTiers().total * 100) : 0">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="pad-poi-chart-wrap">
+          <canvas baseChart #poiAccessBarChart [data]="poiAccessBarData" [options]="poiAccessBarOptions"
+            [type]="barType"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAUFFEUR TABLE -->
+    <section class="pad-table-section">
+      <div class="pad-table-header">
+        <div class="pad-table-title-group">
+          <mat-icon>people</mat-icon>
+          <h3>Analyse par Chauffeur</h3>
+          <span class="pad-table-count">{{ totalElements }}</span>
+          <span class="pad-table-filter-label" *ngIf="chauffeurFilterActive">
+            <mat-icon>filter_alt</mat-icon> {{ selectedChauffeurName }}
+          </span>
+        </div>
+      </div>
+      <div class="pad-table-container">
+        <table mat-table [dataSource]="filteredStatsForTable" class="pad-table">
+          <ng-container matColumnDef="nomChauffeur">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>person</mat-icon> Chauffeur</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <div class="pad-cell-name-row">
+                <span class="pad-cell-name" [class.pad-cell-name--active]="localChauffeurId === s.chauffeurId">{{
+                  s.nomChauffeur }}</span>
+                <span class="pad-cell-vehicle" *ngIf="s.immatriculationVehicule">{{ s.immatriculationVehicule }}</span>
+              </div>
+              <span class="pad-cell-route" *ngIf="s.pointDepart">
+                <mat-icon>arrow_forward</mat-icon> {{ s.pointDepart }} → {{ s.pointArrivee || '—' }}
+              </span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="nombreMissions">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>map</mat-icon> Missions</div>
+            </th>
+            <td mat-cell *matCellDef="let s">{{ s.nombreMissions }}</td>
+          </ng-container>
+          <ng-container matColumnDef="scoreFatigueMoyen">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>psychology</mat-icon> Fatigue</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <span class="pad-score-badge" [style.background-color]="getScoreColor(s.scoreFatigueMoyen)">{{
+                s.scoreFatigueMoyen }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="niveauRisque">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>warning</mat-icon> Risque</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <span class="pad-risk-pill" [style.background]="getRiskColor(s.niveauRisque) + '20'"
+                [style.color]="getRiskColor(s.niveauRisque)" [style.borderColor]="getRiskColor(s.niveauRisque) + '40'">
+                <mat-icon>{{ getRiskIcon(s.niveauRisque) }}</mat-icon> {{ s.niveauRisque || '—' }}
+              </span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="sentiment">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>mood</mat-icon> Sentiment</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <span class="pad-sentiment-badge" [style.color]="getSentimentColor(s.sentiment)">
+                <mat-icon>{{ getSentimentIcon(s.sentiment) }}</mat-icon> {{ getSentimentLabel(s.sentiment) }}
+              </span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="arriveeEstimee">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>event</mat-icon> Arrivée Est.</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <div class="pad-cell-eta">{{ formatDate(s.arriveeEstimee) }}</div>
+              <span class="pad-cell-status" [style.color]="getStatusColor(s.statutTrajet)">{{
+                getStatusLabel(s.statutTrajet) }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="distanceReelle">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>route</mat-icon> Distance</div>
+            </th>
+            <td mat-cell *matCellDef="let s" class="pad-cell-dist">
+              {{ s.distanceReelle ? roundKm(s.distanceReelle) + ' km' : '—' }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="heuresMoyennesConduite">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>schedule</mat-icon> Heures</div>
+            </th>
+            <td mat-cell *matCellDef="let s" class="pad-cell-hour">{{ s.heuresMoyennesConduite ?
+              formatHours(s.heuresMoyennesConduite) : '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="scoreMoyenAccessibilite">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>accessible</mat-icon> Accès</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <span class="pad-score-badge" [style.background-color]="getScoreColor(s.scoreMoyenAccessibilite || 0)">{{
+                s.scoreMoyenAccessibilite || '—' }}</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="alertesUrgentes">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>error</mat-icon> Urgentes</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <span class="pad-alert-badge urgente" *ngIf="s.alertesUrgentes > 0">{{ s.alertesUrgentes }}</span>
+              <span *ngIf="s.alertesUrgentes === 0">—</span>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="tauxConformite">
+            <th mat-header-cell *matHeaderCellDef>
+              <div class="pad-th"><mat-icon>verified</mat-icon> Conformité</div>
+            </th>
+            <td mat-cell *matCellDef="let s">
+              <div class="pad-conf-cell">
+                <div class="pad-conf-bar">
+                  <div class="pad-conf-fill" [style.width.%]="s.tauxConformite"
+                    [style.background-color]="getConformiteColor(s.tauxConformite)"></div>
+                </div>
+                <span class="pad-conf-value">{{ s.tauxConformite }}%</span>
+              </div>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="pad-table-row clickable"
+            (click)="onChauffeurClick(row)"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell pad-no-data" [attr.colspan]="displayedColumns.length">Aucune donnée pour la période
+              sélectionnée</td>
+          </tr>
+        </table>
+      </div>
+      <div class="pad-paginator">
+        <mat-paginator [length]="filteredTableTotal" [pageIndex]="pageIndex" [pageSize]="pageSize"
+          [pageSizeOptions]="[5, 10, 20, 50]" (page)="onPageChange($event)" aria-label="Pagination"></mat-paginator>
+      </div>
+    </section>
+
+    <!-- HEATMAP SECTION -->
+    <section class="pad-heatmap-section">
+      <div class="pad-heatmap-header">
+        <div class="pad-heatmap-title-group">
+          <span class="pad-panel__dot pad-panel__dot--indigo"></span>
+          <h3>Carte de Chaleur <small>({{ getFilteredHeatmapPoints().length }} points)</small></h3>
+        </div>
+        <div class="pad-heatmap-controls">
+          <input class="pad-input pad-input--search" type="text" placeholder="Rechercher..."
+            [(ngModel)]="heatmapSearchQuery" (ngModelChange)="heatmapPageIndex=0">
+          <select class="pad-select pad-select--sm" [(ngModel)]="selectedHeatmapType"
+            (ngModelChange)="heatmapPageIndex=0">
+            <option value="ALL">Tous les types</option>
+            <option value="URGENTE_IGNOREE">Urgentes ignorées</option>
+            <option value="RECOMMANDEE_EFFECTUEE">Effectuées</option>
+            <option value="RECOMMANDEE_IGNOREE">Ignorées</option>
+            <option value="VOLONTAIRE">Volontaires</option>
+          </select>
+          <select class="pad-select pad-select--sm" [(ngModel)]="heatmapChauffeurFilter"
+            (ngModelChange)="heatmapPageIndex=0">
+            <option value="ALL">Tous les chauffeurs</option>
+            <option *ngFor="let name of uniqueChauffeurNames" [value]="name">{{ name }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="pad-heatmap-legend">
+        <div class="pad-legend-item">
+          <div class="pad-legend-color" style="background:#ef4444"></div><span>Urgente ignorée</span>
+        </div>
+        <div class="pad-legend-item">
+          <div class="pad-legend-color" style="background:#f59e0b"></div><span>Recommandée ignorée</span>
+        </div>
+        <div class="pad-legend-item">
+          <div class="pad-legend-color" style="background:#10b981"></div><span>Effectuée</span>
+        </div>
+        <div class="pad-legend-item">
+          <div class="pad-legend-color" style="background:#3b82f6"></div><span>Volontaire</span>
+        </div>
+      </div>
+      <div class="pad-heatmap-list">
+        <div class="pad-heatmap-point" *ngFor="let point of getPaginatedHeatmapPoints(); let i = index"
+          [matTooltip]="point.nomLieu || 'Point de pause'" matTooltipPosition="above">
+          <div class="pad-point-icon-wrapper">
+            <div class="pad-point-icon" [style.background-color]="getHeatmapColor(point.type)">
+              <mat-icon>{{ getHeatmapIcon(point.type) }}</mat-icon>
+            </div>
+            <div class="pad-poi-badge" [style.background-color]="'#818cf8'">
+              <mat-icon>{{ getPOIIconFromName(point.nomLieu || '') }}</mat-icon>
+            </div>
+          </div>
+          <div class="pad-point-details">
+            <div class="pad-point-name">{{ point.nomLieu || 'Point de pause' }}</div>
+            <div class="pad-point-meta">
+              <mat-icon>location_on</mat-icon>
+              {{ point.latitude.toFixed(4) }}, {{ point.longitude.toFixed(4) }}
+            </div>
+            <div class="pad-point-row">
+              <span class="pad-point-score" [style.color]="getScoreColor(point.score)">
+                <mat-icon>psychology</mat-icon> {{ point.score }}
+              </span>
+              <span class="pad-point-type">{{ getPointTypeLabel(point.type) }}</span>
+            </div>
+            <div class="pad-point-extras">
+              <span class="pad-point-chauffeur"><mat-icon>person</mat-icon> {{ point.chauffeurNom || '—' }}</span>
+              <span class="pad-point-access"><mat-icon>accessible</mat-icon> {{ point.accessibilityScore ?? '—'
+                }}</span>
+            </div>
+          </div>
+        </div>
+        <div class="pad-no-points" *ngIf="getFilteredHeatmapPoints().length === 0">
+          <mat-icon>search_off</mat-icon>
+          <p>Aucun point pour les filtres sélectionnés</p>
+        </div>
+      </div>
+      <div class="pad-heatmap-paginator" *ngIf="getFilteredHeatmapPoints().length > heatmapPageSize">
+        <button class="pad-page-btn" [disabled]="heatmapPageIndex === 0" (click)="setHeatmapPage(heatmapPageIndex - 1)">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="pad-page-info">{{ heatmapPageIndex * heatmapPageSize + 1 }}–{{ Min((heatmapPageIndex + 1) *
+          heatmapPageSize, getFilteredHeatmapPoints().length) }} / {{ getFilteredHeatmapPoints().length }}</span>
+        <span class="pad-page-dots">
+          <span class="pad-page-dot" *ngFor="let p of getHeatmapPageArray()" [class.active]="p === heatmapPageIndex"
+            (click)="setHeatmapPage(p)"></span>
+        </span>
+        <button class="pad-page-btn" [disabled]="heatmapPageIndex >= getHeatmapTotalPages() - 1"
+          (click)="setHeatmapPage(heatmapPageIndex + 1)">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    </section>
+
+  </ng-container>
+
+  <!-- EMPTY STATE -->
+  <section class="pad-empty-state" *ngIf="!loading && !dashboard">
+    <mat-icon>analytics</mat-icon>
+    <h2>Aucune donnée disponible</h2>
+    <p>Sélectionnez une période pour voir les statistiques.</p>
+  </section>
+</div>

@@ -1,0 +1,394 @@
+.main-toolbar {
+    height: 70px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-left: 8px;
+}
+
+.toolbar-spacer {
+    flex: 1;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 12px;
+    transition: background 0.3s ease;
+}
+
+.user-profile:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.user-text {
+    display: flex;
+    flex-direction: column;
+    text-align: right;
+}
+
+.username {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.user-role {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: 1.5px solid var(--accent);
+    object-fit: cover;
+}
+
+.avatar-icon-fallback {
+    width: 40px;
+    height: 40px;
+    font-size: 40px;
+    color: var(--text-secondary);
+    opacity: 0.8;
+}
+
+/* Premium Menu Styling */
+::ng-deep .premium-menu {
+    border-radius: 16px !important;
+    margin-top: 10px !important;
+    min-width: 320px !important;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.notif-content {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    align-items: flex-start;
+
+}
+
+.notif-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.notif-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #dadde4;
+}
+
+.notif-msg {
+    font-size: 0.8rem;
+    color: #dbdee3;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.notif-time {
+    font-size: 0.7rem;
+    color: #d4d9e0;
+}
+
+.notification-item {
+    position: relative;
+    transition: background 0.3s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dismiss-btn-x {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    opacity: 0;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.notification-item:hover .dismiss-btn-x {
+    opacity: 1;
+}
+
+.dismiss-btn-x:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--error);
+}
+
+.dismiss-btn-x mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.notification-item:hover {
+    background: rgba(59, 130, 246, 0.06);
+}
+
+.notification-item.unread {
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.icon-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.icon-avatar mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+}
+
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 2px;
+}
+
+.notif-badge {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Account status colors */
+.notif-success {
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #10b981 !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.notif-danger {
+    background: rgba(239, 68, 68, 0.18) !important;
+    color: #ef4444 !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+}
+
+.notif-info {
+    background: rgba(37, 99, 235, 0.16) !important;
+    color: #2563eb !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+}
+
+.notif-warning {
+    background: rgba(255, 224, 101, 0.24) !important;
+    color: #f59e0b !important;
+    border-color: #fde68a !important;
+}
+
+.notif-trip {
+    background: rgba(59, 130, 246, 0.15) !important;
+    color: #3b82f6 !important;
+    border-color: rgba(59, 130, 246, 0.3) !important;
+}
+
+.notif-leave {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #10b981 !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.notif-report {
+    background: rgba(245, 158, 11, 0.15) !important;
+    color: #f59e0b !important;
+    border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.notif-msg-bubble {
+    background: rgba(139, 92, 246, 0.15) !important;
+    color: #8b5cf6 !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+}
+
+.notif-default {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-secondary) !important;
+}
+
+.notif-actions {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 16px 52px;
+}
+
+.notification-list {
+    overflow: hidden;
+}
+
+.notification-list.scroll-enabled {
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.see-more-container {
+    padding: 8px;
+    display: flex;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.see-more-btn {
+    width: 100% !important;
+    color: var(--accent) !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: 0.5px !important;
+}
+
+.see-more-btn:hover {
+    background: rgba(var(--accent-rgb), 0.05) !important;
+}
+
+.see-more-btn mat-icon {
+    margin-left: 4px;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+.btn-accept {
+    background: #10b981 !important;
+    color: white !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    padding: 0 16px !important;
+    font-size: 0.8rem !important;
+    border-radius: 6px !important;
+}
+
+.btn-reject {
+    background: #ef4444 !important;
+    color: white !important;
+    height: 32px !important;
+    line-height: 32px !important;
+    padding: 0 16px !important;
+    font-size: 0.8rem !important;
+    border-radius: 6px !important;
+}
+
+.empty-notif {
+    padding: 32px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+}
+
+.empty-notif mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    opacity: 0.5;
+}
+
+.menu-header {
+    padding: 12px 16px;
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.text-warn {
+    color: var(--error);
+}
+
+@media (max-width: 600px) {
+    .user-text {
+        display: none;
+    }
+}
+
+/* Action menu visibility + premium readability */
+::ng-deep .mat-mdc-menu-panel {
+    min-width: 220px !important;
+    border-radius: 14px !important;
+    border: 1px solid rgba(148, 163, 184, 0.35) !important;
+    background: linear-gradient(180deg, rgba(7, 20, 48, 0.98) 0%, rgba(4, 14, 34, 0.98) 100%) !important;
+    box-shadow: 0 18px 38px rgba(2, 10, 28, 0.55), 0 0 0 1px rgba(15, 23, 42, 0.35) inset !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    overflow: hidden !important;
+}
+
+::ng-deep .mat-mdc-menu-content {
+    padding: 8px !important;
+}
+
+::ng-deep .mat-mdc-menu-item {
+    min-height: 42px !important;
+    border-radius: 10px !important;
+    margin: 2px 0 !important;
+    color: #e5e7eb !important;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+}
+
+::ng-deep .mat-mdc-menu-item:hover,
+::ng-deep .mat-mdc-menu-item.cdk-program-focused,
+::ng-deep .mat-mdc-menu-item.cdk-keyboard-focused {
+    background: rgba(37, 99, 235, 0.22) !important;
+    color: #f8fafc !important;
+}
+
+::ng-deep .mat-mdc-menu-item:active {
+    transform: scale(0.99);
+}
+
+::ng-deep .mat-mdc-menu-item .mat-icon {
+    margin-right: 12px !important;
+    color: #93c5fd !important;
+}
+
+::ng-deep .mat-mdc-menu-item[disabled] {
+    opacity: 0.45 !important;
+}

@@ -1,0 +1,248 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > GeminiService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: GeminiService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">GeminiService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (16/16)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    95,9%
+  </span>
+  <span class="absValue">
+    (47/49)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.databind.JsonNode;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Value;
+&nbsp;import org.springframework.http.*;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.web.client.RestTemplate;
+&nbsp;import org.springframework.web.client.RestClientException;
+&nbsp;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@Service
+&nbsp;@RequiredArgsConstructor
+<b class="fc">&nbsp;@Slf4j</b>
+&nbsp;public class GeminiService {
+&nbsp;
+&nbsp;    @Value(&quot;${rag.service.url:http://localhost:5003}&quot;)
+&nbsp;    private String ragServiceUrl;
+&nbsp;
+&nbsp;    private final RestTemplate restTemplate;
+&nbsp;    private final ObjectMapper objectMapper;
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * Appelle le service RAG Gemini pour obtenir une réponse
+&nbsp;     */
+&nbsp;    public String appelerServiceRAG(String question, String utilisateur, Long entrepriseId) {
+&nbsp;        try {
+<b class="fc">&nbsp;            String url = ragServiceUrl + &quot;/api/rag/question&quot;;</b>
+&nbsp;            
+&nbsp;            // Construction du body de la requête
+<b class="fc">&nbsp;            Map&lt;String, Object&gt; requestBody = new HashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;            requestBody.put(&quot;question&quot;, question);</b>
+<b class="fc">&nbsp;            requestBody.put(&quot;user_id&quot;, utilisateur);</b>
+<b class="fc">&nbsp;            if (entrepriseId != null) {</b>
+<b class="fc">&nbsp;                requestBody.put(&quot;entreprise_id&quot;, String.valueOf(entrepriseId));</b>
+&nbsp;            }
+&nbsp;            
+&nbsp;            // Headers
+<b class="fc">&nbsp;            HttpHeaders headers = new HttpHeaders();</b>
+<b class="fc">&nbsp;            headers.setContentType(MediaType.APPLICATION_JSON);</b>
+&nbsp;            
+<b class="fc">&nbsp;            HttpEntity&lt;Map&lt;String, Object&gt;&gt; request = new HttpEntity&lt;&gt;(requestBody, headers);</b>
+&nbsp;            
+<b class="fc">&nbsp;            log.debug(&quot;Envoi de la question au service RAG Gemini: {}&quot;, question);</b>
+<b class="fc">&nbsp;            ResponseEntity&lt;String&gt; response = restTemplate.postForEntity(url, request, String.class);</b>
+&nbsp;            
+<b class="fc">&nbsp;            if (response.getStatusCode().is2xxSuccessful() &amp;&amp; response.getBody() != null) {</b>
+<b class="fc">&nbsp;                JsonNode jsonResponse = objectMapper.readTree(response.getBody());</b>
+<b class="fc">&nbsp;                String reponse = jsonResponse.path(&quot;reponse&quot;).asText();</b>
+<b class="fc">&nbsp;                log.debug(&quot;Réponse reçue du service RAG Gemini: {} caractères&quot;, reponse.length());</b>
+<b class="fc">&nbsp;                return reponse;</b>
+&nbsp;            } else {
+<b class="fc">&nbsp;                log.error(&quot;Erreur réponse service RAG: status={}, body={}&quot;, </b>
+<b class="fc">&nbsp;                    response.getStatusCode(), response.getBody());</b>
+<b class="fc">&nbsp;                return &quot;Le service RAG Gemini n&#39;est pas disponible pour le moment.&quot;;</b>
+&nbsp;            }
+&nbsp;            
+&nbsp;        } catch (RestClientException e) {
+<b class="fc">&nbsp;            log.error(&quot;Erreur de connexion au service RAG Gemini sur {}: {}&quot;, ragServiceUrl, e.getMessage());</b>
+<b class="fc">&nbsp;            return &quot;Le service RAG Gemini n&#39;est pas disponible. Vérifiez que le service est démarré sur &quot; + ragServiceUrl;</b>
+&nbsp;        } catch (Exception e) {
+<b class="fc">&nbsp;            log.error(&quot;Erreur lors de l&#39;appel au service RAG Gemini: {}&quot;, e.getMessage(), e);</b>
+<b class="fc">&nbsp;            return &quot;Erreur lors du traitement de votre question. Veuillez réessayer.&quot;;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * Vérifie si le service RAG Gemini est disponible
+&nbsp;     */
+&nbsp;    public boolean verifierDisponibilite() {
+&nbsp;        try {
+<b class="fc">&nbsp;            String url = ragServiceUrl + &quot;/health&quot;;</b>
+<b class="fc">&nbsp;            ResponseEntity&lt;String&gt; response = restTemplate.getForEntity(url, String.class);</b>
+&nbsp;            
+<b class="fc">&nbsp;            if (response.getStatusCode().is2xxSuccessful() &amp;&amp; response.getBody() != null) {</b>
+<b class="fc">&nbsp;                JsonNode jsonResponse = objectMapper.readTree(response.getBody());</b>
+<b class="fc">&nbsp;                String status = jsonResponse.path(&quot;status&quot;).asText();</b>
+<b class="fc">&nbsp;                return &quot;healthy&quot;.equalsIgnoreCase(status);</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;            
+&nbsp;        } catch (Exception e) {
+<b class="fc">&nbsp;            log.debug(&quot;Service RAG Gemini non disponible: {}&quot;, e.getMessage());</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * Méthode hybride: utilise les outils MCP locaux + service RAG Gemini
+&nbsp;     */
+&nbsp;    public String traiterQuestionHybride(String question, String utilisateur, Long entrepriseId, 
+&nbsp;                                         String donneesOutils) {
+&nbsp;        try {
+&nbsp;            // Si le service RAG est disponible, on l&#39;utilise
+<b class="fc">&nbsp;            if (verifierDisponibilite()) {</b>
+<b class="fc">&nbsp;                log.debug(&quot;Utilisation du service RAG Gemini&quot;);</b>
+<b class="fc">&nbsp;                return appelerServiceRAG(question, utilisateur, entrepriseId);</b>
+&nbsp;            }
+&nbsp;            
+&nbsp;            // Sinon, on utilise la logique MCP locale
+<b class="fc">&nbsp;            log.debug(&quot;Service RAG non disponible, utilisation de la logique MCP locale&quot;);</b>
+<b class="fc">&nbsp;            return construireReponseLocale(question, donneesOutils);</b>
+&nbsp;            
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            log.error(&quot;Erreur traitement hybride: {}&quot;, e.getMessage(), e);</b>
+<b class="nc">&nbsp;            return construireReponseLocale(question, donneesOutils);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;    
+&nbsp;    /**
+&nbsp;     * Construction de réponse locale basée sur les outils MCP
+&nbsp;     */
+&nbsp;    private String construireReponseLocale(String question, String donneesOutils) {
+<b class="fc">&nbsp;        StringBuilder reponse = new StringBuilder();</b>
+&nbsp;        
+<b class="fc">&nbsp;        if (donneesOutils != null &amp;&amp; !donneesOutils.trim().isEmpty()) {</b>
+<b class="fc">&nbsp;            reponse.append(&quot;Voici les informations disponibles:\n\n&quot;);</b>
+<b class="fc">&nbsp;            reponse.append(donneesOutils);</b>
+<b class="fc">&nbsp;            reponse.append(&quot;\n\n&quot;);</b>
+<b class="fc">&nbsp;            reponse.append(&quot;Pour des réponses plus précises, le service RAG Gemini n&#39;est pas disponible actuellement.&quot;);</b>
+&nbsp;        } else {
+<b class="fc">&nbsp;            reponse.append(&quot;Je n&#39;ai pas trouvé d&#39;informations spécifiques dans le système pour votre question.\n&quot;);</b>
+<b class="fc">&nbsp;            reponse.append(&quot;Le service RAG Gemini n&#39;est pas disponible actuellement.&quot;);</b>
+&nbsp;        }
+&nbsp;        
+<b class="fc">&nbsp;        return reponse.toString();</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

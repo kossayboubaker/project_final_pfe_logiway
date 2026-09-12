@@ -1,0 +1,17 @@
+﻿# Rapport Reclamations - Toutes périodes
+# Généré le: 17/07/2026 17:05:14
+# Domaine: reclamations
+# Période: Toutes périodes
+# Nombre d'enregistrements: 10
+#
+id,sujet,description,statut,priorite,date_creation,date_mise_a_jour,utilisateur_id
+11,fuck you,nrrrrrrrrrrrrrrrrrrrrrrrrrr,REJETE,NORMAL,2026-07-10 02:03:47,2026-07-10 14:27:57,49
+10,nouvelle mission trajet,je vous questionné le trajet de mon mission quand je peux sortir dans une mission,RESOLU,NORMAL,2026-07-08 12:47:34,2026-07-10 00:50:35,45
+9,mission trajet,je vous questionné le trajet de mon mission quand je peux sortir dans une mission,EN_COURS,URGENT,2026-07-08 12:39:21,,42
+8,circulation pour mon trajet,je trouve beaucoup de circulation dans autoroute pour le trajet de zaghwan,EN_COURS,URGENT,2026-06-26 09:37:53,,52
+7,trajet,qaund je veux prendre un trajet,REJETE,NORMAL,2026-05-14 16:50:54,2026-05-14 16:51:33,41
+6,conge,je veux reclame consernant mon conge,RESOLU,NORMAL,2026-05-12 09:18:52,2026-05-12 09:20:55,41
+4,fuck,conge,REJETE,NORMAL,2026-05-12 07:58:52,2026-05-12 08:00:35,41
+3,mission d'une vehicule,je veux faire une mission de vehicule,RESOLU,NORMAL,2026-05-11 17:33:17,2026-05-13 08:23:31,42
+2,conge,je veux reclame consernant le conge,REJETE,NORMAL,2026-05-11 17:11:52,,41
+1,congé,je vous reclame consernant le refuse de conge,RESOLU,NORMAL,2026-05-11 16:40:18,,42

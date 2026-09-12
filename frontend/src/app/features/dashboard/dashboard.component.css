@@ -1,0 +1,42 @@
+.dashboard {
+    margin-top: 20px;
+}
+
+.stats-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.card {
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    flex: 1;
+    text-align: center;
+    background: #f9f9f9;
+    min-width: 180px;
+}
+
+.manager-card {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(15, 23, 42, 0.08));
+    border-color: rgba(37, 99, 235, 0.35);
+}
+
+.card-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.75;
+}
+
+.card-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 6px 0;
+}
+
+.card-help {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}

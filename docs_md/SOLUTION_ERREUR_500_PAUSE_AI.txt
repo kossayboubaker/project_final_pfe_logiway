@@ -1,0 +1,154 @@
+═══════════════════════════════════════════════════════════════════════════
+                    SOLUTION ERREUR 500 - PAUSE AI
+═══════════════════════════════════════════════════════════════════════════
+
+PROBLÈME DÉTECTÉ: Incompatibilité version scikit-learn
+DATE: 27 juillet 2026
+TRAJET: 80
+
+───────────────────────────────────────────────────────────────────────────
+SYMPTÔMES
+───────────────────────────────────────────────────────────────────────────
+
+Frontend (Console navigateur):
+✗ Failed to load resource: status 500
+✗ HttpErrorResponse pour trajet 80
+
+Backend Python (Console Flask):
+✗ InconsistentVersionWarning
+✗ RandomForestRegressor from version 1.6.1 when using version 1.9.0
+✗ POST /api/predict HTTP/1.1 500
+
+───────────────────────────────────────────────────────────────────────────
+CAUSE
+───────────────────────────────────────────────────────────────────────────
+
+Le modèle ML a été entraîné avec scikit-learn 1.6.1
+Votre système utilise scikit-learn 1.9.0
+→ Incompatibilité de sérialisation (pickle)
+
+───────────────────────────────────────────────────────────────────────────
+SOLUTION RAPIDE (5 MINUTES)
+───────────────────────────────────────────────────────────────────────────
+
+ÉTAPE 1: Arrêter Flask
+───────────────────────
+Dans la console où Flask tourne:
+  CTRL+C
+
+ÉTAPE 2: Exécuter le Fix
+─────────────────────────
+cd pause-ai-service
+fix_model_version.bat
+
+Attendez 2-3 minutes (ré-entraînement de 30,000 échantillons)
+
+ÉTAPE 3: Redémarrer Flask
+──────────────────────────
+python app.py
+
+ÉTAPE 4: Tester
+───────────────
+Recharger la page dans le navigateur
+Sélectionner le trajet 80
+→ Les pauses devraient s'afficher ✓
+
+───────────────────────────────────────────────────────────────────────────
+VÉRIFICATION
+───────────────────────────────────────────────────────────────────────────
+
+Après redémarrage de Flask, vous devriez voir:
+
+Console Flask:
+  * Serving Flask app 'app'
+  * Running on http://127.0.0.1:5000
+  
+  PAS d'avertissement InconsistentVersionWarning ✓
+
+Test API:
+  powershell -Command "Invoke-WebRequest -Uri http://localhost:5000/api/health -UseBasicParsing"
+  
+  Réponse attendue: 200 OK
+
+Application:
+  - Trajet 80 se charge
+  - Pauses s'affichent sur la carte
+  - Pas d'erreur 500 ✓
+
+───────────────────────────────────────────────────────────────────────────
+SOLUTION ALTERNATIVE (Manuel)
+───────────────────────────────────────────────────────────────────────────
+
+Si le script batch ne fonctionne pas:
+
+cd pause-ai-service
+python retrain_model.py
+
+Puis redémarrer:
+python app.py
+
+───────────────────────────────────────────────────────────────────────────
+POURQUOI CE PROBLÈME?
+───────────────────────────────────────────────────────────────────────────
+
+• Le modèle ML est sauvegardé en format pickle
+• Pickle est sensible aux versions
+• scikit-learn a changé de version (1.6.1 → 1.9.0)
+• Le modèle doit être ré-entraîné avec la nouvelle version
+
+C'est NORMAL après une mise à jour de Python ou scikit-learn
+
+───────────────────────────────────────────────────────────────────────────
+PRÉVENTION FUTURE
+───────────────────────────────────────────────────────────────────────────
+
+Option 1: Fixer la version dans requirements.txt
+  scikit-learn==1.9.0
+
+Option 2: Ré-entraîner après chaque mise à jour
+
+Option 3: Utiliser ONNX (format indépendant)
+
+───────────────────────────────────────────────────────────────────────────
+COMMANDES UTILES
+───────────────────────────────────────────────────────────────────────────
+
+Vérifier version scikit-learn:
+  python -c "import sklearn; print(sklearn.__version__)"
+
+Vérifier modèle entraîné:
+  python -c "from model import PauseAIModel; print(PauseAIModel().is_trained())"
+
+Diagnostic complet:
+  CHECK_MODEL_STATUS.bat
+
+───────────────────────────────────────────────────────────────────────────
+FICHIERS CRÉÉS
+───────────────────────────────────────────────────────────────────────────
+
+pause-ai-service/retrain_model.py      - Script ré-entraînement
+pause-ai-service/fix_model_version.bat - Fix automatique
+CHECK_MODEL_STATUS.bat                 - Diagnostic
+FIX_ERREUR_MODEL_VERSION.md            - Doc complète
+SOLUTION_ERREUR_500_PAUSE_AI.txt       - Ce fichier
+
+───────────────────────────────────────────────────────────────────────────
+RÉSUMÉ EN 30 SECONDES
+───────────────────────────────────────────────────────────────────────────
+
+Erreur: Version scikit-learn incompatible (1.6.1 vs 1.9.0)
+
+Solution:
+1. CTRL+C dans Flask
+2. cd pause-ai-service && fix_model_version.bat
+3. python app.py
+4. Recharger navigateur
+
+Durée: 5 minutes
+Impact: Aucune perte de données
+
+═══════════════════════════════════════════════════════════════════════════
+                        ✓ SOLUTION DOCUMENTÉE
+═══════════════════════════════════════════════════════════════════════════
+
+Pour plus de détails: FIX_ERREUR_MODEL_VERSION.md

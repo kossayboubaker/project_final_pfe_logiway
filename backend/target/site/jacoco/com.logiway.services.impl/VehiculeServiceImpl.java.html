@@ -1,0 +1,777 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>VehiculeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">VehiculeServiceImpl.java</span></div><h1>VehiculeServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.request.AssignVehiculeDriverRequest;
+import com.logiway.dto.request.CreateVehiculeRequest;
+import com.logiway.dto.request.UpdateVehiculeRequest;
+import com.logiway.dto.request.UpdateVehiculeStatusRequest;
+import com.logiway.dto.response.AvailableDriverResponse;
+import com.logiway.dto.response.VehiculeResponse;
+import com.logiway.entities.Chauffeur;
+import com.logiway.entities.Entreprise;
+import com.logiway.entities.Manager;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Trajet;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.Vehicule;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutChauffeur;
+import com.logiway.entities.enums.StatutVehicule;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.exceptions.ConflictException;
+import com.logiway.exceptions.ResourceNotFoundException;
+import com.logiway.exceptions.UnauthorizedException;
+import com.logiway.repositories.ChauffeurRepository;
+import com.logiway.repositories.EntrepriseRepository;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.repositories.TrajetRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.repositories.VehiculeRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.VehiculeService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
+@Service
+<span class="fc" id="L49">@RequiredArgsConstructor</span>
+<span class="fc" id="L50">@Slf4j</span>
+public class VehiculeServiceImpl implements VehiculeService {
+
+    private final VehiculeRepository vehiculeRepository;
+    private final EntrepriseRepository entrepriseRepository;
+    private final ChauffeurRepository chauffeurRepository;
+    private final TrajetRepository trajetRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final NotificationRepository notificationRepository;
+    private final com.logiway.services.NotificationRealtimeService notificationRealtimeService;
+    private final AuthenticatedUserService authenticatedUserService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;VehiculeResponse&gt; getAccessibleVehicules() {
+<span class="fc" id="L65">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc bfc" id="L67" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L68">            return vehiculeRepository.findAll().stream()</span>
+<span class="fc" id="L69">                .sorted(Comparator.comparing(Vehicule::getId).reversed())</span>
+<span class="fc" id="L70">                .map(this::toResponse)</span>
+<span class="fc" id="L71">                .toList();</span>
+        }
+
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L75">            return vehiculeRepository.findByEntreprise_Proprietaire_IdOrderByIdDesc(currentUser.getId()).stream()</span>
+<span class="fc" id="L76">                .map(this::toResponse)</span>
+<span class="fc" id="L77">                .toList();</span>
+        }
+
+<span class="fc bfc" id="L80" title="All 2 branches covered.">        if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L81">            Chauffeur chauffeur = requireCurrentChauffeur(currentUser);</span>
+<span class="fc" id="L82">            Vehicule vehicule = chauffeur.getVehiculeActuel();</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">            return vehicule == null ? List.of() : List.of(toResponse(vehicule));</span>
+        }
+
+<span class="fc" id="L86">        return List.of();</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VehiculeResponse getVehicule(Long id) {
+<span class="fc" id="L92">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L93">        Vehicule vehicule = requireVehicule(id);</span>
+<span class="fc" id="L94">        ensureReadableByCurrentUser(currentUser, vehicule);</span>
+<span class="fc" id="L95">        return toResponse(vehicule);</span>
+    }
+
+    @Override
+    @Transactional
+    public VehiculeResponse createVehicule(CreateVehiculeRequest request) {
+<span class="fc" id="L101">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L102">        ensureSuperAdmin(currentUser);</span>
+
+<span class="fc bfc" id="L104" title="All 2 branches covered.">        if (vehiculeRepository.existsByMatriculeIgnoreCase(request.matricule().trim())) {</span>
+<span class="fc" id="L105">            throw new BadRequestException(&quot;Vehicle matricule already exists&quot;);</span>
+        }
+
+<span class="fc" id="L108">        Entreprise entreprise = requireEntreprise(request.entrepriseId());</span>
+<span class="fc" id="L109">        ensureEntrepriseCapacity(entreprise);</span>
+
+<span class="fc" id="L111">        Vehicule vehicule = Vehicule.builder()</span>
+<span class="fc" id="L112">            .matricule(request.matricule().trim())</span>
+<span class="fc" id="L113">            .marque(request.marque().trim())</span>
+<span class="fc" id="L114">            .modele(request.modele().trim())</span>
+<span class="fc" id="L115">            .capacite(request.capacite())</span>
+<span class="fc" id="L116">            .kilometrage(request.kilometrage())</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">            .statut(request.statut() == null ? StatutVehicule.EN_SERVICE : request.statut())</span>
+<span class="fc" id="L118">            .entreprise(entreprise)</span>
+<span class="fc" id="L119">            .build();</span>
+
+<span class="fc" id="L121">        vehiculeRepository.save(vehicule);</span>
+<span class="fc" id="L122">                Chauffeur chauffeur = null;</span>
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (request.chauffeurId() != null) {</span>
+<span class="fc" id="L124">            chauffeur = requireChauffeur(request.chauffeurId());</span>
+<span class="fc" id="L125">            ensureChauffeurCompatibleWithEntreprise(chauffeur, entreprise);</span>
+<span class="fc" id="L126">            ensureChauffeurAvailable(chauffeur, vehicule.getId());</span>
+<span class="fc" id="L127">            assignChauffeur(vehicule, chauffeur);</span>
+<span class="fc" id="L128">            vehiculeRepository.save(vehicule);</span>
+<span class="fc" id="L129">            utilisateurRepository.save(chauffeur);</span>
+        }
+
+<span class="fc" id="L132">        notifyVehicleCreation(currentUser, vehicule, entreprise.getProprietaire(), chauffeur);</span>
+<span class="fc" id="L133">        return toResponse(vehicule);</span>
+    }
+
+    @Override
+    @Transactional
+    public VehiculeResponse updateVehicule(Long id, UpdateVehiculeRequest request) {
+<span class="fc" id="L139">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L140">        ensureSuperAdmin(currentUser);</span>
+
+<span class="fc" id="L142">        Vehicule vehicule = requireVehicule(id);</span>
+<span class="fc" id="L143">        Entreprise previousEntreprise = vehicule.getEntreprise();</span>
+<span class="fc" id="L144">        Chauffeur previousChauffeur = vehicule.getChauffeurActuel();</span>
+<span class="fc" id="L145">        StatutVehicule previousStatus = vehicule.getStatut();</span>
+<span class="fc" id="L146">        String previousMatricule = vehicule.getMatricule();</span>
+
+<span class="fc bfc" id="L148" title="All 4 branches covered.">        if (request.matricule() != null &amp;&amp; !request.matricule().trim().equalsIgnoreCase(previousMatricule)) {</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">            if (vehiculeRepository.existsByMatriculeIgnoreCase(request.matricule().trim())) {</span>
+<span class="fc" id="L150">                throw new BadRequestException(&quot;Vehicle matricule already exists&quot;);</span>
+            }
+<span class="fc" id="L152">            vehicule.setMatricule(request.matricule().trim());</span>
+        }
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        if (request.marque() != null) {</span>
+<span class="fc" id="L155">            vehicule.setMarque(request.marque().trim());</span>
+        }
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        if (request.modele() != null) {</span>
+<span class="fc" id="L158">            vehicule.setModele(request.modele().trim());</span>
+        }
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        if (request.capacite() != null) {</span>
+<span class="fc" id="L161">            vehicule.setCapacite(request.capacite());</span>
+        }
+<span class="fc bfc" id="L163" title="All 2 branches covered.">        if (request.kilometrage() != null) {</span>
+<span class="fc" id="L164">            vehicule.setKilometrage(request.kilometrage());</span>
+        }
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        if (request.statut() != null) {</span>
+<span class="fc" id="L167">            vehicule.setStatut(request.statut());</span>
+        }
+
+<span class="fc bfc" id="L170" title="All 6 branches covered.">        if (request.entrepriseId() != null &amp;&amp; (previousEntreprise == null || !Objects.equals(previousEntreprise.getId(), request.entrepriseId()))) {</span>
+<span class="fc" id="L171">            Entreprise newEntreprise = requireEntreprise(request.entrepriseId());</span>
+<span class="fc" id="L172">            ensureEntrepriseCapacity(newEntreprise);</span>
+<span class="fc" id="L173">            vehicule.setEntreprise(newEntreprise);</span>
+        }
+
+<span class="fc" id="L176">        Chauffeur newChauffeur = null;</span>
+<span class="fc bfc" id="L177" title="All 2 branches covered.">        if (request.chauffeurId() != null) {</span>
+<span class="fc" id="L178">            newChauffeur = requireChauffeur(request.chauffeurId());</span>
+<span class="fc" id="L179">            ensureChauffeurCompatibleWithEntreprise(newChauffeur, vehicule.getEntreprise());</span>
+<span class="fc" id="L180">            ensureChauffeurAvailable(newChauffeur, vehicule.getId());</span>
+<span class="fc" id="L181">            assignChauffeur(vehicule, newChauffeur);</span>
+<span class="fc" id="L182">            utilisateurRepository.save(newChauffeur);</span>
+        }
+
+<span class="fc" id="L185">        vehiculeRepository.save(vehicule);</span>
+
+<span class="fc" id="L187">        notifyVehicleUpdate(currentUser, previousEntreprise, vehicule, previousChauffeur, newChauffeur, previousStatus, previousMatricule);</span>
+<span class="fc" id="L188">        return toResponse(vehicule);</span>
+    }
+
+    @Override
+    @Transactional
+    public VehiculeResponse updateVehiculeStatus(Long id, UpdateVehiculeStatusRequest request) {
+<span class="fc" id="L194">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L195">        Vehicule vehicule = requireVehicule(id);</span>
+<span class="fc" id="L196">        StatutVehicule previousStatus = vehicule.getStatut();</span>
+
+<span class="fc bfc" id="L198" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L199">            ensureManagerOwnsVehicle(currentUser, vehicule);</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">            if (request.statut() != StatutVehicule.EN_MAINTENANCE) {</span>
+<span class="fc" id="L201">                throw new UnauthorizedException(&quot;Managers can only report vehicles as EN_MAINTENANCE&quot;);</span>
+            }
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        } else if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L204">            ensureChauffeurIsAssignedToVehicle(currentUser, vehicule);</span>
+        } else {
+<span class="fc" id="L206">            ensureSuperAdmin(currentUser);</span>
+        }
+
+<span class="fc" id="L209">        vehicule.setStatut(request.statut());</span>
+<span class="fc" id="L210">        vehiculeRepository.save(vehicule);</span>
+
+<span class="fc" id="L212">        notifyVehicleStatusChange(vehicule, previousStatus, request.statut(), currentUser);</span>
+<span class="fc" id="L213">        return toResponse(vehicule);</span>
+    }
+
+    @Override
+    @Transactional
+    public VehiculeResponse assignDriver(Long id, AssignVehiculeDriverRequest request) {
+<span class="fc" id="L219">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L220">        Vehicule vehicule = requireVehicule(id);</span>
+
+<span class="fc bfc" id="L222" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L223">            ensureManagerOwnsVehicle(currentUser, vehicule);</span>
+        } else {
+<span class="fc" id="L225">            ensureSuperAdmin(currentUser);</span>
+        }
+
+<span class="fc" id="L228">        Chauffeur chauffeur = requireChauffeur(request.chauffeurId());</span>
+<span class="fc" id="L229">        ensureChauffeurCompatibleWithEntreprise(chauffeur, vehicule.getEntreprise());</span>
+<span class="fc bfc" id="L230" title="All 2 branches covered.">        if (!isDriverAvailableAfterRest(chauffeur)) {</span>
+<span class="fc" id="L231">            String message = buildRestMessage(chauffeur);</span>
+<span class="fc bfc" id="L232" title="All 2 branches covered.">            notifyUsers(buildRecipients(vehicule.getEntreprise() != null ? vehicule.getEntreprise().getProprietaire() : null, chauffeur), recipient -&gt; message);</span>
+<span class="fc" id="L233">            throw new BadRequestException(message);</span>
+        }
+<span class="fc" id="L235">        ensureChauffeurAvailable(chauffeur, vehicule.getId());</span>
+
+<span class="fc" id="L237">        Chauffeur previousChauffeur = vehicule.getChauffeurActuel();</span>
+<span class="fc" id="L238">        assignChauffeur(vehicule, chauffeur);</span>
+<span class="fc" id="L239">        vehiculeRepository.save(vehicule);</span>
+<span class="fc" id="L240">        utilisateurRepository.save(chauffeur);</span>
+<span class="fc bfc" id="L241" title="All 4 branches covered.">        if (previousChauffeur != null &amp;&amp; !Objects.equals(previousChauffeur.getId(), chauffeur.getId())) {</span>
+<span class="fc" id="L242">            utilisateurRepository.save(previousChauffeur);</span>
+        }
+
+<span class="fc" id="L245">        notifyDriverAssignment(vehicule, previousChauffeur, chauffeur, currentUser);</span>
+<span class="fc" id="L246">        return toResponse(vehicule);</span>
+    }
+
+    @Override
+    @Transactional
+    public VehiculeResponse clearDriver(Long id) {
+<span class="fc" id="L252">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L253">        ensureSuperAdmin(currentUser);</span>
+
+<span class="fc" id="L255">        Vehicule vehicule = requireVehicule(id);</span>
+<span class="fc" id="L256">        Chauffeur previousChauffeur = vehicule.getChauffeurActuel();</span>
+<span class="fc bfc" id="L257" title="All 2 branches covered.">        if (previousChauffeur == null) {</span>
+<span class="fc" id="L258">            return toResponse(vehicule);</span>
+        }
+
+<span class="fc" id="L261">        vehicule.setChauffeurActuel(null);</span>
+<span class="fc" id="L262">        previousChauffeur.setVehiculeActuel(null);</span>
+<span class="fc" id="L263">        previousChauffeur.setStatutConducteur(StatutChauffeur.LIBRE);</span>
+<span class="fc" id="L264">        vehiculeRepository.save(vehicule);</span>
+<span class="fc" id="L265">        utilisateurRepository.save(previousChauffeur);</span>
+
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        notifyUsers(buildRecipients(vehicule.getEntreprise() != null ? vehicule.getEntreprise().getProprietaire() : null, previousChauffeur), recipient -&gt; {</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">            if (recipient.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L269">                return &quot;Votre affectation au vehicule &quot; + vehicleSummary(vehicule) + &quot; a ete retiree par &quot; + userLabel(currentUser) + &quot;.&quot;;</span>
+            }
+<span class="fc bfc" id="L271" title="All 2 branches covered.">            if (recipient.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L272">                return &quot;Le chauffeur &quot; + userLabel(previousChauffeur) + &quot; n'est plus affecte au vehicule &quot; + vehicleSummary(vehicule) + &quot;.&quot;;</span>
+            }
+<span class="fc" id="L274">            return &quot;Suppression d'affectation chauffeur sur vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L275">                + &quot; | entreprise: &quot; + companyLabel(vehicule.getEntreprise())</span>
+<span class="fc" id="L276">                + &quot; | acteur: &quot; + userLabel(currentUser) + &quot;.&quot;;</span>
+        });
+
+<span class="fc" id="L279">        return toResponse(vehicule);</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteVehicule(Long id) {
+<span class="fc" id="L285">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L286">        ensureSuperAdmin(currentUser);</span>
+
+<span class="fc" id="L288">        Vehicule vehicule = requireVehicule(id);</span>
+<span class="fc" id="L289">        Chauffeur chauffeur = vehicule.getChauffeurActuel();</span>
+<span class="fc bfc" id="L290" title="All 2 branches covered.">        Manager owner = vehicule.getEntreprise() != null ? vehicule.getEntreprise().getProprietaire() : null;</span>
+
+<span class="fc bfc" id="L292" title="All 2 branches covered.">        if (chauffeur != null) {</span>
+<span class="fc" id="L293">            chauffeur.setVehiculeActuel(null);</span>
+<span class="fc" id="L294">            chauffeur.setStatutConducteur(StatutChauffeur.LIBRE);</span>
+<span class="fc" id="L295">            utilisateurRepository.save(chauffeur);</span>
+        }
+
+<span class="fc" id="L298">        notifyUsers(buildRecipients(owner, chauffeur), recipient -&gt; {</span>
+<span class="fc bfc" id="L299" title="All 2 branches covered.">            if (recipient.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L300">                return &quot;Le vehicule &quot; + vehicleSummary(vehicule) + &quot; auquel vous etiez affecte a ete supprime du systeme.&quot;;</span>
+            }
+<span class="fc bfc" id="L302" title="All 2 branches covered.">            if (recipient.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L303">                return &quot;Un vehicule de votre flotte a ete supprime: &quot; + vehicleSummary(vehicule) + &quot;.&quot;;</span>
+            }
+<span class="fc" id="L305">            return &quot;Suppression vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L306">                + &quot; | entreprise: &quot; + companyLabel(vehicule.getEntreprise())</span>
+<span class="fc" id="L307">                + &quot; | chauffeur precedent: &quot; + userLabel(chauffeur)</span>
+<span class="fc" id="L308">                + &quot; | acteur: &quot; + userLabel(currentUser) + &quot;.&quot;;</span>
+        });
+
+<span class="fc" id="L311">        vehiculeRepository.delete(vehicule);</span>
+<span class="fc" id="L312">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;AvailableDriverResponse&gt; getAvailableDriversForVehicle(Long vehiculeId) {
+<span class="fc" id="L317">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L318">        Vehicule vehicule = requireVehicule(vehiculeId);</span>
+
+        // Vérification d'accès : seul SuperAdmin o Manager propriétaire peut voir les chauffeurs disponibles
+<span class="fc bfc" id="L321" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L322">            ensureManagerOwnsVehicle(currentUser, vehicule);</span>
+<span class="fc bfc" id="L323" title="All 2 branches covered.">        } else if (currentUser.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L324">            throw new UnauthorizedException(&quot;Only SuperAdmin or Manager can access available drivers&quot;);</span>
+        }
+
+        // Si le véhicule n'a pas d'entreprise assignée, retourner liste vide
+<span class="fc bfc" id="L328" title="All 2 branches covered.">        if (vehicule.getEntreprise() == null) {</span>
+<span class="fc" id="L329">            return List.of();</span>
+        }
+
+        // Récupérer les chauffeurs LIBRES de l'entreprise du véhicule
+<span class="fc" id="L333">        return chauffeurRepository.findAvailableDriversByEntreprise(</span>
+<span class="fc" id="L334">            vehicule.getEntreprise().getId(),</span>
+            StatutChauffeur.LIBRE
+<span class="fc" id="L336">        ).stream()</span>
+<span class="fc" id="L337">            .filter(this::isDriverAvailableAfterRest)</span>
+<span class="fc" id="L338">            .map(chauffeur -&gt; new AvailableDriverResponse(</span>
+<span class="fc" id="L339">                chauffeur.getId(),</span>
+<span class="fc" id="L340">                chauffeur.getPrenom(),</span>
+<span class="fc" id="L341">                chauffeur.getNom(),</span>
+<span class="fc" id="L342">                chauffeur.getEmail()</span>
+            ))
+<span class="fc" id="L344">            .toList();</span>
+    }
+
+    private Vehicule requireVehicule(Long id) {
+<span class="fc" id="L348">        return vehiculeRepository.findById(id)</span>
+<span class="fc" id="L349">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Vehicle not found&quot;));</span>
+    }
+
+    private Entreprise requireEntreprise(Long id) {
+<span class="fc" id="L353">        return entrepriseRepository.findById(id)</span>
+<span class="fc" id="L354">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Company not found&quot;));</span>
+    }
+
+    private Chauffeur requireChauffeur(Long id) {
+<span class="fc" id="L358">        return chauffeurRepository.findById(id)</span>
+<span class="fc" id="L359">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Driver not found&quot;));</span>
+    }
+
+    private Chauffeur requireCurrentChauffeur(Utilisateur currentUser) {
+<span class="fc" id="L363">        return chauffeurRepository.findById(currentUser.getId())</span>
+<span class="fc" id="L364">            .orElseThrow(() -&gt; new UnauthorizedException(&quot;Authenticated driver profile not found&quot;));</span>
+    }
+
+    private void ensureSuperAdmin(Utilisateur currentUser) {
+<span class="fc bfc" id="L368" title="All 2 branches covered.">        if (currentUser.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L369">            throw new UnauthorizedException(&quot;Only SuperAdmin can perform this action&quot;);</span>
+        }
+<span class="fc" id="L371">    }</span>
+
+    private void ensureReadableByCurrentUser(Utilisateur currentUser, Vehicule vehicule) {
+<span class="fc bfc" id="L374" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L375">            return;</span>
+        }
+
+<span class="fc bfc" id="L378" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L379">            ensureManagerOwnsVehicle(currentUser, vehicule);</span>
+<span class="fc" id="L380">            return;</span>
+        }
+
+<span class="fc bfc" id="L383" title="All 2 branches covered.">        if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L384">            ensureChauffeurIsAssignedToVehicle(currentUser, vehicule);</span>
+<span class="fc" id="L385">            return;</span>
+        }
+
+<span class="fc" id="L388">        throw new UnauthorizedException(&quot;You are not allowed to access this vehicle&quot;);</span>
+    }
+
+    private void ensureManagerOwnsVehicle(Utilisateur currentUser, Vehicule vehicule) {
+<span class="fc" id="L392">        Entreprise entreprise = currentUser.getEntreprise();</span>
+<span class="fc bfc" id="L393" title="All 6 branches covered.">        if (entreprise == null || vehicule.getEntreprise() == null || !Objects.equals(entreprise.getId(), vehicule.getEntreprise().getId())) {</span>
+<span class="fc" id="L394">            throw new UnauthorizedException(&quot;You can only access vehicles from your company&quot;);</span>
+        }
+<span class="fc" id="L396">    }</span>
+
+    private void ensureChauffeurIsAssignedToVehicle(Utilisateur currentUser, Vehicule vehicule) {
+<span class="fc" id="L399">        Chauffeur chauffeur = requireCurrentChauffeur(currentUser);</span>
+<span class="fc bfc" id="L400" title="All 4 branches covered.">        if (vehicule.getChauffeurActuel() == null || !Objects.equals(vehicule.getChauffeurActuel().getId(), chauffeur.getId())) {</span>
+<span class="fc" id="L401">            throw new UnauthorizedException(&quot;You can only access your assigned vehicle&quot;);</span>
+        }
+<span class="fc" id="L403">    }</span>
+
+    private void ensureEntrepriseCapacity(Entreprise entreprise) {
+<span class="fc" id="L406">        Integer capacity = entreprise.getTailleFlotte();</span>
+<span class="fc bfc" id="L407" title="All 4 branches covered.">        if (capacity == null || capacity &lt;= 0) {</span>
+<span class="fc" id="L408">            return;</span>
+        }
+
+<span class="fc" id="L411">        long currentCount = vehiculeRepository.countByEntreprise_Id(entreprise.getId());</span>
+<span class="fc bfc" id="L412" title="All 2 branches covered.">        if (currentCount &gt;= capacity) {</span>
+<span class="fc" id="L413">            throw new BadRequestException(&quot;FLEET_CAPACITY_REACHED&quot;);</span>
+        }
+<span class="fc" id="L415">    }</span>
+
+    private void ensureChauffeurCompatibleWithEntreprise(Chauffeur chauffeur, Entreprise entreprise) {
+<span class="fc bfc" id="L418" title="All 2 branches covered.">        if (entreprise == null) {</span>
+<span class="fc" id="L419">            return;</span>
+        }
+
+<span class="fc bfc" id="L422" title="All 2 branches covered.">        Long driverCompanyId = chauffeur.getEntreprise() != null</span>
+<span class="fc" id="L423">            ? chauffeur.getEntreprise().getId()</span>
+<span class="fc bfc" id="L424" title="All 4 branches covered.">            : (chauffeur.getManager() != null &amp;&amp; chauffeur.getManager().getEntreprise() != null</span>
+<span class="fc" id="L425">                ? chauffeur.getManager().getEntreprise().getId()</span>
+<span class="fc" id="L426">                : null);</span>
+
+<span class="fc bfc" id="L428" title="All 4 branches covered.">        if (driverCompanyId != null &amp;&amp; !Objects.equals(driverCompanyId, entreprise.getId())) {</span>
+<span class="fc" id="L429">            throw new ConflictException(&quot;Ce chauffeur n'appartient pas à l'entreprise du véhicule&quot;);</span>
+        }
+<span class="fc" id="L431">    }</span>
+
+    private void ensureChauffeurAvailable(Chauffeur chauffeur, Long vehiculeId) {
+<span class="fc" id="L434">        Vehicule currentVehicle = chauffeur.getVehiculeActuel();</span>
+<span class="fc bfc" id="L435" title="All 4 branches covered.">        if (currentVehicle != null &amp;&amp; !Objects.equals(currentVehicle.getId(), vehiculeId)) {</span>
+<span class="fc" id="L436">            throw new BadRequestException(&quot;Driver is already assigned to another vehicle&quot;);</span>
+        }
+
+<span class="fc bfc" id="L439" title="All 6 branches covered.">        if (currentVehicle == null &amp;&amp; chauffeur.getStatutConducteur() != null &amp;&amp; chauffeur.getStatutConducteur() != StatutChauffeur.LIBRE) {</span>
+<span class="fc" id="L440">            throw new BadRequestException(&quot;Driver is not available (statut chauffeur != LIBRE)&quot;);</span>
+        }
+<span class="fc" id="L442">    }</span>
+
+    private boolean isDriverAvailableAfterRest(Chauffeur chauffeur) {
+<span class="fc" id="L445">        return computeNextAvailability(chauffeur).available();</span>
+    }
+
+    private String buildRestMessage(Chauffeur chauffeur) {
+<span class="fc" id="L449">        DriverAvailability availability = computeNextAvailability(chauffeur);</span>
+<span class="fc bfc" id="L450" title="All 2 branches covered.">        if (availability.available()) {</span>
+<span class="fc" id="L451">            return &quot;Driver is not available&quot;;</span>
+        }
+
+<span class="pc bpc" id="L454" title="1 of 2 branches missed.">        String formatted = availability.availableAt() != null</span>
+<span class="fc" id="L455">            ? availability.availableAt().format(DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy à HH:mm&quot;))</span>
+<span class="pc" id="L456">            : &quot;inconnue&quot;;</span>
+
+<span class="fc" id="L458">        return &quot;⚠️ Ce chauffeur n'est pas encore disponible. Repos obligatoire de 12 heures après la dernière mission. Disponible le &quot; + formatted + &quot;.&quot;;</span>
+    }
+
+    private DriverAvailability computeNextAvailability(Chauffeur chauffeur) {
+<span class="fc" id="L462">        Trajet latestComplete = trajetRepository.findByChauffeurIdWithFetch(chauffeur.getId()).stream()</span>
+<span class="fc bfc" id="L463" title="All 4 branches covered.">            .filter(trajet -&gt; trajet.getStatut() == com.logiway.entities.enums.StatutTrajet.COMPLETE &amp;&amp; trajet.getDateArriveeReelle() != null)</span>
+<span class="fc" id="L464">            .findFirst()</span>
+<span class="fc" id="L465">            .orElse(null);</span>
+
+<span class="fc bfc" id="L467" title="All 2 branches covered.">        if (latestComplete == null) {</span>
+<span class="fc" id="L468">            return new DriverAvailability(null, true);</span>
+        }
+
+<span class="fc" id="L471">        LocalDateTime availableAt = latestComplete.getDateArriveeReelle().plusHours(12);</span>
+<span class="fc bfc" id="L472" title="All 2 branches covered.">        return new DriverAvailability(availableAt, !LocalDateTime.now().isBefore(availableAt));</span>
+    }
+
+<span class="fc" id="L475">    private record DriverAvailability(LocalDateTime availableAt, boolean available) {}</span>
+
+    private void assignChauffeur(Vehicule vehicule, Chauffeur chauffeur) {
+<span class="fc" id="L478">        Chauffeur previousChauffeur = vehicule.getChauffeurActuel();</span>
+<span class="fc bfc" id="L479" title="All 4 branches covered.">        if (previousChauffeur != null &amp;&amp; !Objects.equals(previousChauffeur.getId(), chauffeur.getId())) {</span>
+<span class="fc" id="L480">            previousChauffeur.setVehiculeActuel(null);</span>
+<span class="fc" id="L481">            previousChauffeur.setStatutConducteur(StatutChauffeur.LIBRE);</span>
+        }
+
+<span class="fc bfc" id="L484" title="All 4 branches covered.">        if (chauffeur.getEntreprise() == null &amp;&amp; vehicule.getEntreprise() != null) {</span>
+<span class="fc" id="L485">            chauffeur.setEntreprise(vehicule.getEntreprise());</span>
+        }
+
+<span class="fc" id="L488">        vehicule.setChauffeurActuel(chauffeur);</span>
+<span class="fc" id="L489">        chauffeur.setVehiculeActuel(vehicule);</span>
+<span class="fc" id="L490">        chauffeur.setStatutConducteur(StatutChauffeur.EN_SERVICE);</span>
+<span class="fc" id="L491">    }</span>
+
+    private void notifyVehicleCreation(Utilisateur actor, Vehicule vehicule, Manager owner, Chauffeur chauffeur) {
+<span class="fc" id="L494">        List&lt;Utilisateur&gt; recipients = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L495" title="All 2 branches covered.">        if (owner != null) {</span>
+<span class="fc" id="L496">            recipients.add(owner);</span>
+<span class="fc bfc" id="L497" title="All 2 branches covered.">        } else if (actor != null) {</span>
+<span class="fc" id="L498">            recipients.add(actor);</span>
+        }
+<span class="fc bfc" id="L500" title="All 2 branches covered.">        if (chauffeur != null) {</span>
+<span class="fc" id="L501">            recipients.add(chauffeur);</span>
+        }
+
+<span class="fc" id="L504">        notifyUsers(recipients, recipient -&gt; {</span>
+<span class="fc bfc" id="L505" title="All 2 branches covered.">            if (recipient.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L506">                return &quot;Vous etes affecte au vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L507">                    + &quot; dans l'entreprise &quot; + companyLabel(vehicule.getEntreprise()) + &quot;.&quot;;</span>
+            }
+<span class="fc bfc" id="L509" title="All 2 branches covered.">            if (recipient.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L510">                return &quot;Nouveau vehicule ajoute a votre flotte: &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L511">                    + &quot; | statut: &quot; + statusLabel(vehicule.getStatut())</span>
+<span class="fc" id="L512">                    + &quot; | cree par: &quot; + userLabel(actor)</span>
+<span class="fc bfc" id="L513" title="All 2 branches covered.">                    + (chauffeur != null ? &quot; | chauffeur: &quot; + userLabel(chauffeur) : &quot;&quot;) + &quot;.&quot;;</span>
+            }
+<span class="fc" id="L515">            return &quot;Creation vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L516">                + &quot; | entreprise: &quot; + companyLabel(vehicule.getEntreprise())</span>
+<span class="fc" id="L517">                + &quot; | statut: &quot; + statusLabel(vehicule.getStatut())</span>
+<span class="fc" id="L518">                + &quot; | createur: &quot; + userLabel(actor)</span>
+<span class="fc bfc" id="L519" title="All 2 branches covered.">                + (chauffeur != null ? &quot; | chauffeur affecte: &quot; + userLabel(chauffeur) : &quot;&quot;) + &quot;.&quot;;</span>
+        });
+<span class="fc" id="L521">    }</span>
+
+    private void notifyVehicleUpdate(Utilisateur actor, Entreprise previousEntreprise, Vehicule vehicule, Chauffeur previousChauffeur, Chauffeur newChauffeur, StatutVehicule previousStatus, String previousMatricule) {
+<span class="fc bfc" id="L524" title="All 2 branches covered.">        Manager currentOwner = vehicule.getEntreprise() != null ? vehicule.getEntreprise().getProprietaire() : null;</span>
+<span class="fc bfc" id="L525" title="All 2 branches covered.">        Manager previousOwner = previousEntreprise != null ? previousEntreprise.getProprietaire() : null;</span>
+
+<span class="fc bfc" id="L527" title="All 10 branches covered.">        if (!Objects.equals(previousMatricule, vehicule.getMatricule()) || !Objects.equals(previousStatus, vehicule.getStatut()) || !Objects.equals(previousEntreprise != null ? previousEntreprise.getId() : null, vehicule.getEntreprise() != null ? vehicule.getEntreprise().getId() : null)) {</span>
+<span class="fc" id="L528">            notifyUsers(buildRecipients(currentOwner, vehicule.getChauffeurActuel()), recipient -&gt; {</span>
+<span class="fc bfc" id="L529" title="All 2 branches covered.">                if (recipient.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L530">                    return &quot;Le vehicule qui vous est affecte a ete mis a jour: &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L531">                        + &quot; | statut: &quot; + statusLabel(vehicule.getStatut()) + &quot;.&quot;;</span>
+                }
+<span class="fc bfc" id="L533" title="All 2 branches covered.">                if (recipient.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L534">                    return &quot;Mise a jour d'un vehicule de votre flotte: &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L535">                        + &quot; | statut: &quot; + statusLabel(vehicule.getStatut())</span>
+<span class="fc" id="L536">                        + &quot; | acteur: &quot; + userLabel(actor) + &quot;.&quot;;</span>
+                }
+<span class="fc" id="L538">                return &quot;Mise a jour vehicule &quot; + vehicleSummary(vehicule)</span>
+                    + &quot; | ancienne matricule: &quot; + previousMatricule
+<span class="fc" id="L540">                    + &quot; | nouveau statut: &quot; + statusLabel(vehicule.getStatut())</span>
+<span class="fc" id="L541">                    + &quot; | entreprise: &quot; + companyLabel(vehicule.getEntreprise())</span>
+<span class="fc" id="L542">                    + &quot; | acteur: &quot; + userLabel(actor) + &quot;.&quot;;</span>
+            });
+        }
+
+<span class="fc bfc" id="L546" title="All 6 branches covered.">        if (previousEntreprise != null &amp;&amp; vehicule.getEntreprise() != null &amp;&amp; !Objects.equals(previousEntreprise.getId(), vehicule.getEntreprise().getId())) {</span>
+<span class="fc bfc" id="L547" title="All 2 branches covered.">            notifyUsers(buildRecipients(previousOwner, null), recipient -&gt; recipient.getRole() == Role.MANAGER</span>
+<span class="fc" id="L548">                ? &quot;Le vehicule &quot; + vehicleSummary(vehicule) + &quot; a quitte votre flotte (transfert inter-entreprises).&quot;</span>
+<span class="fc" id="L549">                : &quot;Transfert vehicule &quot; + vehicleSummary(vehicule) + &quot; depuis &quot; + companyLabel(previousEntreprise)</span>
+<span class="fc" id="L550">                    + &quot; vers &quot; + companyLabel(vehicule.getEntreprise()) + &quot; | acteur: &quot; + userLabel(actor) + &quot;.&quot;);</span>
+
+<span class="fc bfc" id="L552" title="All 2 branches covered.">            notifyUsers(buildRecipients(currentOwner, null), recipient -&gt; recipient.getRole() == Role.MANAGER</span>
+<span class="fc" id="L553">                ? &quot;Nouveau vehicule recu dans votre flotte: &quot; + vehicleSummary(vehicule) + &quot;.&quot;</span>
+<span class="fc" id="L554">                : &quot;Reception vehicule apres transfert: &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L555">                    + &quot; | nouvelle entreprise: &quot; + companyLabel(vehicule.getEntreprise()) + &quot;.&quot;);</span>
+        }
+
+<span class="fc bfc" id="L558" title="All 2 branches covered.">        if (!Objects.equals(previousStatus, vehicule.getStatut())) {</span>
+<span class="fc" id="L559">            notifyUsers(buildRecipients(currentOwner, vehicule.getChauffeurActuel()), recipient -&gt; {</span>
+<span class="fc bfc" id="L560" title="All 2 branches covered.">                if (recipient.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L561">                    return &quot;Statut de votre vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L562">                        + &quot; : &quot; + statusLabel(previousStatus) + &quot; -&gt; &quot; + statusLabel(vehicule.getStatut()) + &quot;.&quot;;</span>
+                }
+<span class="fc bfc" id="L564" title="All 2 branches covered.">                if (recipient.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L565">                    return &quot;Changement de statut vehicule: &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L566">                        + &quot; | &quot; + statusLabel(previousStatus) + &quot; -&gt; &quot; + statusLabel(vehicule.getStatut()) + &quot;.&quot;;</span>
+                }
+<span class="fc" id="L568">                return &quot;Changement statut vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L569">                    + &quot; | &quot; + statusLabel(previousStatus) + &quot; -&gt; &quot; + statusLabel(vehicule.getStatut())</span>
+<span class="fc" id="L570">                    + &quot; | acteur: &quot; + userLabel(actor) + &quot;.&quot;;</span>
+            });
+        }
+
+<span class="fc bfc" id="L574" title="All 6 branches covered.">        if (!Objects.equals(previousChauffeur != null ? previousChauffeur.getId() : null, newChauffeur != null ? newChauffeur.getId() : null)) {</span>
+<span class="fc bfc" id="L575" title="All 2 branches covered.">            if (previousChauffeur != null) {</span>
+<span class="fc" id="L576">                notifyUsers(List.of(previousChauffeur), recipient -&gt; &quot;Vous n'etes plus affecte au vehicule &quot; + vehicleSummary(vehicule) + &quot;.&quot;);</span>
+            }
+<span class="fc bfc" id="L578" title="All 2 branches covered.">            if (newChauffeur != null) {</span>
+<span class="fc" id="L579">                notifyUsers(List.of(newChauffeur), recipient -&gt; &quot;Vous avez ete affecte au vehicule &quot; + vehicleSummary(vehicule) + &quot;.&quot;);</span>
+            }
+<span class="fc bfc" id="L581" title="All 2 branches covered.">            if (currentOwner != null) {</span>
+<span class="fc bfc" id="L582" title="All 2 branches covered.">                notifyUsers(buildRecipients(currentOwner, null), recipient -&gt; recipient.getRole() == Role.MANAGER</span>
+<span class="fc" id="L583">                    ? &quot;Le vehicule &quot; + vehicleSummary(vehicule) + &quot; a un nouveau chauffeur: &quot; + userLabel(newChauffeur) + &quot;.&quot;</span>
+<span class="fc" id="L584">                    : &quot;Reaffectation chauffeur sur vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L585">                        + &quot; | ancien chauffeur: &quot; + userLabel(previousChauffeur)</span>
+<span class="fc" id="L586">                        + &quot; | nouveau chauffeur: &quot; + userLabel(newChauffeur) + &quot;.&quot;);</span>
+            }
+        }
+<span class="fc" id="L589">    }</span>
+
+    private void notifyVehicleStatusChange(Vehicule vehicule, StatutVehicule previousStatus, StatutVehicule newStatus, Utilisateur actor) {
+<span class="fc" id="L592">        List&lt;Utilisateur&gt; recipients = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L593" title="All 2 branches covered.">        if (actor != null) {</span>
+<span class="fc" id="L594">            recipients.add(actor);</span>
+        }
+<span class="fc bfc" id="L596" title="All 2 branches covered.">        if (vehicule.getChauffeurActuel() != null) {</span>
+<span class="fc" id="L597">            recipients.add(vehicule.getChauffeurActuel());</span>
+        }
+<span class="fc bfc" id="L599" title="All 4 branches covered.">        if (vehicule.getEntreprise() != null &amp;&amp; vehicule.getEntreprise().getProprietaire() != null) {</span>
+<span class="fc" id="L600">            recipients.add(vehicule.getEntreprise().getProprietaire());</span>
+        }
+
+<span class="fc bfc" id="L603" title="All 2 branches covered.">        if (!Objects.equals(previousStatus, newStatus)) {</span>
+<span class="fc" id="L604">            notifyUsers(recipients, recipient -&gt; {</span>
+<span class="fc bfc" id="L605" title="All 2 branches covered.">                if (recipient.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L606">                    return &quot;Statut de votre vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L607">                        + &quot; : &quot; + statusLabel(previousStatus) + &quot; -&gt; &quot; + statusLabel(newStatus) + &quot;.&quot;;</span>
+                }
+<span class="fc bfc" id="L609" title="All 2 branches covered.">                if (recipient.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L610">                    return &quot;Le vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L611">                        + &quot; est passe de &quot; + statusLabel(previousStatus) + &quot; a &quot; + statusLabel(newStatus)</span>
+<span class="fc" id="L612">                        + &quot; (action: &quot; + userLabel(actor) + &quot;).&quot;;</span>
+                }
+<span class="fc" id="L614">                return &quot;Maj statut vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L615">                    + &quot; | &quot; + statusLabel(previousStatus) + &quot; -&gt; &quot; + statusLabel(newStatus)</span>
+<span class="fc" id="L616">                    + &quot; | entreprise: &quot; + companyLabel(vehicule.getEntreprise())</span>
+<span class="fc" id="L617">                    + &quot; | acteur: &quot; + userLabel(actor) + &quot;.&quot;;</span>
+            });
+        }
+<span class="fc" id="L620">    }</span>
+
+    private void notifyDriverAssignment(Vehicule vehicule, Chauffeur previousChauffeur, Chauffeur newChauffeur, Utilisateur actor) {
+<span class="fc" id="L623">        List&lt;Utilisateur&gt; recipients = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L624" title="All 4 branches covered.">        if (actor != null &amp;&amp; actor.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L625">            recipients.add(actor);</span>
+        }
+<span class="fc bfc" id="L627" title="All 4 branches covered.">        if (vehicule.getEntreprise() != null &amp;&amp; vehicule.getEntreprise().getProprietaire() != null) {</span>
+<span class="fc" id="L628">            recipients.add(vehicule.getEntreprise().getProprietaire());</span>
+        }
+<span class="fc" id="L630">        recipients.add(newChauffeur);</span>
+
+<span class="fc bfc" id="L632" title="All 4 branches covered.">        if (previousChauffeur != null &amp;&amp; !Objects.equals(previousChauffeur.getId(), newChauffeur.getId())) {</span>
+<span class="fc" id="L633">            notifyUsers(List.of(previousChauffeur), recipient -&gt; &quot;Vous n'etes plus affecte au vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L634">                + &quot; suite a une reaffectation par &quot; + userLabel(actor) + &quot;.&quot;);</span>
+        }
+
+<span class="fc" id="L637">        notifyUsers(recipients, recipient -&gt; {</span>
+<span class="fc bfc" id="L638" title="All 2 branches covered.">            if (recipient.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L639">                return &quot;Vous etes maintenant affecte au vehicule &quot; + vehicleSummary(vehicule) + &quot;.&quot;;</span>
+            }
+<span class="fc bfc" id="L641" title="All 2 branches covered.">            if (recipient.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L642">                return &quot;Affectation chauffeur sur vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L643">                    + &quot; | chauffeur: &quot; + userLabel(newChauffeur)</span>
+<span class="fc" id="L644">                    + &quot; | acteur: &quot; + userLabel(actor) + &quot;.&quot;;</span>
+            }
+<span class="fc" id="L646">            return &quot;Affectation chauffeur vehicule &quot; + vehicleSummary(vehicule)</span>
+<span class="fc" id="L647">                + &quot; | chauffeur: &quot; + userLabel(newChauffeur)</span>
+<span class="fc" id="L648">                + &quot; | entreprise: &quot; + companyLabel(vehicule.getEntreprise())</span>
+<span class="fc" id="L649">                + &quot; | acteur: &quot; + userLabel(actor) + &quot;.&quot;;</span>
+        });
+<span class="fc" id="L651">    }</span>
+
+    private List&lt;Utilisateur&gt; buildRecipients(Manager owner, Chauffeur chauffeur) {
+<span class="fc" id="L654">        Set&lt;Utilisateur&gt; recipients = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L655" title="All 2 branches covered.">        if (owner != null) {</span>
+<span class="fc" id="L656">            recipients.add(owner);</span>
+        }
+<span class="fc bfc" id="L658" title="All 2 branches covered.">        if (chauffeur != null) {</span>
+<span class="fc" id="L659">            recipients.add(chauffeur);</span>
+        }
+<span class="fc" id="L661">        return new ArrayList&lt;&gt;(recipients);</span>
+    }
+
+
+
+    private void notifyUsers(Collection&lt;? extends Utilisateur&gt; recipients, Function&lt;Utilisateur, String&gt; messageBuilder) {
+<span class="fc" id="L667">        Set&lt;Utilisateur&gt; effectiveRecipients = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L668" title="All 2 branches covered.">        if (recipients != null) {</span>
+<span class="fc" id="L669">            effectiveRecipients.addAll(recipients);</span>
+        }
+<span class="fc" id="L671">        effectiveRecipients.addAll(utilisateurRepository.findByRole(Role.SUPERADMIN));</span>
+<span class="fc bfc" id="L672" title="All 2 branches covered.">        if (effectiveRecipients.isEmpty()) {</span>
+<span class="fc" id="L673">            return;</span>
+        }
+
+<span class="fc" id="L676">        Set&lt;Long&gt; notifiedIds = new LinkedHashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L677" title="All 2 branches covered.">        for (Utilisateur recipient : effectiveRecipients) {</span>
+<span class="fc bfc" id="L678" title="All 6 branches covered.">            if (recipient == null || recipient.getId() == null || !notifiedIds.add(recipient.getId())) {</span>
+<span class="fc" id="L679">                continue;</span>
+            }
+
+<span class="fc bfc" id="L682" title="All 2 branches covered.">            String message = messageBuilder == null ? &quot;&quot; : safe(messageBuilder.apply(recipient));</span>
+<span class="fc bfc" id="L683" title="All 2 branches covered.">            if (message.isBlank()) {</span>
+<span class="fc" id="L684">                continue;</span>
+            }
+
+<span class="fc" id="L687">            Notification notification = Notification.builder()</span>
+<span class="fc" id="L688">                .type(TypeNotif.NOTIF_VEHICULE)</span>
+<span class="fc" id="L689">                .message(message)</span>
+<span class="fc" id="L690">                .utilisateur(recipient)</span>
+<span class="fc" id="L691">                .estLu(false)</span>
+<span class="fc" id="L692">                .build();</span>
+<span class="fc" id="L693">            notificationRepository.save(notification);</span>
+<span class="fc" id="L694">            notificationRealtimeService.publishToUsers(List.of(recipient.getId()), notification);</span>
+<span class="fc" id="L695">        }</span>
+<span class="fc" id="L696">    }</span>
+
+    private String vehicleLabel(Vehicule vehicule) {
+<span class="fc bfc" id="L699" title="All 2 branches covered.">        if (vehicule == null) {</span>
+<span class="fc" id="L700">            return &quot;inconnu&quot;;</span>
+        }
+<span class="fc bfc" id="L702" title="All 4 branches covered.">        if (vehicule.getMatricule() != null &amp;&amp; !vehicule.getMatricule().isBlank()) {</span>
+<span class="fc" id="L703">            return vehicule.getMatricule();</span>
+        }
+<span class="fc" id="L705">        return &quot;#&quot; + vehicule.getId();</span>
+    }
+
+    private String vehicleSummary(Vehicule vehicule) {
+<span class="fc bfc" id="L709" title="All 2 branches covered.">        if (vehicule == null) {</span>
+<span class="fc" id="L710">            return &quot;Vehicule inconnu&quot;;</span>
+        }
+<span class="fc" id="L712">        String model = (safe(vehicule.getMarque()) + &quot; &quot; + safe(vehicule.getModele())).trim();</span>
+<span class="fc bfc" id="L713" title="All 2 branches covered.">        if (model.isBlank()) {</span>
+<span class="fc" id="L714">            return vehicleLabel(vehicule);</span>
+        }
+<span class="fc" id="L716">        return vehicleLabel(vehicule) + &quot; (&quot; + model + &quot;)&quot;;</span>
+    }
+
+    private String companyLabel(Entreprise entreprise) {
+<span class="fc bfc" id="L720" title="All 2 branches covered.">        if (entreprise == null) {</span>
+<span class="fc" id="L721">            return &quot;N/A&quot;;</span>
+        }
+<span class="fc bfc" id="L723" title="All 4 branches covered.">        if (entreprise.getNomEntreprise() != null &amp;&amp; !entreprise.getNomEntreprise().isBlank()) {</span>
+<span class="fc" id="L724">            return entreprise.getNomEntreprise();</span>
+        }
+<span class="fc" id="L726">        return &quot;#&quot; + entreprise.getId();</span>
+    }
+
+    private String statusLabel(StatutVehicule statut) {
+<span class="fc bfc" id="L730" title="All 2 branches covered.">        if (statut == null) {</span>
+<span class="fc" id="L731">            return &quot;INCONNU&quot;;</span>
+        }
+<span class="fc" id="L733">        return statut.name();</span>
+    }
+
+    private String userLabel(Utilisateur user) {
+<span class="fc bfc" id="L737" title="All 2 branches covered.">        if (user == null) {</span>
+<span class="fc" id="L738">            return &quot;le systeme&quot;;</span>
+        }
+
+<span class="fc" id="L741">        String fullName = safe(user.getPrenom()) + &quot; &quot; + safe(user.getNom());</span>
+<span class="fc" id="L742">        String trimmed = fullName.trim();</span>
+<span class="fc bfc" id="L743" title="All 2 branches covered.">        if (!trimmed.isBlank()) {</span>
+<span class="fc" id="L744">            return trimmed;</span>
+        }
+<span class="fc bfc" id="L746" title="All 4 branches covered.">        if (user.getEmail() != null &amp;&amp; !user.getEmail().isBlank()) {</span>
+<span class="fc" id="L747">            return user.getEmail();</span>
+        }
+<span class="fc" id="L749">        return &quot;#&quot; + user.getId();</span>
+    }
+
+    private String safe(String value) {
+<span class="fc bfc" id="L753" title="All 2 branches covered.">        return value == null ? &quot;&quot; : value;</span>
+    }
+
+    private VehiculeResponse toResponse(Vehicule vehicule) {
+<span class="fc bfc" id="L757" title="All 2 branches covered.">        Manager owner = vehicule.getEntreprise() != null ? vehicule.getEntreprise().getProprietaire() : null;</span>
+<span class="fc" id="L758">        Chauffeur chauffeur = vehicule.getChauffeurActuel();</span>
+<span class="fc" id="L759">        return new VehiculeResponse(</span>
+<span class="fc" id="L760">            vehicule.getId(),</span>
+<span class="fc" id="L761">            vehicule.getMatricule(),</span>
+<span class="fc" id="L762">            vehicule.getMarque(),</span>
+<span class="fc" id="L763">            vehicule.getModele(),</span>
+<span class="fc" id="L764">            vehicule.getCapacite(),</span>
+<span class="fc" id="L765">            vehicule.getKilometrage(),</span>
+<span class="fc" id="L766">            vehicule.getStatut(),</span>
+<span class="fc bfc" id="L767" title="All 2 branches covered.">            vehicule.getEntreprise() != null ? vehicule.getEntreprise().getId() : null,</span>
+<span class="fc bfc" id="L768" title="All 2 branches covered.">            vehicule.getEntreprise() != null ? vehicule.getEntreprise().getNomEntreprise() : null,</span>
+<span class="fc bfc" id="L769" title="All 2 branches covered.">            chauffeur != null ? chauffeur.getId() : null,</span>
+<span class="fc bfc" id="L770" title="All 2 branches covered.">            chauffeur != null ? userLabel(chauffeur) : null,</span>
+<span class="fc bfc" id="L771" title="All 2 branches covered.">            owner != null ? owner.getId() : null,</span>
+<span class="fc bfc" id="L772" title="All 2 branches covered.">            owner != null ? owner.getPrenom() : null,</span>
+<span class="fc bfc" id="L773" title="All 2 branches covered.">            owner != null ? owner.getNom() : null</span>
+        );
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

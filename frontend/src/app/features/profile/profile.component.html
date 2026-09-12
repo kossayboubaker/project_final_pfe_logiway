@@ -1,0 +1,117 @@
+<div class="profile-page animate-fade-up" *ngIf="user">
+    <div class="profile-header">
+        <h1 class="text-gradient">Profil & Configuration</h1>
+        <p class="subtitle">Gerez vos informations personnelles et votre securite de compte</p>
+    </div>
+
+    <mat-tab-group class="profile-tabs glass-card">
+        <mat-tab>
+            <ng-template mat-tab-label>
+                <mat-icon class="tab-icon">person</mat-icon>
+                <span>Informations Personnelles</span>
+            </ng-template>
+
+            <div class="tab-content">
+                <div class="user-info-grid">
+                    <div class="avatar-section">
+                        <div class="avatar-container">
+                            <img *ngIf="avatarPreview" [src]="avatarPreview" class="avatar-preview-img" alt="Avatar">
+                            <mat-icon *ngIf="!avatarPreview" class="avatar-icon">account_circle</mat-icon>
+
+                            <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*"
+                                style="display: none;">
+                            <button mat-mini-fab color="accent" class="edit-avatar" (click)="fileInput.click()">
+                                <mat-icon>camera_alt</mat-icon>
+                            </button>
+                        </div>
+                        <h2>{{user?.firstName}} {{user?.lastName}}</h2>
+                        <span class="role-badge">{{user?.role}}</span>
+                    </div>
+
+                    <div class="details-section">
+                        <form class="profile-form" (ngSubmit)="saveUserProfile()">
+                            <div class="form-row">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Prenom</mat-label>
+                                    <input matInput [(ngModel)]="user.firstName" name="firstName"
+                                        [disabled]="!editingUser">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Nom</mat-label>
+                                    <input matInput [(ngModel)]="user.lastName" name="lastName"
+                                        [disabled]="!editingUser">
+                                </mat-form-field>
+                            </div>
+
+                            <div class="form-row">
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Telephone</mat-label>
+                                    <input matInput [(ngModel)]="user.phone" name="phone" [disabled]="!editingUser">
+                                </mat-form-field>
+
+                                <mat-form-field appearance="outline">
+                                    <mat-label>Adresse E-mail</mat-label>
+                                    <input matInput [(ngModel)]="user.email" name="email" disabled>
+                                </mat-form-field>
+                            </div>
+
+                            <div class="readonly-note glass-card">
+                                L'entreprise est affectee par SUPERADMIN ou MANAGER et ne peut pas etre modifiee ici.
+                            </div>
+
+                            <div class="actions">
+                                <button type="button" mat-stroked-button color="accent" class="px-4 mr-2"
+                                    *ngIf="!editingUser" (click)="toggleEditUser()">
+                                    <mat-icon>edit</mat-icon> MODIFIER LE PROFIL
+                                </button>
+                                <button type="submit" mat-raised-button color="primary" class="glow-on-hover px-4"
+                                    *ngIf="editingUser">
+                                    <mat-icon>save</mat-icon> ENREGISTRER
+                                </button>
+                                <button type="button" mat-button class="px-4" *ngIf="editingUser"
+                                    (click)="toggleEditUser()">
+                                    ANNULER
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="security-section">
+                            <h3>Changer le mot de passe</h3>
+                            <form class="profile-form" (ngSubmit)="changePassword()">
+                                <div class="form-row">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Mot de passe actuel</mat-label>
+                                        <input matInput type="password" [(ngModel)]="passwordForm.oldPassword"
+                                            name="oldPassword">
+                                    </mat-form-field>
+
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Nouveau mot de passe</mat-label>
+                                        <input matInput type="password" [(ngModel)]="passwordForm.newPassword"
+                                            name="newPassword">
+                                    </mat-form-field>
+                                </div>
+
+                                <div class="form-row">
+                                    <mat-form-field appearance="outline">
+                                        <mat-label>Confirmer le nouveau mot de passe</mat-label>
+                                        <input matInput type="password" [(ngModel)]="passwordForm.confirmPassword"
+                                            name="confirmPassword">
+                                    </mat-form-field>
+                                </div>
+
+                                <div class="actions">
+                                    <button type="submit" mat-raised-button color="primary" class="glow-on-hover px-4"
+                                        [disabled]="changingPassword">
+                                        <mat-icon>lock_reset</mat-icon> METTRE A JOUR LE MOT DE PASSE
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</div>

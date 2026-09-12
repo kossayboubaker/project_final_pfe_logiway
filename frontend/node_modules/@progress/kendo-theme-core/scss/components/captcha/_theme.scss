@@ -1,0 +1,15 @@
+@use "../../mixins/index.scss" as *;
+@use "./variables.scss" as *;
+
+@mixin kendo-captcha--theme-base() {
+
+    // Captcha
+    .k-captcha {
+        @include fill(
+            $kendo-captcha-text,
+            $kendo-captcha-bg,
+            $kendo-captcha-border
+        );
+    }
+
+}

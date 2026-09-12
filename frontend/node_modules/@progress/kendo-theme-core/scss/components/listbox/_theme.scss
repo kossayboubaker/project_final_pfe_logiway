@@ -1,0 +1,21 @@
+@use "../../color-system/_functions.scss" as *;
+@use "../../mixins/index.scss" as *;
+@use "./variables.scss" as *;
+
+@mixin kendo-listbox--theme-base() {
+
+    // Listbox
+    .k-listbox {
+        .k-list-scroller {
+            @include fill(
+                $kendo-listbox-text,
+                $kendo-listbox-bg,
+                $kendo-listbox-border
+            );
+        }
+        .k-drop-hint {
+            border-block-start-color: k-color(primary);
+        }
+    }
+
+}

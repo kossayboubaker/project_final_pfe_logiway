@@ -1,0 +1,781 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AdminKpiServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">AdminKpiServiceImpl.java</span></div><h1>AdminKpiServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.admin.KpiOverviewResponse;
+import com.logiway.dto.admin.KpiOverviewResponse.*;
+import com.logiway.entities.*;
+import com.logiway.entities.enums.*;
+import com.logiway.repositories.*;
+import com.logiway.services.AdminKpiService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L23">@RequiredArgsConstructor</span>
+public class AdminKpiServiceImpl implements AdminKpiService {
+
+    private final VehiculeRepository vehiculeRepository;
+    private final ChauffeurRepository chauffeurRepository;
+    private final ReclamationRepository reclamationRepository;
+    private final CongeRepository congeRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final EntityManager em;
+
+    @Override
+    @Transactional(readOnly = true)
+    public KpiOverviewResponse getOverview(Long entrepriseId, String period, Long chauffeurId) {
+<span class="fc" id="L36">        KpiOverviewResponse resp = new KpiOverviewResponse();</span>
+
+        LocalDateTime start;
+<span class="fc" id="L39">        LocalDateTime end = LocalDateTime.now();</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        if (period == null) {</span>
+<span class="fc" id="L41">            period = &quot;Mois&quot;;</span>
+        }
+<span class="fc bfc" id="L43" title="All 6 branches covered.">        switch (period) {</span>
+<span class="fc" id="L44">            case &quot;Jour&quot; -&gt; start = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);</span>
+<span class="fc" id="L45">            case &quot;Semaine&quot; -&gt; start = LocalDateTime.now().minusDays(7);</span>
+<span class="fc" id="L46">            case &quot;Trimestre&quot; -&gt; start = LocalDateTime.now().minusMonths(3);</span>
+<span class="fc" id="L47">            case &quot;Année&quot; -&gt; start = LocalDateTime.now().withDayOfYear(1).withHour(0).withMinute(0).withSecond(0).withNano(0);</span>
+<span class="fc" id="L48">            case &quot;Mois&quot; -&gt; start = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);</span>
+<span class="fc" id="L49">            default -&gt; start = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);</span>
+        }
+
+<span class="fc" id="L52">        List&lt;Vehicule&gt; allVehicules = vehiculeRepository.findAll();</span>
+<span class="fc" id="L53">        List&lt;Chauffeur&gt; allChauffeurs = chauffeurRepository.findAll();</span>
+<span class="fc" id="L54">        List&lt;Utilisateur&gt; allUsers = utilisateurRepository.findAll();</span>
+<span class="fc" id="L55">        List&lt;Reclamation&gt; allReclamations = reclamationRepository.findAll();</span>
+<span class="fc" id="L56">        List&lt;Conge&gt; allConges = congeRepository.findAll();</span>
+
+<span class="fc bfc" id="L58" title="All 2 branches covered.">        if (chauffeurId != null) {</span>
+<span class="fc" id="L59">            final Long finalChauffeurId = chauffeurId;</span>
+<span class="fc" id="L60">            allVehicules = allVehicules.stream()</span>
+<span class="pc bpc" id="L61" title="1 of 4 branches missed.">                    .filter(v -&gt; v.getChauffeurActuel() != null &amp;&amp; v.getChauffeurActuel().getId().equals(finalChauffeurId))</span>
+<span class="fc" id="L62">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L63">            allChauffeurs = allChauffeurs.stream()</span>
+<span class="fc" id="L64">                    .filter(c -&gt; c.getId().equals(finalChauffeurId))</span>
+<span class="fc" id="L65">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L66">            allUsers = allUsers.stream()</span>
+<span class="fc" id="L67">                    .filter(u -&gt; u.getId().equals(finalChauffeurId))</span>
+<span class="fc" id="L68">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L69">            allReclamations = allReclamations.stream()</span>
+<span class="pc bpc" id="L70" title="1 of 4 branches missed.">                    .filter(r -&gt; r.getUtilisateur() != null &amp;&amp; r.getUtilisateur().getId().equals(finalChauffeurId))</span>
+<span class="fc" id="L71">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L72">            allConges = allConges.stream()</span>
+<span class="pc bpc" id="L73" title="1 of 4 branches missed.">                    .filter(c -&gt; c.getChauffeur() != null &amp;&amp; c.getChauffeur().getId().equals(finalChauffeurId))</span>
+<span class="fc" id="L74">                    .collect(Collectors.toList());</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        } else if (entrepriseId != null) {</span>
+<span class="fc" id="L76">            final Long finalEntrepriseId = entrepriseId;</span>
+<span class="fc" id="L77">            allVehicules = allVehicules.stream()</span>
+<span class="fc bfc" id="L78" title="All 4 branches covered.">                    .filter(v -&gt; v.getEntreprise() != null &amp;&amp; v.getEntreprise().getId().equals(finalEntrepriseId))</span>
+<span class="fc" id="L79">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L80">            allChauffeurs = allChauffeurs.stream()</span>
+<span class="pc bpc" id="L81" title="1 of 4 branches missed.">                    .filter(c -&gt; c.getEntreprise() != null &amp;&amp; c.getEntreprise().getId().equals(finalEntrepriseId))</span>
+<span class="fc" id="L82">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L83">            allUsers = allUsers.stream()</span>
+<span class="fc bfc" id="L84" title="All 4 branches covered.">                    .filter(u -&gt; u.getEntreprise() != null &amp;&amp; u.getEntreprise().getId().equals(finalEntrepriseId))</span>
+<span class="fc" id="L85">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L86">            allReclamations = allReclamations.stream()</span>
+<span class="fc bfc" id="L87" title="All 6 branches covered.">                    .filter(r -&gt; r.getUtilisateur() != null &amp;&amp; r.getUtilisateur().getEntreprise() != null &amp;&amp; r.getUtilisateur().getEntreprise().getId().equals(finalEntrepriseId))</span>
+<span class="fc" id="L88">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L89">            allConges = allConges.stream()</span>
+<span class="pc bpc" id="L90" title="1 of 6 branches missed.">                    .filter(c -&gt; c.getChauffeur() != null &amp;&amp; c.getChauffeur().getEntreprise() != null &amp;&amp; c.getChauffeur().getEntreprise().getId().equals(finalEntrepriseId))</span>
+<span class="fc" id="L91">                    .collect(Collectors.toList());</span>
+        }
+
+<span class="fc" id="L94">        final LocalDateTime finalStart = start;</span>
+<span class="fc" id="L95">        List&lt;Reclamation&gt; periodReclamations = allReclamations.stream()</span>
+<span class="fc bfc" id="L96" title="All 4 branches covered.">                .filter(r -&gt; r.getDateCreation() != null &amp;&amp; !r.getDateCreation().isBefore(finalStart))</span>
+<span class="fc" id="L97">                .collect(Collectors.toList());</span>
+<span class="fc" id="L98">        List&lt;Conge&gt; periodConges = allConges.stream()</span>
+<span class="fc bfc" id="L99" title="All 4 branches covered.">                .filter(c -&gt; c.getDateCreation() != null &amp;&amp; !c.getDateCreation().isBefore(finalStart))</span>
+<span class="fc" id="L100">                .collect(Collectors.toList());</span>
+
+        // ── Cards ────────────────────────────────────────────────
+<span class="fc" id="L103">        long totalChauffeurs = allChauffeurs.size();</span>
+        // Compter les chauffeurs avec estActif = ACTIF (champ hérité de Utilisateur)
+<span class="fc" id="L105">        long chauffeursActifs = allChauffeurs.stream()</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">                .filter(c -&gt; c.getEstActif() == StatutCompte.ACTIF)</span>
+<span class="fc" id="L107">                .count();</span>
+
+<span class="fc" id="L109">        long totalVehicules = allVehicules.size();</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        long vehEnService = allVehicules.stream().filter(v -&gt; v.getStatut() == StatutVehicule.EN_SERVICE).count();</span>
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        long vehMaintenance = allVehicules.stream().filter(v -&gt; v.getStatut() == StatutVehicule.EN_MAINTENANCE).count();</span>
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        long vehHorsService = allVehicules.stream().filter(v -&gt; v.getStatut() == StatutVehicule.HORS_SERVICE).count();</span>
+
+<span class="fc" id="L114">        long missionsEnCours = countTrajetsByStatut(StatutTrajet.EN_COURS, entrepriseId, chauffeurId);</span>
+<span class="fc" id="L115">        long missionsTerminees = countTrajetsByStatut(StatutTrajet.COMPLETE, entrepriseId, chauffeurId);</span>
+<span class="fc" id="L116">        long missionsALheure = countMissionsEnCoursOnTime(entrepriseId, chauffeurId);</span>
+<span class="fc" id="L117">        long missionsEnRetard = missionsEnCours - missionsALheure;</span>
+
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        long congesEnAttente = periodConges.stream().filter(c -&gt; c.getStatut() == StatutConge.EN_ATTENTE).count();</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        long congesApprouves = periodConges.stream().filter(c -&gt; c.getStatut() == StatutConge.APPROUVE).count();</span>
+<span class="fc bfc" id="L121" title="All 2 branches covered.">        long congesRefuses = periodConges.stream().filter(c -&gt; c.getStatut() == StatutConge.REJETE).count();</span>
+
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        long reclamationsOuvertes = periodReclamations.stream().filter(r -&gt; r.getStatut() == StatutReclamation.EN_COURS).count();</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        long reclamationsResolues = periodReclamations.stream().filter(r -&gt; r.getStatut() == StatutReclamation.RESOLU).count();</span>
+
+<span class="fc bfc" id="L126" title="All 4 branches covered.">        long admins = allUsers.stream().filter(u -&gt; u.getRole() != null &amp;&amp; u.getRole() == Role.SUPERADMIN).count();</span>
+<span class="fc bfc" id="L127" title="All 4 branches covered.">        long managers = allUsers.stream().filter(u -&gt; u.getRole() != null &amp;&amp; u.getRole() == Role.MANAGER).count();</span>
+<span class="fc bfc" id="L128" title="All 4 branches covered.">        long chauffeursCount = allUsers.stream().filter(u -&gt; u.getRole() != null &amp;&amp; u.getRole() == Role.CHAUFFEUR).count();</span>
+
+<span class="fc" id="L130">        resp.cards.chauffeursActifs = chauffeursActifs;</span>
+<span class="fc" id="L131">        resp.cards.chauffeursTotal = totalChauffeurs;</span>
+<span class="fc" id="L132">        resp.cards.vehiculesTotal = totalVehicules;</span>
+<span class="fc" id="L133">        resp.cards.vehiculesEnService = vehEnService;</span>
+<span class="fc" id="L134">        resp.cards.vehiculesEnMaintenance = vehMaintenance;</span>
+<span class="fc" id="L135">        resp.cards.vehiculesHorsService = vehHorsService;</span>
+<span class="fc" id="L136">        resp.cards.vehiculesStatusSummary = String.format(&quot;%d EN_SERVICE | %d EN_MAINTENANCE | %d HORS_SERVICE&quot;, vehEnService, vehMaintenance, vehHorsService);</span>
+<span class="fc" id="L137">        resp.cards.missionsEnCours = missionsEnCours;</span>
+<span class="fc" id="L138">        resp.cards.missionsALheure = missionsALheure;</span>
+<span class="fc" id="L139">        resp.cards.missionsEnRetard = missionsEnRetard;</span>
+<span class="fc" id="L140">        resp.cards.missionsTerminees = missionsTerminees;</span>
+<span class="fc" id="L141">        resp.cards.congesEnAttente = congesEnAttente;</span>
+<span class="fc" id="L142">        resp.cards.congesApprouves = congesApprouves;</span>
+<span class="fc" id="L143">        resp.cards.congesRefuses = congesRefuses;</span>
+<span class="fc" id="L144">        resp.cards.reclamationsOuvertes = reclamationsOuvertes;</span>
+<span class="fc" id="L145">        resp.cards.reclamationsResolues = reclamationsResolues;</span>
+<span class="fc" id="L146">        resp.cards.reclamationsTotal = periodReclamations.size();</span>
+<span class="fc" id="L147">        resp.cards.administrateurs = admins;</span>
+<span class="fc" id="L148">        resp.cards.managers = managers;</span>
+<span class="fc" id="L149">        resp.cards.chauffeurs = chauffeursCount;</span>
+
+        // ── Punctuality last 12 months ────────────────────────────
+<span class="fc" id="L152">        resp.punctualityLast12Months = buildPunctuality(entrepriseId, chauffeurId);</span>
+
+        // ── Incidents this month ──────────────────────────────────
+<span class="fc" id="L155">        resp.incidentsThisMonth = buildIncidents(entrepriseId, start, end, chauffeurId);</span>
+
+        // ── Fuel overview ────────────────────────────────────────
+<span class="fc" id="L158">        FuelOverview fuel = new FuelOverview();</span>
+<span class="fc bfc" id="L159" title="All 2 branches covered.">        long vehiclesTracked = allVehicules.stream().filter(v -&gt; v.getNiveauCarburant() != null).count();</span>
+<span class="fc bfc" id="L160" title="All 4 branches covered.">        long lowFuel = allVehicules.stream().filter(v -&gt; v.getNiveauCarburant() != null &amp;&amp; v.getNiveauCarburant() &lt; 20.0).count();</span>
+<span class="fc" id="L161">        fuel.vehiclesTracked = vehiclesTracked;</span>
+<span class="fc" id="L162">        fuel.lowFuelAlerts = lowFuel;</span>
+<span class="fc" id="L163">        fuel.targetLPer100km = 22.0;</span>
+        // Estimate average consumption from vehicle data + trips
+<span class="fc" id="L165">        Double estimatedAvg = estimateFuelConsumption(allVehicules);</span>
+<span class="fc" id="L166">        fuel.averageLPer100km = estimatedAvg;</span>
+<span class="pc bpc" id="L167" title="1 of 4 branches missed.">        fuel.deltaToTarget = (estimatedAvg != null &amp;&amp; !estimatedAvg.isNaN()) ? estimatedAvg - fuel.targetLPer100km : Double.NaN;</span>
+<span class="fc" id="L168">        resp.fuelOverview = fuel;</span>
+
+        // ── Capacity distribution ─────────────────────────────────
+<span class="fc" id="L171">        List&lt;CapacityDistributionEntry&gt; caps = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L172">        Map&lt;String, List&lt;Vehicule&gt;&gt; groupedVehicules = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L173" title="All 2 branches covered.">        for (Vehicule v : allVehicules) {</span>
+<span class="fc bfc" id="L174" title="All 2 branches covered.">            double cap = v.getCapaciteCharge() != null ? v.getCapaciteCharge() : 0.0;</span>
+<span class="fc" id="L175">            String type = &quot;Petit véhicule&quot;;</span>
+<span class="fc bfc" id="L176" title="All 2 branches covered.">            if (cap &gt;= 7.5) {</span>
+<span class="fc" id="L177">                type = &quot;Poids lourd&quot;;</span>
+<span class="fc bfc" id="L178" title="All 2 branches covered.">            } else if (cap &gt;= 3.5) {</span>
+<span class="fc" id="L179">                type = &quot;Van&quot;;</span>
+            }
+<span class="fc bfc" id="L181" title="All 4 branches covered.">            String model = (v.getMarque() != null ? v.getMarque() : &quot;&quot;) + &quot; &quot; + (v.getModele() != null ? v.getModele() : &quot;&quot;);</span>
+<span class="fc" id="L182">            model = model.trim();</span>
+<span class="fc bfc" id="L183" title="All 2 branches covered.">            if (model.isEmpty()) {</span>
+<span class="fc" id="L184">                model = &quot;Modèle inconnu&quot;;</span>
+            }
+<span class="fc" id="L186">            String key = type + &quot; - &quot; + model;</span>
+<span class="fc" id="L187">            groupedVehicules.computeIfAbsent(key, k -&gt; new ArrayList&lt;&gt;()).add(v);</span>
+<span class="fc" id="L188">        }</span>
+
+<span class="fc bfc" id="L190" title="All 2 branches covered.">        for (Map.Entry&lt;String, List&lt;Vehicule&gt;&gt; entry : groupedVehicules.entrySet()) {</span>
+<span class="fc" id="L191">            String key = entry.getKey();</span>
+<span class="fc" id="L192">            List&lt;Vehicule&gt; vehs = entry.getValue();</span>
+            
+<span class="fc" id="L194">            double totalCap = 0.0;</span>
+<span class="fc" id="L195">            double usedCap = 0.0;</span>
+<span class="fc" id="L196">            double availableCap = 0.0;</span>
+<span class="fc" id="L197">            double maintenanceCap = 0.0;</span>
+            
+<span class="fc bfc" id="L199" title="All 2 branches covered.">            for (Vehicule v : vehs) {</span>
+<span class="fc bfc" id="L200" title="All 2 branches covered.">                double vCap = v.getCapaciteCharge() != null ? v.getCapaciteCharge() : 0.0;</span>
+<span class="fc" id="L201">                totalCap += vCap;</span>
+                
+<span class="fc bfc" id="L203" title="All 2 branches covered.">                if (v.getStatut() == com.logiway.entities.enums.StatutVehicule.EN_SERVICE) {</span>
+<span class="fc" id="L204">                    Trajet activeTrip = em.createQuery(</span>
+                                    &quot;SELECT t FROM Trajet t WHERE t.vehicule.id = :vid AND t.statut = :status&quot;,
+                                    Trajet.class)
+<span class="fc" id="L207">                            .setParameter(&quot;vid&quot;, v.getId())</span>
+<span class="fc" id="L208">                            .setParameter(&quot;status&quot;, StatutTrajet.EN_COURS)</span>
+<span class="fc" id="L209">                            .getResultStream().findFirst().orElse(null);</span>
+                    
+<span class="fc" id="L211">                    double vUsed = 0.0;</span>
+<span class="fc bfc" id="L212" title="All 4 branches covered.">                    if (activeTrip != null &amp;&amp; activeTrip.getChargeKg() != null) {</span>
+<span class="fc" id="L213">                        vUsed = activeTrip.getChargeKg() / 1000.0;</span>
+                    } else {
+<span class="fc" id="L215">                        Trajet lastTrip = em.createQuery(</span>
+                                        &quot;SELECT t FROM Trajet t WHERE t.vehicule.id = :vid ORDER BY t.dateDepart DESC&quot;,
+                                        Trajet.class)
+<span class="fc" id="L218">                                .setParameter(&quot;vid&quot;, v.getId()).setMaxResults(1)</span>
+<span class="fc" id="L219">                                .getResultStream().findFirst().orElse(null);</span>
+<span class="fc bfc" id="L220" title="All 4 branches covered.">                        if (lastTrip != null &amp;&amp; lastTrip.getChargeKg() != null) {</span>
+<span class="fc" id="L221">                            vUsed = lastTrip.getChargeKg() / 1000.0;</span>
+                        }
+                    }
+<span class="fc bfc" id="L224" title="All 2 branches covered.">                    if (vUsed &gt; vCap) {</span>
+<span class="fc" id="L225">                        vUsed = vCap;</span>
+                    }
+<span class="fc" id="L227">                    usedCap += vUsed;</span>
+<span class="fc" id="L228">                    availableCap += (vCap - vUsed);</span>
+<span class="fc" id="L229">                } else {</span>
+<span class="fc" id="L230">                    maintenanceCap += vCap;</span>
+                }
+<span class="fc" id="L232">            }</span>
+            
+<span class="fc bfc" id="L234" title="All 2 branches covered.">            if (totalCap &gt; 0) {</span>
+<span class="fc" id="L235">                CapacityDistributionEntry cde = new CapacityDistributionEntry();</span>
+<span class="fc" id="L236">                cde.vehicleType = key;</span>
+<span class="fc" id="L237">                cde.avgPercent = Math.round((usedCap / totalCap) * 100.0 * 10.0) / 10.0;</span>
+<span class="fc" id="L238">                cde.minPercent = Math.round((availableCap / totalCap) * 100.0 * 10.0) / 10.0;</span>
+<span class="fc" id="L239">                cde.maxPercent = Math.round((maintenanceCap / totalCap) * 100.0 * 10.0) / 10.0;</span>
+<span class="fc" id="L240">                cde.minTons = Math.round(availableCap * 10.0) / 10.0;</span>
+<span class="fc" id="L241">                cde.avgTons = Math.round(usedCap * 10.0) / 10.0;</span>
+<span class="fc" id="L242">                cde.maxTons = Math.round(totalCap * 10.0) / 10.0;</span>
+<span class="fc" id="L243">                caps.add(cde);</span>
+            }
+<span class="fc" id="L245">        }</span>
+        
+<span class="fc bfc" id="L247" title="All 2 branches covered.">        if (caps.isEmpty()) {</span>
+<span class="fc" id="L248">            caps.add(buildCapacityForType(&quot;Poids lourd&quot;, 7.5, Double.MAX_VALUE, entrepriseId));</span>
+<span class="fc" id="L249">            caps.add(buildCapacityForType(&quot;Van&quot;, 3.5, 7.5, entrepriseId));</span>
+<span class="fc" id="L250">            caps.add(buildCapacityForType(&quot;Petit véhicule&quot;, 0.0, 3.5, entrepriseId));</span>
+        }
+<span class="fc" id="L252">        resp.capacityDistribution = caps;</span>
+
+        // ── Top drivers ───────────────────────────────────────────
+<span class="fc" id="L255">        resp.topDrivers = buildTopDrivers(start, end, allReclamations, entrepriseId, chauffeurId);</span>
+
+        // ── Users breakdown ──────────────────────────────────────
+<span class="fc" id="L258">        resp.usersBreakdown = buildUsersBreakdown(allUsers);</span>
+
+        // ── Reclamations stats ────────────────────────────────────
+<span class="fc" id="L261">        resp.reclamationsStats = buildReclamationsStats(periodReclamations);</span>
+
+        // ── Conges stats ─────────────────────────────────────────
+<span class="fc" id="L264">        resp.congesStats = buildCongesStats(periodConges);</span>
+
+<span class="fc" id="L266">        return resp;</span>
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  PUNCTUALITY
+    // ═══════════════════════════════════════════════════════════════
+    private List&lt;PunctualityEntry&gt; buildPunctuality(Long entrepriseId, Long chauffeurId) {
+<span class="fc" id="L273">        List&lt;PunctualityEntry&gt; punctuality = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L274">        YearMonth ym = YearMonth.now();</span>
+<span class="fc bfc" id="L275" title="All 2 branches covered.">        for (int i = 11; i &gt;= 0; i--) {</span>
+<span class="fc" id="L276">            YearMonth cur = ym.minusMonths(i);</span>
+<span class="fc" id="L277">            PunctualityEntry e = new PunctualityEntry();</span>
+<span class="fc" id="L278">            e.month = cur.getMonth().getDisplayName(TextStyle.SHORT, Locale.FRENCH);</span>
+<span class="fc" id="L279">            LocalDateTime start = cur.atDay(1).atStartOfDay();</span>
+<span class="fc" id="L280">            LocalDateTime end = cur.atEndOfMonth().atTime(23, 59, 59);</span>
+<span class="fc" id="L281">            long onTime = countCompletedTripsOnTimeBetween(start, end, entrepriseId, chauffeurId);</span>
+<span class="fc" id="L282">            long lateLess30 = countCompletedTripsLateBetween(start, end, 30, false, entrepriseId, chauffeurId);</span>
+<span class="fc" id="L283">            long lateMore30 = countCompletedTripsLateBetween(start, end, 30, true, entrepriseId, chauffeurId);</span>
+<span class="fc" id="L284">            long total = onTime + lateLess30 + lateMore30;</span>
+<span class="fc" id="L285">            e.onTime = onTime;</span>
+<span class="fc" id="L286">            e.lateLess30 = lateLess30;</span>
+<span class="fc" id="L287">            e.lateMore30 = lateMore30;</span>
+<span class="fc" id="L288">            e.totalMissions = total;</span>
+<span class="fc bfc" id="L289" title="All 2 branches covered.">            e.punctualityPercent = total == 0 ? 0.0 : (100.0 * e.onTime) / total;</span>
+<span class="fc" id="L290">            punctuality.add(e);</span>
+        }
+<span class="fc" id="L292">        return punctuality;</span>
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  INCIDENTS
+    // ═══════════════════════════════════════════════════════════════
+    private List&lt;IncidentEntry&gt; buildIncidents(Long entrepriseId, LocalDateTime start, LocalDateTime end, Long chauffeurId) {
+<span class="fc" id="L299">        List&lt;Reclamation&gt; recs = reclamationRepository.findAll().stream()</span>
+<span class="fc bfc" id="L300" title="All 2 branches covered.">                .filter(r -&gt; r.getDateCreation() != null</span>
+<span class="fc bfc" id="L301" title="All 2 branches covered.">                        &amp;&amp; !r.getDateCreation().isBefore(start)</span>
+<span class="pc bpc" id="L302" title="1 of 2 branches missed.">                        &amp;&amp; !r.getDateCreation().isAfter(end))</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">                .filter(r -&gt; chauffeurId != null</span>
+<span class="pc bpc" id="L304" title="1 of 4 branches missed.">                        ? (r.getUtilisateur() != null &amp;&amp; r.getUtilisateur().getId().equals(chauffeurId))</span>
+<span class="fc bfc" id="L305" title="All 8 branches covered.">                        : (entrepriseId == null || (r.getUtilisateur() != null &amp;&amp; r.getUtilisateur().getEntreprise() != null &amp;&amp; r.getUtilisateur().getEntreprise().getId().equals(entrepriseId))))</span>
+<span class="fc" id="L306">                .toList();</span>
+<span class="fc" id="L307">        long totalInc = recs.size();</span>
+<span class="fc" id="L308">        List&lt;IncidentEntry&gt; incidents = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L309">        String[] cats = new String[]{&quot;Accidents&quot;, &quot;Pannes&quot;, &quot;Embouteillages&quot;, &quot;Contrôles&quot;, &quot;Autres&quot;};</span>
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        for (String cat : cats) {</span>
+<span class="fc" id="L311">            long count = recs.stream().filter(r -&gt; classifyReclamation(r, cat)).count();</span>
+<span class="fc" id="L312">            IncidentEntry ie = new IncidentEntry();</span>
+<span class="fc" id="L313">            ie.category = cat;</span>
+<span class="fc" id="L314">            ie.count = count;</span>
+<span class="fc bfc" id="L315" title="All 2 branches covered.">            ie.percent = totalInc == 0 ? 0.0 : (100.0 * count) / totalInc;</span>
+<span class="fc" id="L316">            incidents.add(ie);</span>
+        }
+<span class="fc" id="L318">        return incidents;</span>
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  FUEL CONSUMPTION ESTIMATION
+    // ═══════════════════════════════════════════════════════════════
+    private Double estimateFuelConsumption(List&lt;Vehicule&gt; allVehicules) {
+        // Estimate average L/100km using: (total km for vehicles with fuel data)
+        // If a vehicle has niveauCarburant (%), we assume a 100L tank and
+        // compute consumption from distance driven.
+<span class="fc" id="L328">        List&lt;Double&gt; estimates = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L329" title="All 2 branches covered.">        for (Vehicule v : allVehicules) {</span>
+<span class="fc bfc" id="L330" title="All 4 branches covered.">            if (v.getNiveauCarburant() == null || v.getKilometrage() == null) continue;</span>
+            // Get last 2 trips to estimate km driven and fuel used
+<span class="fc" id="L332">            List&lt;Trajet&gt; trips = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.vehicule.id = :vid AND t.distanceKm IS NOT NULL ORDER BY t.dateDepart DESC&quot;,
+                            Trajet.class)
+<span class="fc" id="L335">                    .setParameter(&quot;vid&quot;, v.getId())</span>
+<span class="fc" id="L336">                    .setMaxResults(5)</span>
+<span class="fc" id="L337">                    .getResultList();</span>
+<span class="fc bfc" id="L338" title="All 2 branches covered.">            if (trips.size() &lt; 2) continue;</span>
+<span class="fc" id="L339">            double totalKm = 0;</span>
+<span class="fc bfc" id="L340" title="All 2 branches covered.">            for (Trajet t : trips) {</span>
+<span class="pc bpc" id="L341" title="1 of 2 branches missed.">                if (t.getDistanceKm() != null) totalKm += t.getDistanceKm();</span>
+<span class="fc" id="L342">            }</span>
+            // Estimate fuel used: assume 100L tank, niveauCarburant is %
+            // Consumption (L/100km) = (tankCapacity * fuelUsedPct) / (totalKm/100)
+<span class="fc" id="L345">            double tankLiters = 100.0; // assume 100L tank</span>
+<span class="fc" id="L346">            double fuelUsedPct = (100.0 - v.getNiveauCarburant()) / 100.0;</span>
+<span class="pc bpc" id="L347" title="1 of 4 branches missed.">            if (fuelUsedPct &lt;= 0 || totalKm &lt;= 0) continue;</span>
+<span class="fc" id="L348">            double lPer100km = (tankLiters * fuelUsedPct) / (totalKm / 100.0);</span>
+<span class="fc bfc" id="L349" title="All 4 branches covered.">            if (lPer100km &gt; 5 &amp;&amp; lPer100km &lt; 60) { // sanity check</span>
+<span class="fc" id="L350">                estimates.add(lPer100km);</span>
+            }
+<span class="fc" id="L352">        }</span>
+<span class="fc bfc" id="L353" title="All 2 branches covered.">        if (estimates.isEmpty()) return null;</span>
+<span class="fc" id="L354">        return Math.round(estimates.stream().mapToDouble(d -&gt; d).average().orElse(22.0) * 10.0) / 10.0;</span>
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  TOP DRIVERS (enhanced scoring)
+    // ═══════════════════════════════════════════════════════════════
+    private List&lt;TopDriverEntry&gt; buildTopDrivers(LocalDateTime start, LocalDateTime end,
+                                                 List&lt;Reclamation&gt; allReclamations, Long entrepriseId, Long chauffeurId) {
+        List&lt;Object[]&gt; rows;
+<span class="fc bfc" id="L363" title="All 2 branches covered.">        if (chauffeurId != null) {</span>
+<span class="fc" id="L364">            rows = em.createQuery(</span>
+                            &quot;SELECT t.chauffeur.id, COUNT(t.id) as cnt FROM Trajet t &quot; +
+                                    &quot;WHERE t.dateArriveeReelle BETWEEN :s AND :e AND t.chauffeur.id = :c &quot; +
+                                    &quot;GROUP BY t.chauffeur.id ORDER BY cnt DESC&quot;)
+<span class="fc" id="L368">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).setParameter(&quot;c&quot;, chauffeurId)</span>
+<span class="fc" id="L369">                    .setMaxResults(20)</span>
+<span class="fc" id="L370">                    .getResultList();</span>
+<span class="fc bfc" id="L371" title="All 2 branches covered.">        } else if (entrepriseId != null) {</span>
+<span class="fc" id="L372">            rows = em.createQuery(</span>
+                            &quot;SELECT t.chauffeur.id, COUNT(t.id) as cnt FROM Trajet t &quot; +
+                                    &quot;WHERE t.dateArriveeReelle BETWEEN :s AND :e AND t.chauffeur.entreprise.id = :emp &quot; +
+                                    &quot;GROUP BY t.chauffeur.id ORDER BY cnt DESC&quot;)
+<span class="fc" id="L376">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).setParameter(&quot;emp&quot;, entrepriseId)</span>
+<span class="fc" id="L377">                    .setMaxResults(20)</span>
+<span class="fc" id="L378">                    .getResultList();</span>
+        } else {
+<span class="fc" id="L380">            rows = em.createQuery(</span>
+                            &quot;SELECT t.chauffeur.id, COUNT(t.id) as cnt FROM Trajet t &quot; +
+                                    &quot;WHERE t.dateArriveeReelle BETWEEN :s AND :e &quot; +
+                                    &quot;GROUP BY t.chauffeur.id ORDER BY cnt DESC&quot;)
+<span class="fc" id="L384">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end)</span>
+<span class="fc" id="L385">                    .setMaxResults(20)</span>
+<span class="fc" id="L386">                    .getResultList();</span>
+        }
+
+<span class="fc" id="L389">        List&lt;TopDriverEntry&gt; res = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L390">        int rank = 1;</span>
+<span class="fc" id="L391">        double maxDrivingHours = 1;</span>
+
+        // First pass: collect raw data
+<span class="fc" id="L394">        List&lt;TopDriverRaw&gt; rawList = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L395" title="All 2 branches covered.">        for (Object[] r : rows) {</span>
+<span class="fc" id="L396">            TopDriverRaw raw = new TopDriverRaw();</span>
+<span class="fc bfc" id="L397" title="All 2 branches covered.">            raw.chauffeurId = r[0] == null ? null : ((Number) r[0]).longValue();</span>
+<span class="pc bpc" id="L398" title="1 of 2 branches missed.">            raw.missionsCompleted = r[1] == null ? 0 : ((Number) r[1]).longValue();</span>
+<span class="fc" id="L399">            Long cid = raw.chauffeurId;</span>
+
+<span class="fc bfc" id="L401" title="All 2 branches covered.">            Chauffeur ch = cid == null ? null : chauffeurRepository.findById(cid).orElse(null);</span>
+<span class="fc bfc" id="L402" title="All 2 branches covered.">            raw.chauffeurName = ch == null ? &quot;(inconnu)&quot;</span>
+<span class="pc bpc" id="L403" title="1 of 4 branches missed.">                    : (ch.getPrenom() == null ? &quot;&quot; : ch.getPrenom()) + &quot; &quot; + (ch.getNom() == null ? &quot;&quot; : ch.getNom());</span>
+
+            // Punctuality: completed trips where arriveeReelle &lt;= arrivee
+<span class="fc" id="L406">            long ontime = em.createQuery(</span>
+                            &quot;SELECT COUNT(t) FROM Trajet t WHERE t.chauffeur.id = :cid &quot; +
+                                    &quot;AND t.dateArriveeReelle IS NOT NULL AND t.dateArrivee IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle &lt;= t.dateArrivee&quot;,
+                            Long.class)
+<span class="fc" id="L411">                    .setParameter(&quot;cid&quot;, cid)</span>
+<span class="fc" id="L412">                    .getSingleResult();</span>
+<span class="fc" id="L413">            raw.ontime = ontime;</span>
+
+            // Total trips for this driver (not just in period)
+<span class="fc" id="L416">            long totalTrips = em.createQuery(</span>
+                            &quot;SELECT COUNT(t) FROM Trajet t WHERE t.chauffeur.id = :cid&quot;,
+                            Long.class)
+<span class="fc" id="L419">                    .setParameter(&quot;cid&quot;, cid)</span>
+<span class="fc" id="L420">                    .getSingleResult();</span>
+<span class="fc" id="L421">            raw.totalTrips = totalTrips;</span>
+
+            // Driving hours: sum of actual durations computed in Java
+<span class="fc" id="L424">            List&lt;Trajet&gt; completedTrips = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.chauffeur.id = :cid &quot; +
+                                    &quot;AND t.dateDepart IS NOT NULL AND t.dateArriveeReelle IS NOT NULL&quot;,
+                            Trajet.class)
+<span class="fc" id="L428">                    .setParameter(&quot;cid&quot;, cid)</span>
+<span class="fc" id="L429">                    .getResultList();</span>
+<span class="fc" id="L430">            double totalMinutes = completedTrips.stream()</span>
+<span class="fc" id="L431">                    .mapToLong(t -&gt; java.time.Duration.between(t.getDateDepart(), t.getDateArriveeReelle()).toMinutes())</span>
+<span class="fc" id="L432">                    .sum();</span>
+<span class="fc" id="L433">            raw.drivingMinutes = totalMinutes;</span>
+
+            // Average delay (computed in Java for Hibernate 6 compatibility)
+<span class="fc" id="L436">            List&lt;Trajet&gt; lateTrips = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.chauffeur.id = :cid &quot; +
+                                    &quot;AND t.dateArrivee IS NOT NULL AND t.dateArriveeReelle IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle &gt; t.dateArrivee&quot;,
+                            Trajet.class)
+<span class="fc" id="L441">                    .setParameter(&quot;cid&quot;, cid)</span>
+<span class="fc" id="L442">                    .getResultList();</span>
+<span class="fc" id="L443">            double avgDelay = lateTrips.stream()</span>
+<span class="fc" id="L444">                    .mapToLong(t -&gt; java.time.Duration.between(t.getDateArrivee(), t.getDateArriveeReelle()).toMinutes())</span>
+<span class="fc" id="L445">                    .average().orElse(0);</span>
+<span class="fc" id="L446">            raw.avgDelayMinutes = avgDelay;</span>
+
+            // Incidents linked to this driver
+<span class="fc" id="L449">            raw.incidents = allReclamations.stream()</span>
+<span class="fc bfc" id="L450" title="All 2 branches covered.">                    .filter(rc -&gt; rc.getUtilisateur() != null</span>
+<span class="pc bpc" id="L451" title="1 of 2 branches missed.">                            &amp;&amp; rc.getUtilisateur().getId() != null</span>
+<span class="fc bfc" id="L452" title="All 2 branches covered.">                            &amp;&amp; rc.getUtilisateur().getId().equals(raw.chauffeurId))</span>
+<span class="fc" id="L453">                    .count();</span>
+
+            // Availability: is the driver currently active?
+<span class="fc bfc" id="L456" title="All 4 branches covered.">            raw.isActive = ch != null &amp;&amp; ch.getStatutConducteur() == StatutChauffeur.EN_SERVICE;</span>
+<span class="fc bfc" id="L457" title="All 2 branches covered.">            raw.dateCreation = ch != null ? ch.getDateCreation() : null;</span>
+
+<span class="fc" id="L459">            rawList.add(raw);</span>
+<span class="fc bfc" id="L460" title="All 2 branches covered.">            if (raw.drivingMinutes &gt; maxDrivingHours) maxDrivingHours = raw.drivingMinutes;</span>
+<span class="fc" id="L461">        }</span>
+
+        // Second pass: compute weighted score
+<span class="fc bfc" id="L464" title="All 2 branches covered.">        for (TopDriverRaw raw : rawList) {</span>
+<span class="fc" id="L465">            TopDriverEntry e = new TopDriverEntry();</span>
+<span class="fc" id="L466">            e.rank = rank++;</span>
+<span class="fc" id="L467">            e.chauffeurId = raw.chauffeurId;</span>
+<span class="fc" id="L468">            e.chauffeurName = raw.chauffeurName;</span>
+<span class="fc" id="L469">            e.missionsCompleted = raw.missionsCompleted;</span>
+<span class="fc" id="L470">            e.incidents = raw.incidents;</span>
+<span class="fc" id="L471">            e.totalTrips = raw.totalTrips;</span>
+<span class="fc" id="L472">            e.drivingHours = Math.round(raw.drivingMinutes / 6.0) / 10.0; // convert to hours</span>
+<span class="fc" id="L473">            e.avgDelayMinutes = Math.round(raw.avgDelayMinutes * 10.0) / 10.0;</span>
+
+            // Punctuality % = on-time / missionsCompleted in period
+<span class="fc bfc" id="L476" title="All 2 branches covered.">            e.punctualityPercent = raw.missionsCompleted == 0 ? 0</span>
+<span class="fc" id="L477">                    : Math.round((100.0 * raw.ontime) / raw.missionsCompleted * 10.0) / 10.0;</span>
+
+            // Availability score: based on statut + recent activity
+<span class="fc bfc" id="L480" title="All 2 branches covered.">            double availability = raw.isActive ? 80 : 40;</span>
+<span class="fc bfc" id="L481" title="All 2 branches covered.">            if (raw.totalTrips &gt; 50) availability += 10;</span>
+<span class="fc bfc" id="L482" title="All 2 branches covered.">            else if (raw.totalTrips &gt; 20) availability += 5;</span>
+<span class="fc bfc" id="L483" title="All 2 branches covered.">            if (raw.dateCreation != null) {</span>
+<span class="fc" id="L484">                long monthsActive = java.time.temporal.ChronoUnit.MONTHS.between(raw.dateCreation, LocalDateTime.now());</span>
+<span class="fc bfc" id="L485" title="All 2 branches covered.">                if (monthsActive &gt; 12) availability += 10;</span>
+<span class="fc bfc" id="L486" title="All 2 branches covered.">                else if (monthsActive &gt; 6) availability += 5;</span>
+            }
+<span class="fc" id="L488">            e.availabilityScore = Math.min(100, Math.round(availability));</span>
+
+            // Weighted performance score:
+            // 35% punctuality, 20% missions completed (vs max), 15% driving hours, 15% availability, 15% experience
+<span class="fc" id="L492">            double maxMissions = rawList.stream().mapToLong(r -&gt; r.missionsCompleted).max().orElse(1);</span>
+<span class="fc bfc" id="L493" title="All 2 branches covered.">            double missionRatio = maxMissions &gt; 0 ? raw.missionsCompleted / maxMissions : 0;</span>
+<span class="pc bpc" id="L494" title="1 of 2 branches missed.">            double hoursRatio = maxDrivingHours &gt; 0 ? raw.drivingMinutes / maxDrivingHours : 0;</span>
+
+<span class="fc" id="L496">            double score = (e.punctualityPercent / 100.0) * 35</span>
+                    + missionRatio * 20
+                    + hoursRatio * 15
+                    + (e.availabilityScore / 100.0) * 15
+                    + 15; // default experience base
+
+            // Malus for incidents
+<span class="fc" id="L503">            score -= e.incidents * 3;</span>
+
+<span class="fc" id="L505">            e.performanceScore = Math.max(0, Math.min(100, Math.round(score)));</span>
+<span class="fc" id="L506">            e.badge = computeBadge(e.performanceScore);</span>
+<span class="fc" id="L507">            res.add(e);</span>
+<span class="fc" id="L508">        }</span>
+
+        // Sort by performanceScore descending and rerank
+<span class="fc" id="L511">        res.sort((a, b) -&gt; Double.compare(b.performanceScore, a.performanceScore));</span>
+<span class="fc bfc" id="L512" title="All 2 branches covered.">        for (int i = 0; i &lt; res.size(); i++) {</span>
+<span class="fc" id="L513">            res.get(i).rank = i + 1;</span>
+        }
+
+<span class="fc bfc" id="L516" title="All 2 branches covered.">        return res.size() &gt; 10 ? res.subList(0, 10) : res;</span>
+    }
+
+    private static class TopDriverRaw {
+        Long chauffeurId;
+        String chauffeurName;
+        long missionsCompleted;
+        long ontime;
+        long totalTrips;
+        double drivingMinutes;
+        double avgDelayMinutes;
+        long incidents;
+        boolean isActive;
+        LocalDateTime dateCreation;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  USERS BREAKDOWN
+    // ═══════════════════════════════════════════════════════════════
+    private List&lt;UserBreakdownEntry&gt; buildUsersBreakdown(List&lt;Utilisateur&gt; allUsers) {
+<span class="fc" id="L536">        Map&lt;Role, List&lt;Utilisateur&gt;&gt; byRole = allUsers.stream()</span>
+<span class="fc bfc" id="L537" title="All 2 branches covered.">                .filter(u -&gt; u.getRole() != null)</span>
+<span class="fc" id="L538">                .collect(Collectors.groupingBy(Utilisateur::getRole));</span>
+<span class="fc" id="L539">        List&lt;UserBreakdownEntry&gt; res = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L540" title="All 2 branches covered.">        for (Map.Entry&lt;Role, List&lt;Utilisateur&gt;&gt; entry : byRole.entrySet()) {</span>
+<span class="fc" id="L541">            UserBreakdownEntry u = new UserBreakdownEntry();</span>
+<span class="fc" id="L542">            u.role = entry.getKey().name();</span>
+<span class="fc" id="L543">            u.count = entry.getValue().size();</span>
+<span class="fc" id="L544">            u.actifs = entry.getValue().stream()</span>
+<span class="fc bfc" id="L545" title="All 2 branches covered.">                    .filter(usr -&gt; usr.getEstActif() == StatutCompte.ACTIF).count();</span>
+<span class="fc" id="L546">            res.add(u);</span>
+<span class="fc" id="L547">        }</span>
+<span class="fc" id="L548">        return res;</span>
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  RECLAMATIONS STATS
+    // ═══════════════════════════════════════════════════════════════
+    private List&lt;ReclamationStatEntry&gt; buildReclamationsStats(List&lt;Reclamation&gt; allReclamations) {
+<span class="fc" id="L555">        Map&lt;String, Long&gt; byStatus = allReclamations.stream()</span>
+<span class="fc bfc" id="L556" title="All 2 branches covered.">                .filter(r -&gt; r.getStatut() != null)</span>
+<span class="fc" id="L557">                .collect(Collectors.groupingBy(r -&gt; r.getStatut().name(), Collectors.counting()));</span>
+<span class="fc" id="L558">        List&lt;ReclamationStatEntry&gt; res = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L559">        byStatus.forEach((key, value) -&gt; {</span>
+<span class="fc" id="L560">            ReclamationStatEntry e = new ReclamationStatEntry();</span>
+<span class="fc" id="L561">            e.statut = key;</span>
+<span class="fc" id="L562">            e.count = value;</span>
+<span class="fc" id="L563">            res.add(e);</span>
+<span class="fc" id="L564">        });</span>
+<span class="fc" id="L565">        return res;</span>
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  CONGES STATS
+    // ═══════════════════════════════════════════════════════════════
+    private List&lt;CongeStatEntry&gt; buildCongesStats(List&lt;Conge&gt; allConges) {
+<span class="fc" id="L572">        Map&lt;String, Long&gt; byStatus = allConges.stream()</span>
+<span class="fc bfc" id="L573" title="All 2 branches covered.">                .filter(c -&gt; c.getStatut() != null)</span>
+<span class="fc" id="L574">                .collect(Collectors.groupingBy(c -&gt; c.getStatut().name(), Collectors.counting()));</span>
+<span class="fc" id="L575">        List&lt;CongeStatEntry&gt; res = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L576">        byStatus.forEach((key, value) -&gt; {</span>
+<span class="fc" id="L577">            CongeStatEntry e = new CongeStatEntry();</span>
+<span class="fc" id="L578">            e.statut = key;</span>
+<span class="fc" id="L579">            e.count = value;</span>
+<span class="fc" id="L580">            res.add(e);</span>
+<span class="fc" id="L581">        });</span>
+<span class="fc" id="L582">        return res;</span>
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  HELPERS
+    // ═══════════════════════════════════════════════════════════════
+
+    private long countDistinctChauffeursByStatut(StatutTrajet statut) {
+<span class="nc" id="L590">        TypedQuery&lt;Long&gt; q = em.createQuery(</span>
+                &quot;SELECT COUNT(DISTINCT t.chauffeur.id) FROM Trajet t WHERE t.statut = :s&quot;, Long.class);
+<span class="nc" id="L592">        q.setParameter(&quot;s&quot;, statut);</span>
+<span class="nc" id="L593">        return q.getSingleResult();</span>
+    }
+
+    private long countTrajetsByStatut(StatutTrajet statut, Long entrepriseId, Long chauffeurId) {
+<span class="fc bfc" id="L597" title="All 2 branches covered.">        if (chauffeurId != null) {</span>
+<span class="fc" id="L598">            TypedQuery&lt;Long&gt; q = em.createQuery(</span>
+                    &quot;SELECT COUNT(t) FROM Trajet t WHERE t.statut = :s AND t.chauffeur.id = :c&quot;, Long.class);
+<span class="fc" id="L600">            q.setParameter(&quot;s&quot;, statut).setParameter(&quot;c&quot;, chauffeurId);</span>
+<span class="fc" id="L601">            return q.getSingleResult();</span>
+        }
+<span class="fc bfc" id="L603" title="All 2 branches covered.">        if (entrepriseId != null) {</span>
+<span class="fc" id="L604">            TypedQuery&lt;Long&gt; q = em.createQuery(</span>
+                    &quot;SELECT COUNT(t) FROM Trajet t WHERE t.statut = :s AND t.chauffeur.entreprise.id = :emp&quot;, Long.class);
+<span class="fc" id="L606">            q.setParameter(&quot;s&quot;, statut).setParameter(&quot;emp&quot;, entrepriseId);</span>
+<span class="fc" id="L607">            return q.getSingleResult();</span>
+        }
+<span class="fc" id="L609">        TypedQuery&lt;Long&gt; q = em.createQuery(&quot;SELECT COUNT(t) FROM Trajet t WHERE t.statut = :s&quot;, Long.class);</span>
+<span class="fc" id="L610">        q.setParameter(&quot;s&quot;, statut);</span>
+<span class="fc" id="L611">        return q.getSingleResult();</span>
+    }
+
+    private long countMissionsEnCoursOnTime(Long entrepriseId, Long chauffeurId) {
+<span class="fc" id="L615">        long count = 0;</span>
+        List&lt;Trajet&gt; inProg;
+<span class="fc bfc" id="L617" title="All 2 branches covered.">        if (chauffeurId != null) {</span>
+<span class="fc" id="L618">            inProg = em.createQuery(</span>
+                    &quot;SELECT t FROM Trajet t WHERE t.statut = :s AND t.chauffeur.id = :c&quot;, Trajet.class)
+<span class="fc" id="L620">                    .setParameter(&quot;s&quot;, StatutTrajet.EN_COURS)</span>
+<span class="fc" id="L621">                    .setParameter(&quot;c&quot;, chauffeurId)</span>
+<span class="fc" id="L622">                    .getResultList();</span>
+<span class="fc bfc" id="L623" title="All 2 branches covered.">        } else if (entrepriseId != null) {</span>
+<span class="fc" id="L624">            inProg = em.createQuery(</span>
+                    &quot;SELECT t FROM Trajet t WHERE t.statut = :s AND t.chauffeur.entreprise.id = :emp&quot;, Trajet.class)
+<span class="fc" id="L626">                    .setParameter(&quot;s&quot;, StatutTrajet.EN_COURS)</span>
+<span class="fc" id="L627">                    .setParameter(&quot;emp&quot;, entrepriseId)</span>
+<span class="fc" id="L628">                    .getResultList();</span>
+        } else {
+<span class="fc" id="L630">            inProg = em.createQuery(&quot;SELECT t FROM Trajet t WHERE t.statut = :s&quot;, Trajet.class)</span>
+<span class="fc" id="L631">                    .setParameter(&quot;s&quot;, StatutTrajet.EN_COURS)</span>
+<span class="fc" id="L632">                    .getResultList();</span>
+        }
+<span class="fc bfc" id="L634" title="All 2 branches covered.">        for (Trajet t : inProg) {</span>
+<span class="fc bfc" id="L635" title="All 4 branches covered.">            if (t.getDateDepart() != null &amp;&amp; t.getDureeEstimeeMinutes() != null) {</span>
+<span class="fc" id="L636">                LocalDateTime expected = t.getDateDepart().plusMinutes(t.getDureeEstimeeMinutes());</span>
+<span class="fc bfc" id="L637" title="All 2 branches covered.">                if (!LocalDateTime.now().isAfter(expected)) count++;</span>
+            }
+<span class="fc" id="L639">        }</span>
+<span class="fc" id="L640">        return count;</span>
+    }
+
+    private long countCompletedTripsOnTimeBetween(LocalDateTime start, LocalDateTime end, Long entrepriseId, Long chauffeurId) {
+        List&lt;Trajet&gt; list;
+<span class="fc bfc" id="L645" title="All 2 branches covered.">        if (chauffeurId != null) {</span>
+<span class="fc" id="L646">            list = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.dateArriveeReelle IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle BETWEEN :s AND :e AND t.chauffeur.id = :c&quot;, Trajet.class)
+<span class="fc" id="L649">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).setParameter(&quot;c&quot;, chauffeurId).getResultList();</span>
+<span class="fc bfc" id="L650" title="All 2 branches covered.">        } else if (entrepriseId != null) {</span>
+<span class="fc" id="L651">            list = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.dateArriveeReelle IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle BETWEEN :s AND :e AND t.chauffeur.entreprise.id = :emp&quot;, Trajet.class)
+<span class="fc" id="L654">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).setParameter(&quot;emp&quot;, entrepriseId).getResultList();</span>
+        } else {
+<span class="fc" id="L656">            list = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.dateArriveeReelle IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle BETWEEN :s AND :e&quot;, Trajet.class)
+<span class="fc" id="L659">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).getResultList();</span>
+        }
+<span class="fc" id="L661">        long ok = 0;</span>
+<span class="fc bfc" id="L662" title="All 2 branches covered.">        for (Trajet t : list) {</span>
+<span class="fc bfc" id="L663" title="All 4 branches covered.">            if (t.getDateArriveeReelle() != null &amp;&amp; t.getDateArrivee() != null) {</span>
+<span class="fc" id="L664">                long diff = Duration.between(t.getDateArrivee(), t.getDateArriveeReelle()).toMinutes();</span>
+<span class="fc bfc" id="L665" title="All 2 branches covered.">                if (diff &lt;= 0) ok++;</span>
+            }
+<span class="fc" id="L667">        }</span>
+<span class="fc" id="L668">        return ok;</span>
+    }
+
+    private long countCompletedTripsLateBetween(LocalDateTime start, LocalDateTime end, int minutes, boolean moreThan, Long entrepriseId, Long chauffeurId) {
+        List&lt;Trajet&gt; list;
+<span class="fc bfc" id="L673" title="All 2 branches covered.">        if (chauffeurId != null) {</span>
+<span class="fc" id="L674">            list = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.dateArriveeReelle IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle BETWEEN :s AND :e AND t.chauffeur.id = :c&quot;, Trajet.class)
+<span class="fc" id="L677">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).setParameter(&quot;c&quot;, chauffeurId).getResultList();</span>
+<span class="fc bfc" id="L678" title="All 2 branches covered.">        } else if (entrepriseId != null) {</span>
+<span class="fc" id="L679">            list = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.dateArriveeReelle IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle BETWEEN :s AND :e AND t.chauffeur.entreprise.id = :emp&quot;, Trajet.class)
+<span class="fc" id="L682">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).setParameter(&quot;emp&quot;, entrepriseId).getResultList();</span>
+        } else {
+<span class="fc" id="L684">            list = em.createQuery(</span>
+                            &quot;SELECT t FROM Trajet t WHERE t.dateArriveeReelle IS NOT NULL &quot; +
+                                    &quot;AND t.dateArriveeReelle BETWEEN :s AND :e&quot;, Trajet.class)
+<span class="fc" id="L687">                    .setParameter(&quot;s&quot;, start).setParameter(&quot;e&quot;, end).getResultList();</span>
+        }
+<span class="fc" id="L689">        long count = 0;</span>
+<span class="fc bfc" id="L690" title="All 2 branches covered.">        for (Trajet t : list) {</span>
+<span class="fc bfc" id="L691" title="All 4 branches covered.">            if (t.getDateArriveeReelle() != null &amp;&amp; t.getDateArrivee() != null) {</span>
+<span class="fc" id="L692">                long diff = Duration.between(t.getDateArrivee(), t.getDateArriveeReelle()).toMinutes();</span>
+<span class="fc bfc" id="L693" title="All 2 branches covered.">                if (moreThan) {</span>
+<span class="fc bfc" id="L694" title="All 2 branches covered.">                    if (diff &gt; minutes) count++;</span>
+                } else {
+<span class="fc bfc" id="L696" title="All 4 branches covered.">                    if (diff &gt; 0 &amp;&amp; diff &lt;= minutes) count++;</span>
+                }
+            }
+<span class="fc" id="L699">        }</span>
+<span class="fc" id="L700">        return count;</span>
+    }
+
+    private boolean classifyReclamation(Reclamation r, String category) {
+<span class="pc bpc" id="L704" title="2 of 4 branches missed.">        if (r.getSujet() != null &amp;&amp; r.getSujet().toLowerCase().contains(category.toLowerCase())) return true;</span>
+<span class="pc bpc" id="L705" title="2 of 4 branches missed.">        if (r.getDescription() != null &amp;&amp; r.getDescription().toLowerCase().contains(category.toLowerCase())) return true;</span>
+<span class="fc bfc" id="L706" title="All 5 branches covered.">        return switch (category) {</span>
+<span class="fc" id="L707">            case &quot;Accidents&quot; -&gt; containsAny(r, new String[]{&quot;accident&quot;});</span>
+<span class="fc" id="L708">            case &quot;Pannes&quot; -&gt; containsAny(r, new String[]{&quot;panne&quot;, &quot;dépannage&quot;, &quot;depannage&quot;});</span>
+<span class="fc" id="L709">            case &quot;Embouteillages&quot; -&gt; containsAny(r, new String[]{&quot;embouteillage&quot;, &quot;traffic&quot;, &quot;trafic&quot;});</span>
+<span class="fc" id="L710">            case &quot;Contrôles&quot; -&gt; containsAny(r, new String[]{&quot;contrôle&quot;, &quot;controle&quot;, &quot;contrôles&quot;, &quot;controle&quot;});</span>
+<span class="fc" id="L711">            default -&gt; false;</span>
+        };
+    }
+
+    private boolean containsAny(Reclamation r, String[] kws) {
+<span class="pc bpc" id="L716" title="1 of 2 branches missed.">        String text = ((r.getSujet() == null ? &quot;&quot; : r.getSujet()) + &quot; &quot;</span>
+<span class="pc bpc" id="L717" title="1 of 2 branches missed.">                + (r.getDescription() == null ? &quot;&quot; : r.getDescription())).toLowerCase();</span>
+<span class="fc bfc" id="L718" title="All 2 branches covered.">        for (String k : kws) {</span>
+<span class="fc bfc" id="L719" title="All 2 branches covered.">            if (text.contains(k)) return true;</span>
+        }
+<span class="fc" id="L721">        return false;</span>
+    }
+
+    private CapacityDistributionEntry buildCapacityForType(String label, double minTons, double maxTons, Long entrepriseId) {
+<span class="fc" id="L725">        CapacityDistributionEntry e = new CapacityDistributionEntry();</span>
+<span class="fc" id="L726">        e.vehicleType = label;</span>
+<span class="fc" id="L727">        List&lt;Vehicule&gt; vehs = vehiculeRepository.findAll().stream().filter(v -&gt; {</span>
+<span class="pc bpc" id="L728" title="1 of 6 branches missed.">            if (entrepriseId != null &amp;&amp; (v.getEntreprise() == null || !v.getEntreprise().getId().equals(entrepriseId))) {</span>
+<span class="fc" id="L729">                return false;</span>
+            }
+<span class="fc" id="L731">            Double cap = v.getCapaciteCharge();</span>
+<span class="fc bfc" id="L732" title="All 2 branches covered.">            if (cap == null) return false;</span>
+<span class="fc" id="L733">            double t = cap;</span>
+<span class="pc bpc" id="L734" title="2 of 6 branches missed.">            return t &gt;= minTons &amp;&amp; (maxTons == Double.MAX_VALUE || t &lt;= maxTons);</span>
+<span class="fc" id="L735">        }).toList();</span>
+<span class="fc" id="L736">        double minP = 0, maxP = 0, avgP = 0, minT = 0, avgT = 0, maxT = 0;</span>
+<span class="fc bfc" id="L737" title="All 2 branches covered.">        if (!vehs.isEmpty()) {</span>
+<span class="fc" id="L738">            List&lt;Double&gt; percents = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L739" title="All 2 branches covered.">            for (Vehicule v : vehs) {</span>
+<span class="fc" id="L740">                Trajet t = em.createQuery(</span>
+                                &quot;SELECT t FROM Trajet t WHERE t.vehicule.id = :vid ORDER BY t.dateDepart DESC&quot;,
+                                Trajet.class)
+<span class="fc" id="L743">                        .setParameter(&quot;vid&quot;, v.getId()).setMaxResults(1)</span>
+<span class="fc" id="L744">                        .getResultStream().findFirst().orElse(null);</span>
+<span class="pc bpc" id="L745" title="4 of 8 branches missed.">                if (t != null &amp;&amp; t.getChargeKg() != null &amp;&amp; v.getCapaciteCharge() != null &amp;&amp; v.getCapaciteCharge() &gt; 0) {</span>
+<span class="fc" id="L746">                    double tons = t.getChargeKg() / 1000.0;</span>
+<span class="fc" id="L747">                    double pct = (tons / v.getCapaciteCharge()) * 100.0;</span>
+<span class="fc" id="L748">                    percents.add(pct);</span>
+<span class="pc bpc" id="L749" title="1 of 2 branches missed.">                    minT = Math.min(minT == 0 ? tons : minT, tons);</span>
+<span class="fc" id="L750">                    maxT = Math.max(maxT, tons);</span>
+<span class="fc" id="L751">                    avgT += tons;</span>
+                }
+<span class="fc" id="L753">            }</span>
+<span class="pc bpc" id="L754" title="1 of 2 branches missed.">            if (!percents.isEmpty()) {</span>
+<span class="fc" id="L755">                minP = percents.stream().mapToDouble(Double::doubleValue).min().orElse(0);</span>
+<span class="fc" id="L756">                maxP = percents.stream().mapToDouble(Double::doubleValue).max().orElse(0);</span>
+<span class="fc" id="L757">                avgP = percents.stream().mapToDouble(Double::doubleValue).average().orElse(0);</span>
+<span class="fc" id="L758">                avgT = avgT / percents.size();</span>
+            }
+        }
+<span class="fc" id="L761">        e.minPercent = round(minP);</span>
+<span class="fc" id="L762">        e.avgPercent = round(avgP);</span>
+<span class="fc" id="L763">        e.maxPercent = round(maxP);</span>
+<span class="fc" id="L764">        e.minTons = round(minT);</span>
+<span class="fc" id="L765">        e.avgTons = round(avgT);</span>
+<span class="fc" id="L766">        e.maxTons = round(maxT);</span>
+<span class="fc" id="L767">        return e;</span>
+    }
+
+    private String computeBadge(double score) {
+<span class="fc bfc" id="L771" title="All 2 branches covered.">        if (score &gt; 85) return &quot;Excellent&quot;;</span>
+<span class="fc bfc" id="L772" title="All 2 branches covered.">        if (score &gt; 70) return &quot;Bon&quot;;</span>
+<span class="fc bfc" id="L773" title="All 2 branches covered.">        if (score &gt; 50) return &quot;Normal&quot;;</span>
+<span class="fc" id="L774">        return &quot;À améliorer&quot;;</span>
+    }
+
+    private double round(double v) {
+<span class="fc" id="L778">        return Math.round(v * 10.0) / 10.0;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

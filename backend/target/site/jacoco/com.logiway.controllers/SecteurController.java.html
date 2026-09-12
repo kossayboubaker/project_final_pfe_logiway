@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecteurController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">SecteurController.java</span></div><h1>SecteurController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.request.CreateSectorRequest;
+import com.logiway.dto.request.UpdateSectorRequest;
+import com.logiway.dto.response.SectorResponse;
+import com.logiway.services.SecteurService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/secteurs&quot;)
+<span class="fc" id="L17">@RequiredArgsConstructor</span>
+public class SecteurController {
+
+    private final SecteurService secteurService;
+
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;List&lt;SectorResponse&gt;&gt; list() {
+<span class="fc" id="L25">        return ResponseEntity.ok(secteurService.getAccessibleSectors());</span>
+    }
+
+    @GetMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;SectorResponse&gt; getById(@PathVariable Long id) {
+<span class="fc" id="L31">        return ResponseEntity.ok(secteurService.getSectorById(id));</span>
+    }
+
+    @PostMapping
+    @PreAuthorize(&quot;hasAuthority('ROLE_SUPERADMIN')&quot;)
+    public ResponseEntity&lt;SectorResponse&gt; create(@Valid @RequestBody CreateSectorRequest request) {
+<span class="fc" id="L37">        return ResponseEntity.ok(secteurService.createSector(request));</span>
+    }
+
+    @PutMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAuthority('ROLE_SUPERADMIN')&quot;)
+    public ResponseEntity&lt;SectorResponse&gt; update(@PathVariable Long id, @Valid @RequestBody UpdateSectorRequest request) {
+<span class="fc" id="L43">        return ResponseEntity.ok(secteurService.updateSector(id, request));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}&quot;)
+    @PreAuthorize(&quot;hasAuthority('ROLE_SUPERADMIN')&quot;)
+    public ResponseEntity&lt;Void&gt; delete(@PathVariable Long id) {
+<span class="fc" id="L49">        secteurService.deleteSector(id);</span>
+<span class="fc" id="L50">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @PutMapping(&quot;/{id}/manager/{managerId}&quot;)
+    @PreAuthorize(&quot;hasAuthority('ROLE_SUPERADMIN')&quot;)
+    public ResponseEntity&lt;SectorResponse&gt; assignManager(@PathVariable Long id, @PathVariable Long managerId) {
+<span class="fc" id="L56">        return ResponseEntity.ok(secteurService.assignManager(id, managerId));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}/manager/{managerId}&quot;)
+    @PreAuthorize(&quot;hasAuthority('ROLE_SUPERADMIN')&quot;)
+    public ResponseEntity&lt;SectorResponse&gt; removeManager(@PathVariable Long id, @PathVariable Long managerId) {
+<span class="fc" id="L62">        return ResponseEntity.ok(secteurService.removeManager(id, managerId));</span>
+    }
+
+    @PutMapping(&quot;/{id}/chauffeur/{chauffeurId}&quot;)
+    @PreAuthorize(&quot;hasAuthority('ROLE_SUPERADMIN')&quot;)
+    public ResponseEntity&lt;SectorResponse&gt; assignChauffeur(@PathVariable Long id, @PathVariable Long chauffeurId) {
+<span class="fc" id="L68">        return ResponseEntity.ok(secteurService.assignChauffeur(id, chauffeurId));</span>
+    }
+
+    @DeleteMapping(&quot;/{id}/chauffeur/{chauffeurId}&quot;)
+    @PreAuthorize(&quot;hasAuthority('ROLE_SUPERADMIN')&quot;)
+    public ResponseEntity&lt;SectorResponse&gt; removeChauffeur(@PathVariable Long id, @PathVariable Long chauffeurId) {
+<span class="fc" id="L74">        return ResponseEntity.ok(secteurService.removeChauffeur(id, chauffeurId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

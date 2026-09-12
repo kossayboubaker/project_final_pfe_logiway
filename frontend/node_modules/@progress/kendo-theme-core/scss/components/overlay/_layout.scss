@@ -1,0 +1,17 @@
+@use "./_variables.scss" as *;
+@use "../../z-index/index.scss" as *;
+
+@mixin kendo-overlay--layout-base() {
+
+    // Overlay
+    .k-overlay {
+        width: 100%;
+        height: 100%;
+        opacity: $kendo-overlay-opacity;
+        position: fixed;
+        inset-block-start: 0;
+        inset-inline-start: 0;
+        z-index: k-z-index("overlay");
+    }
+
+}

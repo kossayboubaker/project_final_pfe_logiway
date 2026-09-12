@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EntrepriseServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">EntrepriseServiceImpl.java</span></div><h1>EntrepriseServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.request.CreateEntrepriseRequest;
+import com.logiway.dto.request.UpdateEntrepriseRequest;
+import com.logiway.dto.response.EntrepriseResponse;
+import com.logiway.entities.Entreprise;
+import com.logiway.entities.Manager;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutEntreprise;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.exceptions.UnauthorizedException;
+import com.logiway.repositories.EntrepriseRepository;
+import com.logiway.repositories.ManagerRepository;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.repositories.VehiculeRepository;
+import com.logiway.repositories.ChauffeurRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.EntrepriseService;
+import com.logiway.services.MailService;
+import com.logiway.services.NotificationRealtimeService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Objects;
+
+@Service
+<span class="fc" id="L34">@RequiredArgsConstructor</span>
+<span class="fc" id="L35">@Slf4j</span>
+public class EntrepriseServiceImpl implements EntrepriseService {
+
+    private final EntrepriseRepository entrepriseRepository;
+    private final ManagerRepository managerRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final VehiculeRepository vehiculeRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationRealtimeService notificationRealtimeService;
+    private final MailService mailService;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final ChauffeurRepository chauffeurRepository;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;EntrepriseResponse&gt; getAccessibleEntreprises() {
+<span class="fc" id="L51">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L54">            return entrepriseRepository.findAllByOrderByDateCreationDesc().stream()</span>
+<span class="fc" id="L55">                .map(this::toResponse)</span>
+<span class="fc" id="L56">                .toList();</span>
+        }
+
+<span class="fc" id="L59">        Entreprise company = currentUser.getEntreprise();</span>
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        if (company == null) {</span>
+<span class="fc" id="L61">            return List.of();</span>
+        }
+
+<span class="fc" id="L64">        return List.of(toResponse(company));</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EntrepriseResponse getMyEntreprise() {
+<span class="fc" id="L70">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L71">        Entreprise company = currentUser.getEntreprise();</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">        return company == null ? null : toResponse(company);</span>
+    }
+
+    @Override
+    @Transactional
+    public EntrepriseResponse createEntreprise(CreateEntrepriseRequest request) {
+<span class="fc" id="L78">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L79">        Entreprise entreprise = buildEntreprise(request);</span>
+
+<span class="fc bfc" id="L81" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L82">            Manager owner = requireCurrentManager(currentUser);</span>
+<span class="fc" id="L83">            ensureManagerHasNoEntreprise(owner);</span>
+<span class="fc" id="L84">            entreprise.setProprietaire(owner);</span>
+<span class="fc" id="L85">            entreprise.setStatut(StatutEntreprise.EN_ATTENTE);</span>
+<span class="fc" id="L86">            owner.setEntreprise(entreprise);</span>
+<span class="fc" id="L87">            entrepriseRepository.save(entreprise);</span>
+<span class="fc" id="L88">            utilisateurRepository.save(owner);</span>
+
+            // Synchronize all drivers managed by this manager to the new enterprise
+<span class="fc" id="L91">            chauffeurRepository.findByManagerId(owner.getId()).forEach(chauffeur -&gt; {</span>
+<span class="fc" id="L92">                chauffeur.setEntreprise(entreprise);</span>
+<span class="fc" id="L93">                utilisateurRepository.save(chauffeur);</span>
+<span class="fc" id="L94">            });</span>
+
+<span class="fc" id="L96">            notifyCompanyAudience(owner, currentUser, entreprise, &quot;Votre entreprise a ete creee et est en attente de validation par le SuperAdmin.&quot;);</span>
+<span class="fc" id="L97">            return toResponse(entreprise);</span>
+        }
+
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc bfc" id="L101" title="All 2 branches covered.">            Manager owner = request.managerOwnerId() == null ? null : requireManager(request.managerOwnerId());</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            if (owner != null) {</span>
+<span class="fc" id="L103">                ensureManagerHasNoEntreprise(owner);</span>
+<span class="fc" id="L104">                entreprise.setProprietaire(owner);</span>
+            }
+<span class="fc" id="L106">            entreprise.setStatut(StatutEntreprise.ACTIF);</span>
+<span class="fc" id="L107">            entrepriseRepository.save(entreprise);</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">            if (owner != null) {</span>
+<span class="fc" id="L109">                owner.setEntreprise(entreprise);</span>
+<span class="fc" id="L110">                utilisateurRepository.save(owner);</span>
+
+                // Synchronize all drivers managed by this manager to the new enterprise
+<span class="fc" id="L113">                chauffeurRepository.findByManagerId(owner.getId()).forEach(chauffeur -&gt; {</span>
+<span class="fc" id="L114">                    chauffeur.setEntreprise(entreprise);</span>
+<span class="fc" id="L115">                    utilisateurRepository.save(chauffeur);</span>
+<span class="fc" id="L116">                });</span>
+            }
+
+<span class="fc bfc" id="L119" title="All 2 branches covered.">            if (owner != null) {</span>
+<span class="fc" id="L120">                notifyCompanyAudience(owner, currentUser, entreprise, &quot;Une entreprise vous a ete affectee avec succes.&quot;);</span>
+<span class="fc" id="L121">                sendCompanyEmail(owner,</span>
+                    &quot;Affectation d'entreprise&quot;,
+                    &quot;Votre entreprise a ete affectee&quot;,
+                    &quot;Une nouvelle entreprise vous a ete affectee par le SuperAdmin.&quot;,
+                    entreprise);
+<span class="fc" id="L126">                notifySuperAdmins(&quot;L'entreprise &quot; + entreprise.getNomEntreprise() + &quot; a ete creee et affectee a &quot; + labelForUser(owner) + &quot;.&quot;);</span>
+            } else {
+<span class="fc" id="L128">                notifySuperAdmins(&quot;L'entreprise &quot; + entreprise.getNomEntreprise() + &quot; a ete creee sans manager affecte.&quot;);</span>
+            }
+<span class="fc" id="L130">            return toResponse(entreprise);</span>
+        }
+
+<span class="fc" id="L133">        throw new UnauthorizedException(&quot;You are not allowed to create companies&quot;);</span>
+    }
+
+    @Override
+    @Transactional
+    public EntrepriseResponse updateEntreprise(Long id, UpdateEntrepriseRequest request) {
+<span class="fc" id="L139">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L140">        Entreprise entreprise = entrepriseRepository.findById(id)</span>
+<span class="fc" id="L141">            .orElseThrow(() -&gt; new BadRequestException(&quot;Entreprise introuvable&quot;));</span>
+
+<span class="fc" id="L143">        Manager previousOwner = entreprise.getProprietaire();</span>
+<span class="fc" id="L144">        StatutEntreprise previousStatus = entreprise.getStatut();</span>
+
+<span class="fc bfc" id="L146" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc bfc" id="L147" title="All 2 branches covered.">            if (!isOwnedByCurrentManager(currentUser, entreprise)) {</span>
+<span class="fc" id="L148">                throw new UnauthorizedException(&quot;You are not allowed to modify this company&quot;);</span>
+            }
+<span class="fc bfc" id="L150" title="All 2 branches covered.">            if (entreprise.getStatut() != StatutEntreprise.ACTIF) {</span>
+<span class="fc" id="L151">                throw new UnauthorizedException(&quot;Your company must be active before modification&quot;);</span>
+            }
+        }
+
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc bfc" id="L156" title="All 6 branches covered.">            if (request.managerOwnerId() != null &amp;&amp; !Objects.equals(request.managerOwnerId(), previousOwner != null ? previousOwner.getId() : null)) {</span>
+<span class="fc" id="L157">                Manager newOwner = requireManager(request.managerOwnerId());</span>
+<span class="fc" id="L158">                ensureManagerHasNoEntreprise(newOwner);</span>
+<span class="fc" id="L159">                entreprise.setProprietaire(newOwner);</span>
+<span class="fc" id="L160">                newOwner.setEntreprise(entreprise);</span>
+                // Synchronisation: détacher le manager de son ancien secteur (appartient à l'ancienne entreprise)
+<span class="fc" id="L162">                newOwner.setSecteur(null);</span>
+<span class="fc" id="L163">                utilisateurRepository.save(newOwner);</span>
+
+                // Synchronize all drivers managed by this manager to the new enterprise
+<span class="fc" id="L166">                chauffeurRepository.findByManagerId(newOwner.getId()).forEach(chauffeur -&gt; {</span>
+<span class="fc" id="L167">                    chauffeur.setEntreprise(entreprise);</span>
+<span class="fc" id="L168">                    utilisateurRepository.save(chauffeur);</span>
+<span class="fc" id="L169">                });</span>
+
+<span class="fc" id="L171">                sendNotification(newOwner, &quot;Vous avez ete affecte a l'entreprise &quot; + entreprise.getNomEntreprise() + &quot;.&quot;);</span>
+<span class="pc bpc" id="L172" title="1 of 4 branches missed.">                if (previousOwner != null &amp;&amp; !Objects.equals(previousOwner.getId(), newOwner.getId())) {</span>
+<span class="fc" id="L173">                    previousOwner.setEntreprise(null);</span>
+                    // Synchronisation: détacher l'ancien propriétaire de son secteur
+<span class="fc" id="L175">                    previousOwner.setSecteur(null);</span>
+<span class="fc" id="L176">                    utilisateurRepository.save(previousOwner);</span>
+
+                    // Reset enterprise for previous owner's chauffeurs
+<span class="fc" id="L179">                    chauffeurRepository.findByManagerId(previousOwner.getId()).forEach(chauffeur -&gt; {</span>
+<span class="fc" id="L180">                        chauffeur.setEntreprise(null);</span>
+<span class="fc" id="L181">                        utilisateurRepository.save(chauffeur);</span>
+<span class="fc" id="L182">                    });</span>
+
+<span class="fc" id="L184">                    sendNotification(previousOwner, &quot;Vous avez ete retire de l'entreprise &quot; + entreprise.getNomEntreprise() + &quot;.&quot;);</span>
+                }
+<span class="fc" id="L186">                sendCompanyEmail(newOwner,</span>
+                    &quot;Modification d'entreprise&quot;,
+                    &quot;Votre entreprise a ete mise a jour&quot;,
+                    &quot;Le SuperAdmin a modifie les informations de votre entreprise et a defini un nouveau managerOwner.&quot;,
+                    entreprise);
+            }
+
+<span class="fc bfc" id="L193" title="All 2 branches covered.">            if (request.statut() != null) {</span>
+<span class="fc" id="L194">                entreprise.setStatut(parseStatut(request.statut()));</span>
+            }
+        }
+
+<span class="fc" id="L198">        applyUpdates(entreprise, request);</span>
+<span class="fc" id="L199">        entrepriseRepository.save(entreprise);</span>
+
+<span class="fc" id="L201">        Manager currentOwner = entreprise.getProprietaire();</span>
+
+<span class="fc bfc" id="L203" title="All 6 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN &amp;&amp; request.statut() != null &amp;&amp; currentOwner != null) {</span>
+<span class="fc" id="L204">            StatutEntreprise newStatus = entreprise.getStatut();</span>
+<span class="fc bfc" id="L205" title="All 4 branches covered.">            if (newStatus == StatutEntreprise.ACTIF &amp;&amp; previousStatus != StatutEntreprise.ACTIF) {</span>
+<span class="fc" id="L206">                sendNotification(currentOwner, &quot;Votre entreprise a ete validee. Vous pouvez acceder a toutes les fonctionnalites.&quot;);</span>
+<span class="fc bfc" id="L207" title="All 6 branches covered.">            } else if ((newStatus == StatutEntreprise.INACTIF || newStatus == StatutEntreprise.SUSPENDU) &amp;&amp; previousStatus != newStatus) {</span>
+<span class="fc" id="L208">                sendNotification(currentOwner, &quot;Votre entreprise a ete suspendue/desactivee. Votre acces est restreint.&quot;);</span>
+            }
+        }
+
+<span class="fc bfc" id="L212" title="All 2 branches covered.">        if (currentOwner != null) {</span>
+<span class="fc" id="L213">            sendCompanyEmail(currentOwner,</span>
+<span class="fc bfc" id="L214" title="All 2 branches covered.">                currentUser.getRole() == Role.SUPERADMIN ? &quot;Modification d'entreprise&quot; : &quot;Modification de votre entreprise&quot;,</span>
+                &quot;Entreprise mise a jour&quot;,
+<span class="fc bfc" id="L216" title="All 2 branches covered.">                currentUser.getRole() == Role.SUPERADMIN</span>
+<span class="fc" id="L217">                    ? &quot;Le SuperAdmin a modifie les informations de votre entreprise.&quot;</span>
+<span class="fc" id="L218">                    : &quot;Vos informations entreprise ont ete mises a jour avec succes.&quot;,</span>
+                entreprise);
+        }
+
+<span class="fc" id="L222">        notifyCompanyAudience(currentOwner, currentUser, entreprise,</span>
+<span class="fc bfc" id="L223" title="All 2 branches covered.">            currentUser.getRole() == Role.SUPERADMIN</span>
+<span class="fc" id="L224">                ? &quot;Le SuperAdmin a modifie l'entreprise &quot; + entreprise.getNomEntreprise() + &quot;.&quot;</span>
+<span class="fc" id="L225">                : &quot;Le manager &quot; + labelForUser(currentUser) + &quot; a modifie son entreprise &quot; + entreprise.getNomEntreprise() + &quot;.&quot;);</span>
+
+<span class="fc bfc" id="L227" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L228">            notifySuperAdmins(&quot;L'entreprise &quot; + entreprise.getNomEntreprise() + &quot; a ete modifiee.&quot;);</span>
+        }
+
+<span class="fc" id="L231">        return toResponse(entreprise);</span>
+    }
+
+    @Override
+    @Transactional
+    public EntrepriseResponse clearEntrepriseOwner(Long id) {
+<span class="fc" id="L237">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L238" title="All 2 branches covered.">        if (currentUser.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L239">            throw new UnauthorizedException(&quot;Only SuperAdmin can clear company owner&quot;);</span>
+        }
+
+<span class="fc" id="L242">        Entreprise entreprise = entrepriseRepository.findById(id)</span>
+<span class="fc" id="L243">            .orElseThrow(() -&gt; new BadRequestException(&quot;Entreprise introuvable&quot;));</span>
+
+<span class="fc" id="L245">        Manager previousOwner = entreprise.getProprietaire();</span>
+<span class="fc bfc" id="L246" title="All 2 branches covered.">        if (previousOwner == null) {</span>
+<span class="fc" id="L247">            return toResponse(entreprise);</span>
+        }
+
+<span class="fc" id="L250">        previousOwner.setEntreprise(null);</span>
+        // Synchronisation: détacher le manager de son secteur lors du retrait de l'entreprise
+<span class="fc" id="L252">        previousOwner.setSecteur(null);</span>
+<span class="fc" id="L253">        utilisateurRepository.save(previousOwner);</span>
+
+        // Reset enterprise for previous owner's chauffeurs
+<span class="fc" id="L256">        chauffeurRepository.findByManagerId(previousOwner.getId()).forEach(chauffeur -&gt; {</span>
+<span class="fc" id="L257">            chauffeur.setEntreprise(null);</span>
+<span class="fc" id="L258">            utilisateurRepository.save(chauffeur);</span>
+<span class="fc" id="L259">        });</span>
+
+<span class="fc" id="L261">        entreprise.setProprietaire(null);</span>
+<span class="fc" id="L262">        entrepriseRepository.save(entreprise);</span>
+
+<span class="fc" id="L264">        sendNotification(previousOwner, &quot;Vous avez ete retire de l'entreprise &quot; + entreprise.getNomEntreprise() + &quot;.&quot;);</span>
+<span class="fc" id="L265">        notifySuperAdmins(&quot;L'affectation manager de l'entreprise &quot; + entreprise.getNomEntreprise() + &quot; a ete annulee.&quot;);</span>
+
+<span class="fc" id="L267">        return toResponse(entreprise);</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntreprise(Long id) {
+<span class="fc" id="L273">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        if (currentUser.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L275">            throw new UnauthorizedException(&quot;Only SuperAdmin can delete companies&quot;);</span>
+        }
+
+<span class="fc" id="L278">        Entreprise entreprise = entrepriseRepository.findById(id)</span>
+<span class="fc" id="L279">            .orElseThrow(() -&gt; new BadRequestException(&quot;Entreprise introuvable&quot;));</span>
+
+<span class="fc" id="L281">        Manager owner = entreprise.getProprietaire();</span>
+
+<span class="fc" id="L283">        List&lt;Utilisateur&gt; linkedUsers = utilisateurRepository.findByEntreprise_Id(id);</span>
+<span class="fc" id="L284">        linkedUsers.forEach(user -&gt; user.setEntreprise(null));</span>
+<span class="fc bfc" id="L285" title="All 2 branches covered.">        if (!linkedUsers.isEmpty()) {</span>
+<span class="fc" id="L286">            utilisateurRepository.saveAll(linkedUsers);</span>
+        }
+
+<span class="fc" id="L289">        var linkedVehicules = vehiculeRepository.findByEntreprise_Id(id);</span>
+<span class="fc" id="L290">        linkedVehicules.forEach(vehicule -&gt; vehicule.setEntreprise(null));</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        if (!linkedVehicules.isEmpty()) {</span>
+<span class="fc" id="L292">            vehiculeRepository.saveAll(linkedVehicules);</span>
+        }
+
+<span class="fc bfc" id="L295" title="All 2 branches covered.">        if (owner != null) {</span>
+<span class="fc" id="L296">            owner.setEntreprise(null);</span>
+<span class="fc" id="L297">            utilisateurRepository.save(owner);</span>
+<span class="fc" id="L298">            sendCompanyEmail(owner,</span>
+                &quot;Suppression d'entreprise&quot;,
+                &quot;Votre entreprise a ete supprimee&quot;,
+                &quot;Le SuperAdmin a supprime votre entreprise. Votre acces au dashboard est de nouveau restreint.&quot;,
+                entreprise);
+        }
+
+<span class="fc" id="L305">            entreprise.setProprietaire(null);</span>
+<span class="fc" id="L306">            entrepriseRepository.save(entreprise);</span>
+
+<span class="fc" id="L308">        entrepriseRepository.delete(entreprise);</span>
+
+<span class="fc bfc" id="L310" title="All 2 branches covered.">        if (owner != null) {</span>
+<span class="fc" id="L311">            notifyCompanyAudience(owner, currentUser, entreprise, &quot;Votre entreprise &quot; + entreprise.getNomEntreprise() + &quot; a ete supprimee par le SuperAdmin.&quot;);</span>
+        }
+<span class="fc" id="L313">        notifySuperAdmins(&quot;L'entreprise &quot; + entreprise.getNomEntreprise() + &quot; a ete supprimee avec succes.&quot;);</span>
+<span class="fc" id="L314">    }</span>
+
+    private Entreprise buildEntreprise(CreateEntrepriseRequest request) {
+<span class="fc" id="L317">        return Entreprise.builder()</span>
+<span class="fc" id="L318">            .nomEntreprise(trimOrNull(request.nomEntreprise()))</span>
+<span class="fc" id="L319">            .emailEntreprise(trimOrNull(request.emailEntreprise()))</span>
+<span class="fc" id="L320">            .adresseEntreprise(trimOrNull(request.adresseEntreprise()))</span>
+<span class="fc" id="L321">            .numeroEntreprise(trimOrNull(request.numeroEntreprise()))</span>
+<span class="fc" id="L322">            .codeTVA(trimOrNull(request.codeTVA()))</span>
+<span class="fc" id="L323">            .representantLegal(trimOrNull(request.representantLegal()))</span>
+<span class="fc" id="L324">            .documentJustificatif(trimOrNull(request.documentJustificatif()))</span>
+<span class="fc" id="L325">            .image(trimOrNull(request.image()))</span>
+<span class="fc" id="L326">            .secteurActivite(trimOrNull(request.secteurActivite()))</span>
+<span class="fc" id="L327">            .tailleFlotte(request.tailleFlotte())</span>
+<span class="fc" id="L328">            .statut(defaultStatutForCreate())</span>
+<span class="fc" id="L329">            .build();</span>
+    }
+
+    private void applyUpdates(Entreprise entreprise, UpdateEntrepriseRequest request) {
+<span class="fc bfc" id="L333" title="All 2 branches covered.">        if (request.nomEntreprise() != null) {</span>
+<span class="fc" id="L334">            entreprise.setNomEntreprise(trimOrNull(request.nomEntreprise()));</span>
+        }
+<span class="fc bfc" id="L336" title="All 2 branches covered.">        if (request.emailEntreprise() != null) {</span>
+<span class="fc" id="L337">            entreprise.setEmailEntreprise(trimOrNull(request.emailEntreprise()));</span>
+        }
+<span class="fc bfc" id="L339" title="All 2 branches covered.">        if (request.adresseEntreprise() != null) {</span>
+<span class="fc" id="L340">            entreprise.setAdresseEntreprise(trimOrNull(request.adresseEntreprise()));</span>
+        }
+<span class="fc bfc" id="L342" title="All 2 branches covered.">        if (request.numeroEntreprise() != null) {</span>
+<span class="fc" id="L343">            entreprise.setNumeroEntreprise(trimOrNull(request.numeroEntreprise()));</span>
+        }
+<span class="fc bfc" id="L345" title="All 2 branches covered.">        if (request.codeTVA() != null) {</span>
+<span class="fc" id="L346">            entreprise.setCodeTVA(trimOrNull(request.codeTVA()));</span>
+        }
+<span class="fc bfc" id="L348" title="All 2 branches covered.">        if (request.representantLegal() != null) {</span>
+<span class="fc" id="L349">            entreprise.setRepresentantLegal(trimOrNull(request.representantLegal()));</span>
+        }
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        if (request.documentJustificatif() != null) {</span>
+<span class="fc" id="L352">            entreprise.setDocumentJustificatif(trimOrNull(request.documentJustificatif()));</span>
+        }
+<span class="fc bfc" id="L354" title="All 2 branches covered.">        if (request.image() != null) {</span>
+<span class="fc" id="L355">            entreprise.setImage(trimOrNull(request.image()));</span>
+        }
+<span class="fc bfc" id="L357" title="All 2 branches covered.">        if (request.secteurActivite() != null) {</span>
+<span class="fc" id="L358">            entreprise.setSecteurActivite(trimOrNull(request.secteurActivite()));</span>
+        }
+<span class="fc bfc" id="L360" title="All 2 branches covered.">        if (request.tailleFlotte() != null) {</span>
+<span class="fc" id="L361">            entreprise.setTailleFlotte(request.tailleFlotte());</span>
+        }
+<span class="fc" id="L363">    }</span>
+
+    private EntrepriseResponse toResponse(Entreprise entreprise) {
+<span class="fc" id="L366">        Manager owner = entreprise.getProprietaire();</span>
+<span class="fc" id="L367">        return new EntrepriseResponse(</span>
+<span class="fc" id="L368">            entreprise.getId(),</span>
+<span class="fc" id="L369">            entreprise.getNomEntreprise(),</span>
+<span class="fc" id="L370">            entreprise.getEmailEntreprise(),</span>
+<span class="fc" id="L371">            entreprise.getAdresseEntreprise(),</span>
+<span class="fc" id="L372">            entreprise.getNumeroEntreprise(),</span>
+<span class="fc" id="L373">            entreprise.getCodeTVA(),</span>
+<span class="fc" id="L374">            entreprise.getRepresentantLegal(),</span>
+<span class="fc" id="L375">            entreprise.getDocumentJustificatif(),</span>
+<span class="fc" id="L376">            entreprise.getSecteurActivite(),</span>
+<span class="fc" id="L377">            entreprise.getImage(),</span>
+<span class="fc" id="L378">            entreprise.getTailleFlotte(),</span>
+<span class="fc" id="L379">            entreprise.getStatut(),</span>
+<span class="fc bfc" id="L380" title="All 2 branches covered.">            owner != null ? owner.getId() : null,</span>
+<span class="fc bfc" id="L381" title="All 2 branches covered.">            owner != null ? labelForUser(owner) : null,</span>
+<span class="fc" id="L382">            entreprise.getDateCreation(),</span>
+<span class="fc" id="L383">            0</span>
+        );
+    }
+
+    private Manager requireCurrentManager(Utilisateur currentUser) {
+<span class="fc bfc" id="L388" title="All 2 branches covered.">        if (!(currentUser instanceof Manager manager)) {</span>
+<span class="fc" id="L389">            throw new BadRequestException(&quot;Current user is not a manager&quot;);</span>
+        }
+<span class="fc" id="L391">        return manager;</span>
+    }
+
+    private Manager requireManager(Long managerId) {
+<span class="fc" id="L395">        return managerRepository.findById(managerId)</span>
+<span class="fc" id="L396">            .orElseThrow(() -&gt; new BadRequestException(&quot;Manager introuvable&quot;));</span>
+    }
+
+    private void ensureManagerHasNoEntreprise(Manager manager) {
+<span class="fc bfc" id="L400" title="All 2 branches covered.">        if (manager.getEntreprise() != null) {</span>
+<span class="fc" id="L401">            throw new BadRequestException(&quot;Ce manager est deja rattache a une entreprise&quot;);</span>
+        }
+<span class="fc" id="L403">    }</span>
+
+    private boolean isOwnedByCurrentManager(Utilisateur currentUser, Entreprise entreprise) {
+<span class="fc" id="L406">        Manager owner = entreprise.getProprietaire();</span>
+<span class="fc bfc" id="L407" title="All 4 branches covered.">        return owner != null &amp;&amp; Objects.equals(owner.getId(), currentUser.getId());</span>
+    }
+
+    private void notifyCompanyAudience(Manager owner, Utilisateur actor, Entreprise entreprise, String message) {
+<span class="fc bfc" id="L411" title="All 2 branches covered.">        if (owner != null) {</span>
+<span class="fc" id="L412">            sendNotification(owner, message);</span>
+        }
+<span class="fc" id="L414">        notifySuperAdmins(&quot;L'entreprise &quot; + entreprise.getNomEntreprise() + &quot; a ete impactee par l'action de &quot; + labelForUser(actor) + &quot;.&quot;);</span>
+<span class="fc" id="L415">    }</span>
+
+    private void notifySuperAdmins(String message) {
+<span class="fc" id="L418">        utilisateurRepository.findByRole(Role.SUPERADMIN)</span>
+<span class="fc" id="L419">            .forEach(superAdmin -&gt; sendNotification(superAdmin, message));</span>
+<span class="fc" id="L420">    }</span>
+
+    private void sendNotification(Utilisateur recipient, String message) {
+        try {
+<span class="fc" id="L424">            Notification notification = Notification.builder()</span>
+<span class="fc" id="L425">                .type(TypeNotif.NOTIF_ENTREPRISE)</span>
+<span class="fc" id="L426">                .message(message)</span>
+<span class="fc" id="L427">                .utilisateur(recipient)</span>
+<span class="fc" id="L428">                .estLu(false)</span>
+<span class="fc" id="L429">                .build();</span>
+<span class="fc" id="L430">            notificationRepository.save(notification);</span>
+<span class="fc" id="L431">            notificationRealtimeService.publishToUsers(List.of(recipient.getId()), notification);</span>
+<span class="fc" id="L432">        } catch (Exception ex) {</span>
+<span class="fc" id="L433">            log.warn(&quot;Company notification could not be saved for recipient {}&quot;, recipient.getEmail(), ex);</span>
+<span class="fc" id="L434">        }</span>
+<span class="fc" id="L435">    }</span>
+
+    private void sendCompanyEmail(Manager manager, String subject, String headline, String bodyText, Entreprise entreprise) {
+        try {
+<span class="fc" id="L439">            String summary = buildCompanySummary(entreprise);</span>
+<span class="fc" id="L440">            mailService.sendCompanyNotificationEmail(manager, subject, headline, bodyText, summary);</span>
+<span class="fc" id="L441">        } catch (Exception ex) {</span>
+<span class="fc" id="L442">            log.warn(&quot;Company email could not be sent to {}&quot;, manager.getEmail(), ex);</span>
+<span class="fc" id="L443">        }</span>
+<span class="fc" id="L444">    }</span>
+
+    private String buildCompanySummary(Entreprise entreprise) {
+<span class="fc" id="L447">        return &quot;Nom: &quot; + safe(entreprise.getNomEntreprise()) +</span>
+<span class="fc" id="L448">            &quot;\nStatut: &quot; + entreprise.getStatut() +</span>
+<span class="fc" id="L449">            &quot;\nSecteur: &quot; + safe(entreprise.getSecteurActivite()) +</span>
+<span class="fc" id="L450">            &quot;\nEmail: &quot; + safe(entreprise.getEmailEntreprise()) +</span>
+<span class="fc" id="L451">            &quot;\nTelephone: &quot; + safe(entreprise.getNumeroEntreprise()) +</span>
+<span class="fc" id="L452">            &quot;\nAdresse: &quot; + safe(entreprise.getAdresseEntreprise()) +</span>
+<span class="fc" id="L453">            &quot;\nCode TVA: &quot; + safe(entreprise.getCodeTVA()) +</span>
+<span class="fc" id="L454">            &quot;\nRepresentant legal: &quot; + safe(entreprise.getRepresentantLegal()) +</span>
+<span class="fc" id="L455">            &quot;\nDocument justificatif: &quot; + fileLabel(entreprise.getDocumentJustificatif(), &quot;PDF charge&quot;) +</span>
+<span class="fc bfc" id="L456" title="All 2 branches covered.">            &quot;\nTaille flotte: &quot; + (entreprise.getTailleFlotte() == null ? &quot;&quot; : entreprise.getTailleFlotte()) +</span>
+<span class="fc" id="L457">            &quot;\nImage: &quot; + fileLabel(entreprise.getImage(), &quot;Image chargee&quot;);</span>
+    }
+
+    private StatutEntreprise defaultStatutForCreate() {
+<span class="fc" id="L461">        return StatutEntreprise.ACTIF;</span>
+    }
+
+    private StatutEntreprise parseStatut(String status) {
+        try {
+<span class="fc" id="L466">            return StatutEntreprise.valueOf(status.trim().toUpperCase());</span>
+<span class="fc" id="L467">        } catch (Exception ex) {</span>
+<span class="fc" id="L468">            return StatutEntreprise.ACTIF;</span>
+        }
+    }
+
+    private String trimOrNull(String value) {
+<span class="fc bfc" id="L473" title="All 2 branches covered.">        return value == null ? null : value.trim();</span>
+    }
+
+    private String safe(String value) {
+<span class="fc bfc" id="L477" title="All 2 branches covered.">        return value == null ? &quot;&quot; : value;</span>
+    }
+
+    private String fileLabel(String value, String fallback) {
+<span class="pc bpc" id="L481" title="1 of 4 branches missed.">        if (value == null || value.isBlank()) {</span>
+<span class="fc" id="L482">            return &quot;&quot;;</span>
+        }
+
+<span class="fc bfc" id="L485" title="All 2 branches covered.">        if (value.startsWith(&quot;data:&quot;)) {</span>
+<span class="fc" id="L486">            return fallback;</span>
+        }
+
+<span class="fc bfc" id="L489" title="All 2 branches covered.">        return value.length() &gt; 80 ? value.substring(0, 80) + &quot;...&quot; : value;</span>
+    }
+
+    private String labelForUser(Utilisateur user) {
+<span class="fc bfc" id="L493" title="All 4 branches covered.">        String fullName = ((user.getPrenom() == null ? &quot;&quot; : user.getPrenom()) + &quot; &quot; + (user.getNom() == null ? &quot;&quot; : user.getNom())).trim();</span>
+<span class="fc bfc" id="L494" title="All 2 branches covered.">        return fullName.isBlank() ? user.getEmail() : fullName;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

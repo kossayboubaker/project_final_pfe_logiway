@@ -1,0 +1,97 @@
+<h2 mat-dialog-title class="dialog-title">
+    {{ data.company ? 'Modifier l\'Entreprise' : 'Ajouter une Entreprise' }}
+</h2>
+<mat-dialog-content class="dialog-content">
+    <form #companyForm="ngForm" class="company-form">
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Nom de l'entreprise</mat-label>
+            <input matInput [(ngModel)]="company.name" name="name" required>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Email de l'entreprise</mat-label>
+            <input matInput [(ngModel)]="company.email" name="email">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full" *ngIf="currentRole === 'SUPERADMIN'">
+            <mat-label>Affecter à un Manager</mat-label>
+            <mat-select [(ngModel)]="company.managerOwnerId" name="managerOwnerId">
+                <mat-option *ngFor="let manager of managers" [value]="manager.id">
+                    {{ manager.name }}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+
+        <div class="row">
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Secteur</mat-label>
+                <mat-select [(ngModel)]="company.sector" name="sector" required>
+                    <mat-option value="Logistique">Logistique</mat-option>
+                    <mat-option value="Transport">Transport</mat-option>
+                    <mat-option value="Distribution">Distribution</mat-option>
+                    <mat-option value="Construction">Construction</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Taille Flotte (Est.)</mat-label>
+                <input matInput type="number" [(ngModel)]="company.fleetSize" name="fleetSize" required>
+            </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Numéro de l'entreprise</mat-label>
+            <input matInput [(ngModel)]="company.number" name="number">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Code TVA</mat-label>
+            <input matInput [(ngModel)]="company.codeTVA" name="codeTVA">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Représentant légal</mat-label>
+            <input matInput [(ngModel)]="company.representantLegal" name="representantLegal">
+        </mat-form-field>
+            <div class="w-full">
+                <input type="file" accept="application/pdf" (change)="onLegalDocSelected($event)">
+                <small *ngIf="legalDocFileName">{{ legalDocFileName }}</small>
+                <div *ngIf="isPdfDataUrl(company.documentJustificatif)">
+                    <a [href]="company.documentJustificatif" target="_blank" rel="noopener">Voir le PDF</a>
+                </div>
+            </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Image (URL ou base64)</mat-label>
+            <input matInput [(ngModel)]="company.image" name="image">
+        </mat-form-field>
+            <div class="w-full">
+                <input type="file" accept="image/*" (change)="onImageSelected($event)">
+                <small *ngIf="imageFileName">{{ imageFileName }}</small>
+                <div *ngIf="isImageDataUrl(company.image)">
+                    <img [src]="company.image" alt="Aperçu image entreprise" style="max-width: 180px; max-height: 120px; border-radius: 8px; margin-top: 8px;">
+                </div>
+            </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Adresse</mat-label>
+            <input matInput [(ngModel)]="company.address" name="address">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Statut</mat-label>
+            <mat-select [(ngModel)]="company.status" name="status" required>
+                <mat-option value="Actif">ACTIF</mat-option>
+                <mat-option value="Inactif">INACTIF</mat-option>
+                <mat-option value="En Attente">EN_ATTENTE</mat-option>
+                <mat-option value="Suspendu">SUSPENDU</mat-option>
+            </mat-select>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button (click)="onCancel()">Annuler</button>
+    <button mat-raised-button color="primary" [disabled]="!companyForm.valid" (click)="onSave()">
+        {{ data.company ? 'Mettre à jour' : 'Enregistrer' }}
+    </button>
+</mat-dialog-actions>

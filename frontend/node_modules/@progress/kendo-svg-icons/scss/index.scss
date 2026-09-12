@@ -1,0 +1,70 @@
+@forward "_variables.scss";
+@use "_variables.scss" as *;
+
+@mixin kendo-svg-icon-styles() {
+
+    .k-svg-icon {
+        outline: 0;
+        line-height: 1;
+        display: inline-flex;
+        flex-flow: row nowrap;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+        position: relative;
+
+        > svg {
+            fill: currentColor;
+            flex: 1 1 auto;
+        }
+
+        // SVG Icon sizes
+        @each $size, $value in $ki-icon-sizes {
+            #{if($ki-icon-default-size == $size, "&,", null)}
+            &.k-icon-#{$size} {
+                width: $value;
+                height: $value;
+            }
+        }
+    }
+
+    // Flip
+    .k-flip-h,
+    .k-flip-v,
+    .k-flip-h.k-flip-v {
+        &.k-svg-icon {
+            transform: none;
+        }
+    }
+    .k-flip-h {
+        > svg {
+            transform: scaleX( -1 );
+        }
+    }
+    .k-flip-v {
+        > svg {
+            transform: scaleY( -1 );
+        }
+    }
+    .k-flip-h.k-flip-v,
+    .k-flip-both {
+        > svg {
+            transform: scale( -1, -1 );
+        }
+    }
+
+
+    // Rotate
+    @each $index, $rotate in $ki-rotate-map {
+        .k-rotate-#{$index} {
+            &.k-svg-icon {
+                transform: none;
+            }
+
+            > svg {
+                transform: rotate( #{$rotate} );
+            }
+        }
+    }
+
+}

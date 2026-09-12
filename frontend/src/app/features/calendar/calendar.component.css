@@ -1,0 +1,295 @@
+.calendar-page {
+    padding: 16px 32px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+}
+
+.calendar-container {
+    padding: 16px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.month-nav {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.month-nav h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.view-toggle {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 4px;
+}
+
+.view-toggle button {
+    border-radius: 8px;
+}
+
+.view-toggle button.active {
+    background: var(--accent);
+    color: white;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--glass-border);
+    border: 1px solid var(--glass-border);
+}
+
+.day-label {
+    background: rgba(15, 23, 42, 0.8);
+    padding: 8px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.calendar-day {
+    background: rgba(15, 23, 42, 0.4);
+    min-height: 90px;
+    padding: 6px;
+    transition: background 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-day:hover {
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+}
+
+.calendar-day.empty {
+    background: rgba(15, 23, 42, 0.2);
+    cursor: default;
+}
+
+.calendar-day.today {
+    background: rgba(14, 165, 233, 0.05);
+}
+
+.calendar-day.today .date-num {
+    background: var(--accent);
+    color: white;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.calendar-day.weekend {
+    background: rgba(100, 116, 139, 0.1);
+}
+
+.date-num {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+}
+
+/* Holiday badge - official and religious events */
+.holiday-badge {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    min-height: 18px;
+}
+
+.holiday-name {
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.holiday-name.official {
+    background: rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+    border-left: 2px solid #f59e0b;
+}
+
+.holiday-name.religious {
+    background: rgba(139, 92, 246, 0.3);
+    color: #c4b5fd;
+    border-left: 2px solid #8b5cf6;
+}
+
+/* Leaves section - multiline bars */
+.leaves-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 4px;
+    flex-grow: 1;
+}
+
+.leave {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.leave:hover {
+    transform: scale(1.02);
+}
+
+.leave-badge {
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+/* Leave types colors */
+.leave.leave-vacances {
+    background: rgba(59, 130, 246, 0.25);
+    color: #93c5fd;
+    border-left: 3px solid #3b82f6;
+}
+
+.leave.leave-maladie {
+    background: rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+    border-left: 3px solid #ef4444;
+}
+
+.leave.leave-mariage {
+    background: rgba(16, 185, 129, 0.25);
+    color: #86efac;
+    border-left: 3px solid #10b981;
+}
+
+/* Manual events */
+.events {
+    margin-top: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.65rem;
+}
+
+.event {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.event:hover {
+    transform: translateX(1px);
+}
+
+.event.mission {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border-left: 2px solid #10b981;
+}
+
+.event.maintenance {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border-left: 2px solid #f59e0b;
+}
+
+.event.leave {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-left: 2px solid #ef4444;
+}
+
+.event mat-icon {
+    font-size: 9px;
+    height: 9px;
+    width: 9px;
+    margin-right: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .calendar-page {
+        padding: 8px 16px;
+    }
+
+    .calendar-day {
+        min-height: 80px;
+        padding: 4px;
+    }
+
+    .date-num {
+        font-size: 0.85rem;
+    }
+
+    .holiday-name {
+        font-size: 0.6rem;
+    }
+
+    .leave {
+        font-size: 0.65rem;
+        padding: 2px 4px;
+    }
+
+    .event {
+        font-size: 0.6rem;
+    }
+}
+
+/* Animation */
+.animate-fade-up {
+    animation: fadeUp 0.5s ease-out;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

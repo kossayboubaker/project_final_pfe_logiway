@@ -1,0 +1,89 @@
+================================================================
+        ERREUR 500 PAUSE AI - CORRECTION TERMINEE
+================================================================
+
+           PROBLEME: Erreur 500 lors de predict
+           CAUSE: Variable 'amenity' non definie
+           SOLUTION: Ajout variable ligne 410-411
+           STATUT: CORRIGE
+
+================================================================
+        POUR COMMENCER - CHOISISSEZ UNE OPTION:
+================================================================
+
+OPTION 1 - JE VEUX TESTER RAPIDEMENT
+   >>> cd pause-ai-service
+   >>> .\RESTART_SERVICE.bat
+   
+   Puis ouvrir http://localhost:4200 et tester trajet 80
+
+OPTION 2 - JE VEUX VOIR LE RESUME
+   >>> type README_CORRECTION_500.txt
+   
+   Ou
+   >>> type SOLUTION_FINALE_PAUSE_AI.txt
+
+OPTION 3 - JE VEUX UN MENU INTERACTIF
+   >>> .\MENU_CORRECTION.bat
+
+OPTION 4 - JE VEUX LA DOCUMENTATION COMPLETE
+   Ouvrir ces fichiers:
+   - CORRECTION_ERREUR_500_FINALE.md
+   - COMMENT_TESTER_CORRECTION.md
+   - HISTORIQUE_DEBUG_ERREUR_500.md
+
+================================================================
+        FICHIERS CREES (10 FICHIERS)
+================================================================
+
+ESSENTIELS:
+   [1] README_CORRECTION_500.txt           <- Commencer ici
+   [2] SOLUTION_FINALE_PAUSE_AI.txt        <- Resume court
+   [3] COMMENT_TESTER_CORRECTION.md        <- Guide test
+
+DOCUMENTATION:
+   [4] CORRECTION_ERREUR_500_FINALE.md     <- Doc technique
+   [5] HISTORIQUE_DEBUG_ERREUR_500.md      <- Timeline
+   [6] SYNTHESE_COMPLETE_CORRECTION.md     <- Vue ensemble
+   [7] INDEX_CORRECTION_ERREUR_500.md      <- Index
+
+SCRIPTS:
+   [8] pause-ai-service/RESTART_SERVICE.bat <- Redemarrer
+   [9] MENU_CORRECTION.bat                  <- Menu
+   [10] VOIR_CORRECTION.bat                 <- Afficher
+
+CODE:
+   pause-ai-service/app.py (lignes 410-411) <- CORRIGE
+
+================================================================
+        VERIFICATION RAPIDE
+================================================================
+
+Le fichier app.py contient bien ces lignes?
+   
+   Ligne 410: amenity = tags.get("amenity", "")
+   Ligne 411: highway_type = tags.get("highway", "")
+
+Si OUI: Tout est bon, redemarrer le service
+Si NON: Verifier le fichier pause-ai-service/app.py
+
+================================================================
+        PROCHAINE ACTION RECOMMANDEE
+================================================================
+
+   1. Lire README_CORRECTION_500.txt (ce fichier)
+   2. Redemarrer le service:
+      cd pause-ai-service
+      .\RESTART_SERVICE.bat
+   3. Tester le trajet 80 dans Frontend
+   4. Verifier console Flask: "200 -" (pas "500 -")
+
+================================================================
+
+Date: 27/07/2026 17:45
+Version: v3.0-ml
+Temps resolution: 33 minutes
+
+STATUT: PRET A TESTER
+
+================================================================

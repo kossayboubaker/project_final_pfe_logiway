@@ -1,0 +1,557 @@
+<!-- ════════════════════════════════════════════════════
+     LOGIWAY — Dashboard Utilisateurs Power BI Style
+     ════════════════════════════════════════════════════ -->
+
+<div class="uic-dashboard">
+
+    <!-- ── HEADER ─────────────────────────────────────── -->
+    <header class="uic-header">
+        <div class="uic-header__left">
+            <div class="uic-header__icon-wrap">
+                <mat-icon>people</mat-icon>
+            </div>
+            <div>
+                <h1 class="uic-header__title">Dashboard Utilisateurs</h1>
+                <p class="uic-header__subtitle">Analyse d'engagement, rôles et administration du parc</p>
+            </div>
+        </div>
+        <div class="uic-header__right">
+            <div class="uic-header__live-badge">
+                <span class="uic-live-dot"></span>
+                <span>{{ kpiTotal }} Utilisateurs inscrits</span>
+            </div>
+            <div class="uic-header__stat-badge uic-header__stat-badge--emerald">
+                <mat-icon>trending_up</mat-icon>
+                <span>{{ kpiActive }} Comptes actifs</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── KPI STRIP ───────────────────────────────────── -->
+    <section class="uic-kpi-strip">
+        <!-- Total Users -->
+        <div class="uic-kpi uic-kpi--violet" (click)="openKpiDrillDown('total')" style="cursor:pointer"
+            title="Cliquez pour voir tous les utilisateurs">
+            <div class="uic-kpi__icon"><mat-icon>group</mat-icon></div>
+            <div class="uic-kpi__body">
+                <span class="uic-kpi__label">Nombre Total</span>
+                <span class="uic-kpi__value">{{ kpiTotal }}</span>
+                <span class="uic-kpi__trend uic-kpi__trend--up">
+                    <mat-icon>trending_up</mat-icon>
+                    +{{ trendTotal }}% ce mois
+                </span>
+            </div>
+            <div class="uic-kpi__glow"></div>
+        </div>
+
+        <!-- Active Users -->
+        <div class="uic-kpi uic-kpi--emerald" (click)="openKpiDrillDown('active')" style="cursor:pointer"
+            title="Cliquez pour voir les utilisateurs actifs">
+            <div class="uic-kpi__icon"><mat-icon>check_circle</mat-icon></div>
+            <div class="uic-kpi__body">
+                <span class="uic-kpi__label">Comptes Actifs</span>
+                <span class="uic-kpi__value">{{ kpiActive }}</span>
+                <span class="uic-kpi__trend uic-kpi__trend--up">
+                    <mat-icon>trending_up</mat-icon>
+                    +{{ trendActive }}% ce mois
+                </span>
+            </div>
+            <div class="uic-kpi__glow"></div>
+        </div>
+
+        <!-- Pending Accounts -->
+        <div class="uic-kpi uic-kpi--amber" (click)="openKpiDrillDown('pending')" style="cursor:pointer"
+            title="Cliquez pour voir les comptes en attente">
+            <div class="uic-kpi__icon"><mat-icon>pending_actions</mat-icon></div>
+            <div class="uic-kpi__body">
+                <span class="uic-kpi__label">En Attente</span>
+                <span class="uic-kpi__value">{{ kpiPending }}</span>
+                <span class="uic-kpi__trend uic-kpi__trend--down">
+                    <mat-icon>trending_down</mat-icon>
+                    {{ trendPending }}% ce mois
+                </span>
+            </div>
+            <div class="uic-kpi__glow"></div>
+        </div>
+
+        <!-- Rejected/Disabled Accounts -->
+        <div class="uic-kpi uic-kpi--red" (click)="openKpiDrillDown('rejected')" style="cursor:pointer"
+            title="Cliquez pour voir les comptes rejetés / désactivés">
+            <div class="uic-kpi__icon"><mat-icon>no_accounts</mat-icon></div>
+            <div class="uic-kpi__body">
+                <span class="uic-kpi__label">Rejetés / Désactivés</span>
+                <span class="uic-kpi__value">{{ kpiRejected }}</span>
+                <span class="uic-kpi__trend uic-kpi__trend--down">
+                    <mat-icon>trending_down</mat-icon>
+                    {{ trendRejected }}% ce mois
+                </span>
+            </div>
+            <div class="uic-kpi__glow"></div>
+        </div>
+
+        <!-- Mean session duration -->
+        <div class="uic-kpi uic-kpi--blue">
+            <div class="uic-kpi__icon"><mat-icon>hourglass_empty</mat-icon></div>
+            <div class="uic-kpi__body">
+                <span class="uic-kpi__label">Durée de Session</span>
+                <span class="uic-kpi__value">{{ kpiAvgSessionDuration }} <small>min</small></span>
+                <span class="uic-kpi__trend uic-kpi__trend--up">
+                    <mat-icon>trending_up</mat-icon>
+                    +{{ trendSession }}% ce mois
+                </span>
+            </div>
+            <div class="uic-kpi__glow"></div>
+        </div>
+    </section>
+
+    <!-- ── FILTER BAR ─────────────────────────────────── -->
+    <section class="uic-filter-bar">
+        <div class="uic-filter-bar__left">
+            <mat-icon class="uic-filter-icon">tune</mat-icon>
+            <span class="uic-filter-label">Filtres</span>
+            <span class="uic-filter-badge" *ngIf="filterRole || filterStatus">
+                {{ (filterRole ? 1 : 0) + (filterStatus ? 1 : 0) }}
+            </span>
+        </div>
+        <div class="uic-filter-bar__controls">
+            <!-- Status selection (NOUVEAU) -->
+            <select class="uic-select" [value]="filterStatus" (change)="onStatusChange($any($event.target).value)">
+                <option *ngFor="let st of statuses" [value]="st.value">{{ st.label }}</option>
+            </select>
+            <!-- Role selection -->
+            <select class="uic-select" [value]="filterRole" (change)="onRoleChange($any($event.target).value)">
+                <option value="">Tous les rôles</option>
+                <option *ngFor="let r of roles" [value]="r">{{ getRoleLabel(r) }}</option>
+            </select>
+            <!-- Reset button -->
+            <button class="uic-btn-clear" *ngIf="filterRole || filterStatus" (click)="clearFilters()">
+                <mat-icon>restart_alt</mat-icon> Réinitialiser
+            </button>
+        </div>
+    </section>
+
+    <!-- ── CHARTS ROW 1 ───────────────────────────────── -->
+    <section class="uic-charts-grid">
+        <!-- Temps passé sur la plateforme (Pointages) -->
+        <div class="uic-panel uic-panel--area">
+            <div class="uic-panel__header">
+                <div class="uic-panel__title-group">
+                    <span class="uic-panel__dot uic-panel__dot--indigo"></span>
+                    <h3 class="uic-panel__title">Évolution de l'engagement (Temps de connexion cumulé)</h3>
+                </div>
+                <span class="uic-panel__hint"><mat-icon>info</mat-icon> Engagement Evolution</span>
+            </div>
+            <div class="uic-panel__chart-wrap">
+                <canvas baseChart [data]="stackedAreaData" [options]="stackedAreaOptions"
+                    [type]="stackedAreaType"></canvas>
+            </div>
+        </div>
+
+        <!-- Répartition par Rôle -->
+        <div class="uic-panel uic-panel--donut">
+            <div class="uic-panel__header">
+                <div class="uic-panel__title-group">
+                    <span class="uic-panel__dot uic-panel__dot--violet"></span>
+                    <h3 class="uic-panel__title">Répartition par Rôle</h3>
+                </div>
+                <span class="uic-panel__hint">Seniority Breakdown</span>
+            </div>
+            <div class="uic-panel__chart-wrap">
+                <div class="uic-donut-center">
+                    <span class="uic-donut-center__value">{{ kpiTotal }}</span>
+                    <span class="uic-donut-center__label">Utilisateurs</span>
+                </div>
+                <canvas baseChart [data]="donutData" [options]="donutOptions" [type]="donutType"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CHARTS ROW 2 ───────────────────────────────── -->
+    <section class="uic-charts-grid2">
+        <!-- Historique des changements de statut -->
+        <div class="uic-panel uic-panel--bar">
+            <div class="uic-panel__header">
+                <div class="uic-panel__title-group">
+                    <span class="uic-panel__dot uic-panel__dot--emerald"></span>
+                    <h3 class="uic-panel__title">Statuts des comptes (Historique mensuel)</h3>
+                </div>
+            </div>
+            <div class="uic-panel__chart-wrap">
+                <canvas baseChart [data]="barChartData" [options]="barChartOptions" [type]="barChartType"></canvas>
+            </div>
+        </div>
+
+        <!-- Indicateurs complémentaires -->
+        <div class="uic-panel uic-panel--kpis">
+            <div class="uic-panel__header">
+                <div class="uic-panel__title-group">
+                    <span class="uic-panel__dot uic-panel__dot--amber"></span>
+                    <h3 class="uic-panel__title">Indicateurs Complémentaires</h3>
+                </div>
+            </div>
+            <div class="uic-kpi-subgrid">
+                <!-- Taux de rétention -->
+                <div class="uic-subkpi-card" (click)="openKpiDrillDown('active')" style="cursor: pointer"
+                    title="Cliquez pour voir les comptes actifs">
+                    <div class="uic-subkpi-header">
+                        <span class="uic-subkpi-label">Rétention Comptes Actifs</span>
+                        <span class="uic-subkpi-trend trend--up">+2.4%</span>
+                    </div>
+                    <div class="uic-subkpi-content">
+                        <span class="uic-subkpi-value">{{ kpiRetentionRate }}%</span>
+                        <div class="uic-progress-bar">
+                            <div class="uic-progress-fill uic-progress-fill--violet" [style.width.%]="kpiRetentionRate">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Délai moyen d'approbation -->
+                <div class="uic-subkpi-card" (click)="openKpiDrillDown('pending')" style="cursor: pointer"
+                    title="Cliquez pour voir les comptes en attente d'approbation">
+                    <div class="uic-subkpi-header">
+                        <span class="uic-subkpi-label">Délai Moyen d'Approbation</span>
+                        <span class="uic-subkpi-trend trend--down">-12%</span>
+                    </div>
+                    <div class="uic-subkpi-content">
+                        <span class="uic-subkpi-value">{{ kpiAvgApprovalDelay }} <small>jours</small></span>
+                        <div class="uic-progress-bar">
+                            <div class="uic-progress-fill uic-progress-fill--emerald"
+                                [style.width.%]="(kpiAvgApprovalDelay / 30) * 100"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score Global Moyen -->
+                <div class="uic-subkpi-card"
+                    style="grid-column: span 2; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05)); border: 1px solid rgba(99, 102, 241, 0.15)">
+                    <div class="uic-subkpi-header">
+                        <span class="uic-subkpi-label" style="color: #a78bfa">Score de Performance Global (Moyen)</span>
+                        <span class="uic-subkpi-trend trend--up"
+                            style="background: rgba(167, 139, 250, 0.1); color: #c084fc">Assiduité</span>
+                    </div>
+                    <div class="uic-subkpi-content">
+                        <div style="display: flex; align-items: baseline; gap: 8px;">
+                            <span class="uic-subkpi-value" style="color: #a78bfa">{{ kpiAvgRatingScore }}</span>
+                            <span style="font-size: 0.85rem; color: #64748b">/ 100 pts</span>
+                        </div>
+                        <div class="uic-progress-bar">
+                            <div class="uic-progress-fill"
+                                [style.background]="'linear-gradient(90deg, #6366f1, #a78bfa)'"
+                                [style.width.%]="kpiAvgRatingScore"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utilisateurs les plus actifs -->
+            <div class="uic-active-users">
+                <h4 class="uic-sub-title">Membres les plus actifs</h4>
+                <div class="uic-active-users-list">
+                    <div class="uic-user-row" *ngFor="let user of topUsers"
+                        (click)="openUserDrillDown(findUserByName(user.name))" style="cursor: pointer;"
+                        title="Cliquez pour voir les détails">
+                        <div class="uic-user-row__avatar">
+                            <mat-icon>person</mat-icon>
+                        </div>
+                        <div class="uic-user-row__info">
+                            <div class="uic-user-row__name-line" style="display: flex; align-items: center; gap: 8px;">
+                                <span class="uic-user-row__name">{{ user.name }}</span>
+                                <span class="uic-rating-badge-mini" *ngIf="getUserRating(user.id) as r"
+                                    [style.background]="r.ratingColor" [title]="'Score: ' + r.totalScore + '/100'"
+                                    style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 6px; font-size: 0.7rem; font-weight: 900; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.2); box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+                                    {{ r.rating }}
+                                </span>
+                            </div>
+                            <span class="uic-user-row__role" [ngClass]="getRoleClass(user.role)">{{ user.roleLabel
+                                }}</span>
+                        </div>
+                        <div class="uic-user-row__stats">
+                            <span class="uic-user-row__sessions">{{ user.sessions }} sessions</span>
+                            <span class="uic-user-row__time">{{ formatMin(user.totalTimeMin) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- ── STATUTE CHANGE HISTORY TABLE ────────────────── -->
+    <section class="uic-panel uic-panel--table">
+        <div class="uic-panel__header">
+            <div class="uic-panel__title-group">
+                <mat-icon class="panel-icon-history">history</mat-icon>
+                <h3 class="uic-panel__title">Historique des Changements de Statut</h3>
+            </div>
+            <span class="uic-table-count">{{ logTotalElements }} changements</span>
+        </div>
+        <div class="uic-table-container">
+            <table class="uic-table">
+                <thead>
+                    <tr>
+                        <th>Date et Heure</th>
+                        <th>Utilisateur cible</th>
+                        <th>Rôle</th>
+                        <th class="text-center">Ancien Statut</th>
+                        <th class="text-center">Nouveau Statut</th>
+                        <th class="text-center">Nombre de Changements</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let log of logDataSource" (click)="openUserDrillDown(findUserByName(log.userName))"
+                        style="cursor: pointer" title="Cliquez pour voir les détails">
+                        <td class="uic-td-date">
+                            <mat-icon>calendar_month</mat-icon>
+                            <span>{{ log.date }}</span>
+                        </td>
+                        <td><strong>{{ log.userName }}</strong></td>
+                        <td><span class="uic-role-badge"
+                                [ngClass]="getRoleClass(log.role === 'SuperAdmin' ? 'SUPERADMIN' : log.role === 'Manager' ? 'MANAGER' : 'CHAUFFEUR')">{{
+                                log.role }}</span></td>
+                        <td class="text-center">
+                            <span class="uic-status-badge status--pending" [ngClass]="getStatusClass(log.oldStatus)">{{
+                                log.oldStatus }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="uic-status-badge status--active" [ngClass]="getStatusClass(log.newStatus)">{{
+                                log.newStatus }}</span>
+                        </td>
+                        <td class="text-center uic-td-change-count">
+                            <span class="uic-change-count-badge">{{ log.changeCount }}</span>
+                        </td>
+                    </tr>
+                    <tr *ngIf="logDataSource.length === 0">
+                        <td colspan="6" class="uic-no-data">Aucun changement de statut trouvé.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="uic-paginator">
+            <mat-paginator [length]="logTotalElements" [pageIndex]="logPageIndex" [pageSize]="logPageSize"
+                [pageSizeOptions]="[5, 10, 20]" (page)="onLogPageChange($event)" aria-label="Pagination logs statuts">
+            </mat-paginator>
+        </div>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════
+         DRILL-DOWN OVERLAY
+         ══════════════════════════════════════════════════ -->
+    <div class="uic-drill-down-overlay" *ngIf="drillDownOpen" (click)="closeDrillDown()">
+        <div class="uic-drill-down-panel" (click)="$event.stopPropagation()">
+            <div class="uic-drill-down-header">
+                <h2>{{ drillDownTitle }}</h2>
+                <button class="uic-drill-down-close" (click)="closeDrillDown()">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+
+            <div class="uic-drill-down-body">
+                <!-- User Detail Drill-Down -->
+                <div *ngIf="drillDownType === 'user' && drillDownData" class="uic-drill-user">
+                    <div class="uic-drill-user-info">
+                        <div class="uic-drill-avatar">
+                            <mat-icon>person</mat-icon>
+                        </div>
+                        <div class="uic-drill-user-details">
+                            <h3>{{ drillDownData.name }}</h3>
+                            <p class="uic-drill-email">{{ drillDownData.email }}</p>
+                            <div class="uic-drill-badges">
+                                <span class="uic-role-badge" [ngClass]="getRoleClass(drillDownData.role)">
+                                    {{ drillDownData.stats.roleLabel }}
+                                </span>
+                                <span class="uic-status-badge"
+                                    [ngClass]="getStatusClass(drillDownData.stats.currentStatus)">
+                                    {{ drillDownData.stats.currentStatus }}
+                                </span>
+                                <span class="uic-sector-badge">
+                                    <mat-icon>location_on</mat-icon> {{ drillDownData.secteurNom }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="uic-drill-rating" *ngIf="drillDownData.rating">
+                            <div class="uic-rating-circle" [style.border-color]="drillDownData.rating.ratingColor"
+                                [style.box-shadow]="'0 0 20px ' + drillDownData.rating.ratingColor + '30'">
+                                <span [style.color]="drillDownData.rating.ratingColor">{{ drillDownData.rating.rating
+                                    }}</span>
+                            </div>
+                            <span class="uic-rating-score">{{ drillDownData.rating.totalScore }} / 100</span>
+                        </div>
+                    </div>
+
+                    <div class="uic-drill-stats-grid" *ngIf="drillDownData.rating">
+                        <div class="uic-drill-stat">
+                            <mat-icon>calendar_today</mat-icon>
+                            <div>
+                                <span class="label">Ancienneté</span>
+                                <span class="value">{{ drillDownData.stats.daysSinceCreation }} jours</span>
+                            </div>
+                        </div>
+                        <div class="uic-drill-stat">
+                            <mat-icon>login</mat-icon>
+                            <div>
+                                <span class="label">Sessions estimées</span>
+                                <span class="value">{{ drillDownData.stats.estimatedSessions }}</span>
+                            </div>
+                        </div>
+                        <div class="uic-drill-stat">
+                            <mat-icon>swap_horiz</mat-icon>
+                            <div>
+                                <span class="label">Changements statut</span>
+                                <span class="value">{{ drillDownData.stats.statusChanges }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bars de Notation -->
+                        <div class="uic-drill-rating-card"
+                            style="grid-column: span 3; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem;">
+                            <div class="uic-drill-rating-item" style="display: flex; flex-direction: column; gap: 6px;">
+                                <div class="uic-drill-rating-label-row"
+                                    style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span class="label"
+                                        style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">
+                                        <mat-icon
+                                            style="font-size: 16px; width: 16px; height: 16px; color: #3b82f6;">event_available</mat-icon>
+                                        Présence (Pointage)
+                                    </span>
+                                    <span class="value" style="font-size: 0.85rem; font-weight: 700; color: #f1f5f9;">{{
+                                        drillDownData.rating.attendanceScore }} / 40</span>
+                                </div>
+                                <div class="uic-drill-progress"
+                                    style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden;">
+                                    <div class="uic-drill-progress-fill"
+                                        [style.background]="'linear-gradient(90deg, #3b82f6, #60a5fa)'"
+                                        [style.width.%]="(drillDownData.rating.attendanceScore / 40) * 100"
+                                        style="height: 100%; border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                            <div class="uic-drill-rating-item" style="display: flex; flex-direction: column; gap: 6px;">
+                                <div class="uic-drill-rating-label-row"
+                                    style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span class="label"
+                                        style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">
+                                        <mat-icon
+                                            style="font-size: 16px; width: 16px; height: 16px; color: #10b981;">gavel</mat-icon>
+                                        Discipline & Assiduité
+                                    </span>
+                                    <span class="value" style="font-size: 0.85rem; font-weight: 700; color: #f1f5f9;">{{
+                                        drillDownData.rating.disciplineScore }} / 30</span>
+                                </div>
+                                <div class="uic-drill-progress"
+                                    style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden;">
+                                    <div class="uic-drill-progress-fill"
+                                        [style.background]="'linear-gradient(90deg, #10b981, #34d399)'"
+                                        [style.width.%]="(drillDownData.rating.disciplineScore / 30) * 100"
+                                        style="height: 100%; border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                            <div class="uic-drill-rating-item" style="display: flex; flex-direction: column; gap: 6px;">
+                                <div class="uic-drill-rating-label-row"
+                                    style="display: flex; align-items: center; justify-content: space-between;">
+                                    <span class="label"
+                                        style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">
+                                        <mat-icon
+                                            style="font-size: 16px; width: 16px; height: 16px; color: #f59e0b;">speed</mat-icon>
+                                        Engagement & Activité
+                                    </span>
+                                    <span class="value" style="font-size: 0.85rem; font-weight: 700; color: #f1f5f9;">{{
+                                        drillDownData.rating.presenceScore }} / 30</span>
+                                </div>
+                                <div class="uic-drill-progress"
+                                    style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden;">
+                                    <div class="uic-drill-progress-fill"
+                                        [style.background]="'linear-gradient(90deg, #f59e0b, #fbbf24)'"
+                                        [style.width.%]="(drillDownData.rating.presenceScore / 30) * 100"
+                                        style="height: 100%; border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="uic-drill-history" *ngIf="drillDownData.logs && drillDownData.logs.length > 0">
+                        <h4><mat-icon>history</mat-icon> Historique des changements</h4>
+                        <div class="uic-drill-timeline">
+                            <div class="uic-timeline-item" *ngFor="let log of drillDownData.logs">
+                                <div class="uic-timeline-dot"></div>
+                                <div class="uic-timeline-content">
+                                    <span class="uic-timeline-date">{{ log.date }}</span>
+                                    <span class="uic-timeline-change">
+                                        <span class="uic-status-badge" [ngClass]="getStatusClass(log.oldStatus)">{{
+                                            log.oldStatus }}</span>
+                                        <mat-icon>arrow_forward</mat-icon>
+                                        <span class="uic-status-badge" [ngClass]="getStatusClass(log.newStatus)">{{
+                                            log.newStatus }}</span>
+                                    </span>
+                                    <span class="uic-timeline-approver">Par: {{ log.approver }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- KPI Drill-Down -->
+                <div *ngIf="drillDownType === 'kpi' && drillDownData" class="uic-drill-kpi">
+                    <!-- Barre de recherche -->
+                    <div class="uic-search-box-container"
+                        style="position: relative; margin-bottom: 1.25rem; display: flex; align-items: center; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.5rem 1rem;">
+                        <mat-icon style="color: #64748b; margin-right: 8px;">search</mat-icon>
+                        <input type="text" class="uic-search-input" placeholder="Rechercher par nom ou email..."
+                            [value]="drillDownSearchQuery" (input)="onDrillDownSearch($event)"
+                            style="background: transparent; border: none; outline: none; color: #cbd5e1; font-size: 0.85rem; width: 100%;">
+                    </div>
+                    <div class="uic-drill-user-list">
+                        <div class="uic-drill-user-card" *ngFor="let user of getFilteredDrillDownUsers()"
+                            (click)="openUserDrillDown(user)" style="cursor: pointer">
+                            <div class="uic-user-card-avatar">
+                                <mat-icon>person</mat-icon>
+                            </div>
+                            <div class="uic-user-card-info">
+                                <strong>{{ user.name }}</strong>
+                                <span class="uic-user-card-email">{{ user.email }}</span>
+                                <div class="uic-user-card-badges">
+                                    <span class="uic-role-badge small" [ngClass]="getRoleClass(user.role)">{{
+                                        user.roleLabel }}</span>
+                                    <span class="uic-status-badge small" [ngClass]="getStatusClass(user.statusLabel)">{{
+                                        user.statusLabel }}</span>
+                                </div>
+                            </div>
+                            <div class="uic-user-card-rating" *ngIf="user.rating">
+                                <span class="uic-rating-badge" [style.background]="user.rating.ratingColor">
+                                    {{ user.rating.rating }}
+                                </span>
+                                <span class="uic-rating-score-small">{{ user.rating.totalScore }}</span>
+                            </div>
+                        </div>
+                        <div *ngIf="getFilteredDrillDownUsers().length === 0" class="uic-empty-drill">
+                            <mat-icon>inbox</mat-icon>
+                            <p>Aucun utilisateur trouvé</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Drill-Down -->
+                <div *ngIf="drillDownType === 'status' && drillDownData" class="uic-drill-status">
+                    <p class="uic-drill-status-count">{{ drillDownData.count }} changement(s) vers ce statut</p>
+                    <div class="uic-drill-timeline">
+                        <div class="uic-timeline-item" *ngFor="let log of drillDownData.logs">
+                            <div class="uic-timeline-dot"></div>
+                            <div class="uic-timeline-content">
+                                <span class="uic-timeline-date">{{ log.date }}</span>
+                                <strong>{{ log.userName }}</strong> ({{ log.role }})
+                                <span class="uic-timeline-change">
+                                    <span class="uic-status-badge" [ngClass]="getStatusClass(log.oldStatus)">{{
+                                        log.oldStatus }}</span>
+                                    <mat-icon>arrow_forward</mat-icon>
+                                    <span class="uic-status-badge" [ngClass]="getStatusClass(log.newStatus)">{{
+                                        log.newStatus }}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>

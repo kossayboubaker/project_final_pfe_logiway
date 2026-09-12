@@ -1,0 +1,30 @@
+<div class="dd-glass">
+    <div class="dd-header">
+        <div class="dd-header__left">
+            <mat-icon class="dd-header__icon">info</mat-icon>
+            <h2 class="dd-title">{{ data.title }}</h2>
+        </div>
+        <button class="dd-close" (click)="close()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <div class="dd-body">
+        <div class="dd-stat" *ngIf="data.chartLabel != null">
+            <span class="dd-stat__label">{{ data.chartLabel }}</span>
+            <span class="dd-stat__value">{{ data.chartValue }}</span>
+        </div>
+
+        <div class="dd-divider"></div>
+
+        <div class="dd-list">
+            <div class="dd-item" *ngFor="let d of data.details">
+                <mat-icon class="dd-item__icon" [style.color]="d.color || '#818cf8'" *ngIf="d.icon">{{ d.icon }}</mat-icon>
+                <div class="dd-item__body">
+                    <span class="dd-item__label">{{ d.label }}</span>
+                    <span class="dd-item__value">{{ d.value }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

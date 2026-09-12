@@ -1,0 +1,693 @@
+<div class="driver-dashboard-shell animate-fade-up">
+    <section class="hero-panel">
+        <div class="hero-copy">
+            <p class="eyebrow">Espace Chauffeur</p>
+            <h1>Votre cockpit de mission</h1>
+            <p>
+                Vue instantanée sur votre entreprise, votre manager, votre véhicule assigné et votre statut de service.
+            </p>
+            <div class="sa-live-badge" style="margin-top:12px">
+                <span class="sa-live-dot"></span>
+                <span>{{ currentTime | date:'HH:mm' }} — {{ currentTime | date:'dd MMM yyyy' }}</span>
+            </div>
+        </div>
+
+        <div class="hero-aside">
+            <div class="driver-badge">
+                <div class="driver-avatar">{{ driverInitials }}</div>
+                <div>
+                    <span class="driver-name">{{ currentUserName }}</span>
+                    <span class="driver-role">Chauffeur</span>
+                </div>
+            </div>
+
+            <div class="availability-card">
+                <div class="availability-row">
+                    <span>Disponibilité</span>
+                    <span class="status-pill" [ngClass]="availabilityTone">{{ availabilityLabel }}</span>
+                </div>
+                <mat-progress-bar mode="determinate" [value]="availabilityProgress"></mat-progress-bar>
+            </div>
+
+            <mat-card class="pointage-card" [class.ptg--on]="pointage.clockedIn" (click)="togglePointage()"
+                style="cursor:pointer">
+                <mat-card-content>
+                    <div class="ptg-header">
+                        <mat-icon class="ptg-led" [class.ptg-led--on]="pointage.clockedIn"
+                            [class.ptg-led--off]="!pointage.clockedIn">fiber_manual_record</mat-icon>
+                        <span class="ptg-label">Pointage</span>
+                        <span class="ptg-status">{{ pointageStatusLabel }}</span>
+                    </div>
+                    <div class="ptg-time" *ngIf="pointage.clockedIn; else ptgIdle">{{ pointage.sessionElapsed }}</div>
+                    <ng-template #ptgIdle>
+                        <div class="ptg-time ptg-time--idle">--:--:--</div>
+                    </ng-template>
+                    <div class="ptg-today">Aujourd'hui : {{ pointageTodayLabel }}</div>
+                </mat-card-content>
+            </mat-card>
+        </div>
+    </section>
+
+    <section class="summary-grid">
+        <article class="summary-card accent-blue">
+            <mat-icon>domain</mat-icon>
+            <div>
+                <span>Entreprise</span>
+                <strong>{{ companyLabel }}</strong>
+                <small>{{ companySectorLabel }}</small>
+            </div>
+        </article>
+
+        <article class="summary-card accent-gold">
+            <mat-icon>supervisor_account</mat-icon>
+            <div>
+                <span>Manager</span>
+                <strong>{{ companyManagerLabel }}</strong>
+                <small>Référent d'affectation</small>
+            </div>
+        </article>
+
+        <article class="summary-card accent-teal">
+            <mat-icon>local_shipping</mat-icon>
+            <div>
+                <span>Véhicule assigné</span>
+                <strong>{{ assignedVehicle?.plate || 'Aucun véhicule' }}</strong>
+                <small>{{ vehicleSubtitle }}</small>
+            </div>
+        </article>
+
+        <article class="summary-card accent-emerald">
+            <mat-icon>verified_user</mat-icon>
+            <div>
+                <span>Statut</span>
+                <strong>{{ availabilityLabel }}</strong>
+                <small>{{ vehicleStatusLabel }}</small>
+            </div>
+        </article>
+    </section>
+
+    <section class="glass-card trips-card">
+        <div class="card-head">
+            <div class="card-title">
+                <mat-icon>route</mat-icon>
+                <div>
+                    <h2>Missions du jour</h2>
+                    <p>Trajet actuel, trajets planifiés et suivi temps réel</p>
+                </div>
+            </div>
+            <a mat-stroked-button routerLink="/dashboard/trajets-map">
+                <mat-icon>gps_fixed</mat-icon>
+                Carte GPS
+            </a>
+        </div>
+
+        <ng-container *ngIf="missionDuJour; else noTrips">
+            <article class="mission-highlight">
+                <div>
+                    <span class="mission-label">Mission principale</span>
+                    <strong>{{ missionDuJour.from }} → {{ missionDuJour.to }}</strong>
+                    <p>{{ missionDuJour.vehicle }} • {{ missionDuJour.date }}</p>
+                </div>
+                <div class="mission-metrics">
+                    <span class="status-pill"
+                        [ngClass]="isTripActive(missionDuJour) ? 'success' : isTripCompleted(missionDuJour) ? 'info' : 'warning'">
+                        {{ missionDuJour.status }}
+                    </span>
+                    <small>{{ missionDuJour.distanceKm || 0 }} km • {{ missionDuJour.dureeEstimeeMinutes || 0 }} min
+                        prévues</small>
+                </div>
+            </article>
+
+            <div class="trip-stream">
+                <article class="trip-row" *ngFor="let trip of todaysTrips">
+                    <div>
+                        <strong>{{ trip.from }} → {{ trip.to }}</strong>
+                        <p>{{ trip.vehicle }} • {{ trip.date }}</p>
+                    </div>
+                    <span class="status-pill"
+                        [ngClass]="isTripActive(trip) ? 'success' : isTripCompleted(trip) ? 'info' : 'warning'">
+                        {{ trip.status }}
+                    </span>
+                </article>
+            </div>
+        </ng-container>
+
+        <ng-template #noTrips>
+            <div class="empty-state compact">
+                <mat-icon>route_off</mat-icon>
+                <h3>Aucun trajet assigné</h3>
+                <p>Vos missions apparaîtront ici dès qu'elles seront planifiées.</p>
+            </div>
+        </ng-template>
+    </section>
+
+    <!-- ══════════════════════════════════════════════════════
+         HISTORIQUE COMPLET — Style premium redesigné
+         ══════════════════════════════════════════════════════ -->
+    <section class="drv-history-section">
+        <div class="drv-history-header">
+            <div class="drv-history-title">
+                <div class="drv-history-icon-wrap">
+                    <mat-icon>history</mat-icon>
+                </div>
+                <div>
+                    <h2>Historique complet</h2>
+                    <p>Tous vos trajets, quel que soit leur statut</p>
+                </div>
+            </div>
+            <div class="drv-history-total-badge">
+                <mat-icon>receipt_long</mat-icon>
+                {{ tripSummary.total }} trajet(s)
+            </div>
+        </div>
+
+        <!-- KPI mini-bande redesignée -->
+        <div class="drv-history-kpis">
+            <div class="drv-hkpi">
+                <div class="drv-hkpi__icon-wrap drv-hkpi__icon--default">
+                    <mat-icon>list_alt</mat-icon>
+                </div>
+                <div class="drv-hkpi__data">
+                    <span class="drv-hkpi__val">{{ tripSummary.total }}</span>
+                    <span class="drv-hkpi__lbl">Total</span>
+                </div>
+            </div>
+            <div class="drv-hkpi drv-hkpi--emerald">
+                <div class="drv-hkpi__icon-wrap drv-hkpi__icon--emerald">
+                    <mat-icon>task_alt</mat-icon>
+                </div>
+                <div class="drv-hkpi__data">
+                    <span class="drv-hkpi__val">{{ tripSummary.completed }}</span>
+                    <span class="drv-hkpi__lbl">Terminées</span>
+                </div>
+            </div>
+            <div class="drv-hkpi drv-hkpi--blue">
+                <div class="drv-hkpi__icon-wrap drv-hkpi__icon--blue">
+                    <mat-icon>play_circle</mat-icon>
+                </div>
+                <div class="drv-hkpi__data">
+                    <span class="drv-hkpi__val">{{ tripSummary.active }}</span>
+                    <span class="drv-hkpi__lbl">En cours</span>
+                </div>
+            </div>
+            <div class="drv-hkpi drv-hkpi--amber">
+                <div class="drv-hkpi__icon-wrap drv-hkpi__icon--amber">
+                    <mat-icon>schedule</mat-icon>
+                </div>
+                <div class="drv-hkpi__data">
+                    <span class="drv-hkpi__val">{{ tripSummary.delayed }}</span>
+                    <span class="drv-hkpi__lbl">Retards</span>
+                </div>
+            </div>
+            <div class="drv-hkpi drv-hkpi--violet">
+                <div class="drv-hkpi__icon-wrap drv-hkpi__icon--violet">
+                    <mat-icon>verified</mat-icon>
+                </div>
+                <div class="drv-hkpi__data">
+                    <span class="drv-hkpi__val">{{ punctualityRate }}%</span>
+                    <span class="drv-hkpi__lbl">Ponctualité</span>
+                </div>
+            </div>
+            <div class="drv-hkpi drv-hkpi--cyan">
+                <div class="drv-hkpi__icon-wrap drv-hkpi__icon--cyan">
+                    <mat-icon>social_distance</mat-icon>
+                </div>
+                <div class="drv-hkpi__data">
+                    <span class="drv-hkpi__val">{{ tripSummary.distanceKm | number:'1.0-0' }}<small> km</small></span>
+                    <span class="drv-hkpi__lbl">Distance totale</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="drv-table-wrap" *ngIf="historyTrips.length > 0; else emptyHistory">
+            <table class="drv-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <div class="drv-th"><mat-icon>event</mat-icon> Date</div>
+                        </th>
+                        <th>
+                            <div class="drv-th"><mat-icon>route</mat-icon> Trajet</div>
+                        </th>
+                        <th>
+                            <div class="drv-th"><mat-icon>local_shipping</mat-icon> Véhicule</div>
+                        </th>
+                        <th>
+                            <div class="drv-th"><mat-icon>straighten</mat-icon> Distance</div>
+                        </th>
+                        <th>
+                            <div class="drv-th"><mat-icon>timer</mat-icon> Durée</div>
+                        </th>
+                        <th>
+                            <div class="drv-th"><mat-icon>more_time</mat-icon> Retard</div>
+                        </th>
+                        <th>
+                            <div class="drv-th"><mat-icon>flag</mat-icon> Statut</div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let trip of historyTripsPage; let i = index" class="drv-tr"
+                        [class.drv-tr--alt]="i % 2 === 1">
+                        <td class="drv-td drv-td--date">{{ trip.date }}</td>
+                        <td class="drv-td">
+                            <div class="drv-route">
+                                <span class="drv-route__dot drv-route__dot--from"></span>
+                                <span>{{ trip.from }}</span>
+                                <mat-icon
+                                    style="font-size:13px;width:13px;height:13px;color:#475569">arrow_forward</mat-icon>
+                                <span class="drv-route__dot drv-route__dot--to"></span>
+                                <span>{{ trip.to }}</span>
+                            </div>
+                        </td>
+                        <td class="drv-td">
+                            <span class="drv-vehicle-tag">{{ trip.vehicle || '—' }}</span>
+                        </td>
+                        <td class="drv-td">
+                            <span class="drv-dist">{{ trip.distanceKm ? (trip.distanceKm | number:'1.0-1') + ' km' : '—'
+                                }}</span>
+                        </td>
+                        <td class="drv-td">
+                            <span class="drv-dur">{{ trip.dureeEstimeeMinutes ? trip.dureeEstimeeMinutes + ' min' : '—'
+                                }}</span>
+                        </td>
+                        <td class="drv-td">
+                            <ng-container *ngIf="isTripDelayed(trip)">
+                                <span class="drv-delay drv-delay--late">+{{ getTripActualMinutes(trip) -
+                                    (trip.dureeEstimeeMinutes || 0) }} min</span>
+                            </ng-container>
+                            <ng-container *ngIf="!isTripDelayed(trip)">
+                                <span class="drv-delay drv-delay--ok">À l'heure</span>
+                            </ng-container>
+                        </td>
+                        <td class="drv-td">
+                            <span class="drv-badge"
+                                [ngClass]="isTripActive(trip) ? 'drv-badge--active' : isTripCompleted(trip) ? 'drv-badge--done' : 'drv-badge--other'">
+                                {{ trip.status }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Pagination Premium -->
+            <div class="drv-pagination" *ngIf="histTotalPages > 1">
+                <button mat-icon-button (click)="prevHistPage()" [disabled]="histPageIndex === 0" class="pag-btn">
+                    <mat-icon>chevron_left</mat-icon>
+                </button>
+                <div class="pag-numbers">
+                    <button *ngFor="let p of histPageNumbers" class="pag-num"
+                        [class.pag-num--active]="p === histPageIndex" (click)="goHistPage(p)">
+                        {{ p + 1 }}
+                    </button>
+                </div>
+                <button mat-icon-button (click)="nextHistPage()" [disabled]="histPageIndex === histTotalPages - 1"
+                    class="pag-btn">
+                    <mat-icon>chevron_right</mat-icon>
+                </button>
+            </div>
+        </div>
+
+
+        <ng-template #emptyHistory>
+            <div class="drv-history-empty">
+                <div class="drv-history-empty__icon">
+                    <mat-icon>history_toggle_off</mat-icon>
+                </div>
+                <h3>Historique vide</h3>
+                <p>Aucun trajet n'a encore été enregistré pour votre compte.</p>
+            </div>
+        </ng-template>
+    </section>
+
+    <section class="dashboard-grid">
+
+        <!-- ══════════════════════════════════════════════════════
+             MISSION ACTUELLE — Redesign premium
+             ══════════════════════════════════════════════════════ -->
+        <mat-card class="glass-card mission-card drv-mission-premium">
+            <div class="card-head">
+                <div class="card-title">
+                    <div class="drv-miss-icon-wrap">
+                        <mat-icon>navigation</mat-icon>
+                    </div>
+                    <div>
+                        <h2>Mission actuelle</h2>
+                        <p>{{ tripStatusLabel }}</p>
+                    </div>
+                </div>
+                <span class="status-pill" [ngClass]="availabilityTone">{{ availabilityLabel }}</span>
+            </div>
+
+            <ng-container *ngIf="currentTrip; else noMission">
+                <!-- Route visuelle -->
+                <div class="drv-miss-route-visual">
+                    <div class="drv-miss-point drv-miss-point--from">
+                        <div class="drv-miss-point-dot"></div>
+                        <div class="drv-miss-point-info">
+                            <span class="drv-miss-point-label">Départ</span>
+                            <strong>{{ currentTrip.from }}</strong>
+                        </div>
+                    </div>
+                    <div class="drv-miss-line">
+                        <div class="drv-miss-line-bar"></div>
+                        <div class="drv-miss-line-truck">
+                            <mat-icon>local_shipping</mat-icon>
+                        </div>
+                    </div>
+                    <div class="drv-miss-point drv-miss-point--to">
+                        <div class="drv-miss-point-dot drv-miss-point-dot--to"></div>
+                        <div class="drv-miss-point-info">
+                            <span class="drv-miss-point-label">Destination</span>
+                            <strong>{{ currentTrip.to }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Méta infos -->
+                <div class="drv-miss-meta-grid">
+                    <div class="drv-miss-meta-item">
+                        <mat-icon>local_shipping</mat-icon>
+                        <div>
+                            <span>Véhicule</span>
+                            <strong>{{ tripVehicleLabel }}</strong>
+                        </div>
+                    </div>
+                    <div class="drv-miss-meta-item">
+                        <mat-icon>event</mat-icon>
+                        <div>
+                            <span>Date</span>
+                            <strong>{{ currentTrip.date }}</strong>
+                        </div>
+                    </div>
+                    <div class="drv-miss-meta-item" *ngIf="currentTrip.distanceKm">
+                        <mat-icon>straighten</mat-icon>
+                        <div>
+                            <span>Distance</span>
+                            <strong>{{ currentTrip.distanceKm | number:'1.0-1' }} km</strong>
+                        </div>
+                    </div>
+                    <div class="drv-miss-meta-item" *ngIf="currentTrip.dureeEstimeeMinutes">
+                        <mat-icon>timer</mat-icon>
+                        <div>
+                            <span>Durée estimée</span>
+                            <strong>{{ currentTrip.dureeEstimeeMinutes }} min</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <mat-progress-bar mode="determinate" [value]="availabilityProgress"
+                    class="drv-miss-progress"></mat-progress-bar>
+            </ng-container>
+
+            <ng-template #noMission>
+                <div class="empty-state">
+                    <div class="drv-no-mission-icon">
+                        <mat-icon>event_busy</mat-icon>
+                    </div>
+                    <h3>Aucune mission active</h3>
+                    <p>
+                        Votre véhicule et votre affectation restent visibles ici pour faciliter la reconnaissance
+                        rapide.
+                    </p>
+                </div>
+            </ng-template>
+        </mat-card>
+
+        <mat-card class="glass-card vehicle-card">
+            <div class="card-head">
+                <div class="card-title">
+                    <mat-icon>commute</mat-icon>
+                    <div>
+                        <h2>Mon véhicule</h2>
+                        <p>Informations techniques et disponibilité</p>
+                    </div>
+                </div>
+            </div>
+
+            <ng-container *ngIf="assignedVehicle; else vehicleLoadingOrEmpty">
+                <div class="info-list">
+                    <div class="info-row">
+                        <span>Immatriculation</span>
+                        <strong>{{ assignedVehicle.plate }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Modèle</span>
+                        <strong>{{ assignedVehicle.model }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Statut technique</span>
+                        <strong>{{ vehicleStatusLabel }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Prochaine vérification</span>
+                        <strong>{{ assignedVehicle.nextCheck }}</strong>
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-template #vehicleLoadingOrEmpty>
+                <div class="empty-state compact" *ngIf="isVehicleLoading; else noVehicle">
+                    <mat-icon>hourglass_top</mat-icon>
+                    <h3>Chargement en cours</h3>
+                    <p>Récupération du véhicule assigné.</p>
+                </div>
+
+                <ng-template #noVehicle>
+                    <div class="empty-state compact">
+                        <mat-icon>local_shipping_outlined</mat-icon>
+                        <h3>Aucun véhicule trouvé</h3>
+                        <p>{{ vehicleError || 'Aucun véhicule assigné à votre compte.' }}</p>
+                    </div>
+                </ng-template>
+            </ng-template>
+        </mat-card>
+
+        <mat-card class="glass-card company-card">
+            <div class="card-head">
+                <div class="card-title">
+                    <mat-icon>business_center</mat-icon>
+                    <div>
+                        <h2>Entreprise de rattachement</h2>
+                        <p>Repère rapide pour le chauffeur</p>
+                    </div>
+                </div>
+            </div>
+
+            <ng-container *ngIf="assignedCompany; else companyEmpty">
+                <div class="info-list">
+                    <div class="info-row">
+                        <span>Nom</span>
+                        <strong>{{ assignedCompany.name }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Manager</span>
+                        <strong>{{ companyManagerLabel }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Secteur</span>
+                        <strong>{{ companySectorLabel }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Flotte</span>
+                        <strong>{{ assignedCompany.fleetSize }} véhicules</strong>
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-template #companyEmpty>
+                <div class="empty-state compact">
+                    <mat-icon>domain_disabled</mat-icon>
+                    <h3>Entreprise non résolue</h3>
+                    <p>{{ companyError || 'Aucune entreprise liée au véhicule assigné.' }}</p>
+                </div>
+            </ng-template>
+        </mat-card>
+
+        <mat-card class="glass-card sector-card">
+            <div class="card-head">
+                <div class="card-title">
+                    <mat-icon>map</mat-icon>
+                    <div>
+                        <h2>Mon secteur</h2>
+                        <p>Zone de travail liée à votre manager</p>
+                    </div>
+                </div>
+            </div>
+
+            <ng-container *ngIf="assignedSector; else sectorEmpty">
+                <div class="info-list">
+                    <div class="info-row">
+                        <span>Nom</span>
+                        <strong>{{ assignedSector.nom }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Zone géographique</span>
+                        <strong>{{ assignedSector.zoneGeographique || 'Non renseignée' }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Codes postaux</span>
+                        <strong>{{ assignedSector.codesPostaux || '—' }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span>Description</span>
+                        <strong>{{ assignedSector.description || 'Aucune description.' }}</strong>
+                    </div>
+                </div>
+            </ng-container>
+
+            <ng-template #sectorEmpty>
+                <div class="empty-state compact" *ngIf="isSectorLoading; else noSector">
+                    <mat-icon>hourglass_top</mat-icon>
+                    <h3>Chargement du secteur</h3>
+                    <p>Récupération de la zone liée à votre manager.</p>
+                </div>
+
+                <ng-template #noSector>
+                    <div class="empty-state compact">
+                        <mat-icon>map_outlined</mat-icon>
+                        <h3>Secteur indisponible</h3>
+                        <p>{{ sectorError || "Votre Manager n'est actuellement affecté à aucun secteur. Votre zone de
+                            travail sera communiquée prochainement." }}</p>
+                    </div>
+                </ng-template>
+            </ng-template>
+        </mat-card>
+
+        <!-- ══════════════════════════════════════════════════════
+             INDICATEURS CONDUITE — Redesign premium
+             ══════════════════════════════════════════════════════ -->
+        <mat-card class="glass-card drv-indicators-card drv-indicators-premium">
+            <div class="card-head">
+                <div class="card-title">
+                    <div class="drv-ind-header-icon">
+                        <mat-icon>analytics</mat-icon>
+                    </div>
+                    <div>
+                        <h2>Indicateurs conduite</h2>
+                        <p>Calculés depuis vos données réelles de trajet</p>
+                    </div>
+                </div>
+                <div class="drv-ind-global-score" [class.drv-gsc--green]="drivingStats.safetyScore >= 80"
+                    [class.drv-gsc--amber]="drivingStats.safetyScore >= 60 && drivingStats.safetyScore < 80"
+                    [class.drv-gsc--red]="drivingStats.safetyScore < 60">
+                    <span class="drv-gsc-val">{{ drivingStats.safetyScore }}</span>
+                    <span class="drv-gsc-lbl">Score</span>
+                </div>
+            </div>
+
+            <div class="drv-ind-grid">
+
+                <!-- Score sécurité -->
+                <div class="drv-ind-metric drv-ind-metric--full">
+                    <div class="drv-ind-metric__header">
+                        <div class="drv-ind-metric__icon"
+                            [style.background]="drivingStats.safetyScore >= 80 ? 'rgba(16,185,129,0.15)' : drivingStats.safetyScore >= 60 ? 'rgba(245,158,11,0.15)' : 'rgba(239,68,68,0.15)'">
+                            <mat-icon
+                                [style.color]="drivingStats.safetyScore >= 80 ? '#10b981' : drivingStats.safetyScore >= 60 ? '#f59e0b' : '#ef4444'">shield</mat-icon>
+                        </div>
+                        <div class="drv-ind-metric__info">
+                            <span class="drv-ind-metric__name">Score sécurité</span>
+                            <span class="drv-ind-metric__note">ponctualité + incidents</span>
+                        </div>
+                        <strong class="drv-ind-metric__value"
+                            [style.color]="drivingStats.safetyScore >= 80 ? '#10b981' : drivingStats.safetyScore >= 60 ? '#f59e0b' : '#ef4444'">
+                            {{ drivingStats.safetyScore }}%
+                        </strong>
+                    </div>
+                    <div class="drv-ind-bar-track">
+                        <div class="drv-ind-bar-fill" [style.width.%]="drivingStats.safetyScore"
+                            [style.background]="drivingStats.safetyScore >= 80 ? 'linear-gradient(90deg,#059669,#10b981)' : drivingStats.safetyScore >= 60 ? 'linear-gradient(90deg,#d97706,#f59e0b)' : 'linear-gradient(90deg,#dc2626,#ef4444)'">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ponctualité -->
+                <div class="drv-ind-metric">
+                    <div class="drv-ind-metric__header">
+                        <div class="drv-ind-metric__icon" style="background:rgba(99,102,241,0.15)">
+                            <mat-icon style="color:#6366f1">verified</mat-icon>
+                        </div>
+                        <div class="drv-ind-metric__info">
+                            <span class="drv-ind-metric__name">Ponctualité</span>
+                            <span class="drv-ind-metric__note">missions à l'heure</span>
+                        </div>
+                        <strong class="drv-ind-metric__value" style="color:#818cf8">{{ drivingStats.punctuality
+                            }}%</strong>
+                    </div>
+                    <div class="drv-ind-bar-track">
+                        <div class="drv-ind-bar-fill" [style.width.%]="drivingStats.punctuality"
+                            style="background:linear-gradient(90deg,#4338ca,#6366f1)"></div>
+                    </div>
+                </div>
+
+                <!-- Consommation -->
+                <div class="drv-ind-metric">
+                    <div class="drv-ind-metric__header">
+                        <div class="drv-ind-metric__icon" style="background:rgba(245,158,11,0.15)">
+                            <mat-icon style="color:#f59e0b">local_gas_station</mat-icon>
+                        </div>
+                        <div class="drv-ind-metric__info">
+                            <span class="drv-ind-metric__name">Consommation estimée</span>
+                            <span class="drv-ind-metric__note">profil de conduite</span>
+                        </div>
+                        <strong class="drv-ind-metric__value" style="color:#fbbf24">
+                            {{ drivingStats.fuelEfficiency }} <small>L/100km</small>
+                        </strong>
+                    </div>
+                </div>
+
+                <!-- Distance totale -->
+                <div class="drv-ind-metric">
+                    <div class="drv-ind-metric__header">
+                        <div class="drv-ind-metric__icon" style="background:rgba(16,185,129,0.15)">
+                            <mat-icon style="color:#34d399">social_distance</mat-icon>
+                        </div>
+                        <div class="drv-ind-metric__info">
+                            <span class="drv-ind-metric__name">Distance totale réelle</span>
+                            <span class="drv-ind-metric__note">tous trajets</span>
+                        </div>
+                        <strong class="drv-ind-metric__value" style="color:#34d399">
+                            {{ drivingStats.totalDistance | number }} <small>km</small>
+                        </strong>
+                    </div>
+                </div>
+
+                <!-- Conduite aujourd'hui -->
+                <div class="drv-ind-metric">
+                    <div class="drv-ind-metric__header">
+                        <div class="drv-ind-metric__icon" style="background:rgba(59,130,246,0.15)">
+                            <mat-icon style="color:#60a5fa">access_time</mat-icon>
+                        </div>
+                        <div class="drv-ind-metric__info">
+                            <span class="drv-ind-metric__name">Conduite aujourd'hui</span>
+                            <span class="drv-ind-metric__note">durée cumulée réelle</span>
+                        </div>
+                        <strong class="drv-ind-metric__value" style="color:#60a5fa">{{ drivingStats.drivingTimeToday
+                            }}</strong>
+                    </div>
+                </div>
+
+                <!-- Pause réglementaire -->
+                <div class="drv-ind-metric" [class.drv-ind-metric--alert]="drivingStats.needsRest">
+                    <div class="drv-ind-metric__header">
+                        <div class="drv-ind-metric__icon"
+                            [style.background]="drivingStats.needsRest ? 'rgba(239,68,68,0.15)' : 'rgba(100,116,139,0.12)'">
+                            <mat-icon [style.color]="drivingStats.needsRest ? '#f87171' : '#94a3b8'">bedtime</mat-icon>
+                        </div>
+                        <div class="drv-ind-metric__info">
+                            <span class="drv-ind-metric__name">Pause réglementaire</span>
+                            <span class="drv-ind-metric__note">règle 4h30 max</span>
+                        </div>
+                        <strong class="drv-ind-metric__value"
+                            [style.color]="drivingStats.needsRest ? '#f87171' : '#94a3b8'">
+                            {{ drivingStats.restRequiredIn }}
+                        </strong>
+                    </div>
+                </div>
+
+            </div>
+        </mat-card>
+    </section>
+</div>

@@ -1,0 +1,113 @@
+<div class="glass-card dialog-container animate-fade-up">
+    <h2 mat-dialog-title class="text-gradient">
+        {{ isEditMode ? 'Modifier la Réclamation' : 'Nouvelle Réclamation' }}
+    </h2>
+    <p class="dialog-subtitle">Décrivez votre problème de manière claire et professionnelle</p>
+
+    <mat-dialog-content class="mat-typography">
+        <form [formGroup]="reclamationForm" class="dialog-form">
+            <!-- Sujet Field -->
+            <div class="form-group">
+                <mat-form-field appearance="outline" class="full-width" [class.field-error]="hasSujetError">
+                    <mat-label>Sujet</mat-label>
+                    <input matInput formControlName="sujet" placeholder="Résumé du problème (ex: panne véhicule)" />
+                    <mat-icon style="color: aliceblue;" matSuffix *ngIf="!isCheckingAI">subject</mat-icon>
+                    <mat-spinner matSuffix *ngIf="isCheckingAI" diameter="20"></mat-spinner>
+                    <mat-error *ngIf="reclamationForm.get('sujet')?.hasError('required')">
+                        Le sujet est obligatoire
+                    </mat-error>
+                    <mat-error *ngIf="reclamationForm.get('sujet')?.hasError('minlength')">
+                        Minimum 3 caractères
+                    </mat-error>
+                    <mat-error *ngIf="reclamationForm.get('sujet')?.hasError('maxlength')">
+                        Maximum 200 caractères
+                    </mat-error>
+                </mat-form-field>
+                <!-- Message d'erreur IA sous l'input -->
+                <div class="ai-validation-error" *ngIf="sujetError">
+                    <div class="ai-error-header">
+                        <mat-icon class="ai-icon">smart_toy</mat-icon>
+                        <span class="ai-label">Analyse IA : Sujet non conforme</span>
+                    </div>
+                    <div class="ai-error-body">
+                        {{ sujetError }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description Field -->
+            <div class="form-group">
+                <mat-form-field appearance="outline" class="full-width" [class.field-error]="hasDescriptionError">
+                    <mat-label>Description</mat-label>
+                    <textarea matInput formControlName="description" rows="5"
+                        placeholder="Décrivez en détail le problème rencontré (minimum 20 caractères)">
+                    </textarea>
+                    <mat-icon style="color: aliceblue;" matSuffix
+                        *ngIf="!isCheckingAI">description</mat-icon>
+                    <mat-spinner matSuffix *ngIf="isCheckingAI" diameter="20"></mat-spinner>
+                    <mat-error *ngIf="reclamationForm.get('description')?.hasError('required')">
+                        La description est obligatoire
+                    </mat-error>
+                    <mat-error *ngIf="reclamationForm.get('description')?.hasError('minlength')">
+                        Minimum 20 caractères requis
+                    </mat-error>
+                    <mat-error *ngIf="reclamationForm.get('description')?.hasError('maxlength')">
+                        Maximum 1000 caractères autorisés
+                    </mat-error>
+                </mat-form-field>
+                <div class="char-counter">{{ descriptionCharCount }} / 1000 caractères</div>
+                <!-- Message d'erreur IA sous l'input -->
+                <div class="ai-validation-error" *ngIf="descriptionError">
+                    <div class="ai-error-header">
+                        <mat-icon class="ai-icon">smart_toy</mat-icon>
+                        <span class="ai-label">Analyse IA : Description non conforme</span>
+                    </div>
+                    <div class="ai-error-body">
+                        {{ descriptionError }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priorité Field -->
+            <div class="form-group priorite-row">
+                <mat-form-field appearance="outline" class="priorite-field">
+                    <mat-label>Priorité</mat-label>
+                    <mat-select formControlName="priorite">
+                        <mat-option value="NORMAL">Normal</mat-option>
+                        <mat-option value="URGENT">Urgent</mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>flag</mat-icon>
+                </mat-form-field>
+                <div class="priorite-preview">
+                    <span class="badge" [ngClass]="prioriteBadgeClass">
+                        {{ prioriteLabel }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Analyse IA hint -->
+            <div class="form-hint">
+                <mat-icon class="hint-icon">smart_toy</mat-icon>
+                <span *ngIf="!isCheckingAI; else checking">
+                    Validation intelligente par IA activée.
+                </span>
+                <ng-template #checking>
+                    <span class="checking-ai">
+                        Analyse intelligente en cours...
+                    </span>
+                </ng-template>
+            </div>
+        </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="cancel()" [disabled]="isSubmitting" class="px-4">
+            ANNULER
+        </button>
+        <button mat-raised-button color="primary" [disabled]="!canSubmit()" (click)="submit()"
+            class="glow-on-hover px-4">
+            <mat-icon *ngIf="isSubmitting" class="spinner">loop</mat-icon>
+            <span>{{ submitButtonText }}</span>
+        </button>
+    </mat-dialog-actions>
+</div>

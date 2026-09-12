@@ -1,0 +1,96 @@
+<h2 mat-dialog-title class="dialog-title">{{ title }}</h2>
+<mat-dialog-content class="dialog-content">
+    <form #vehicleForm="ngForm" class="vehicle-form">
+        <div class="section-note" *ngIf="isCreateOrEdit">
+            Les champs ci-dessous correspondent directement aux colonnes du camion en base : matricule, marque, modèle, capacité, kilométrage, statut et entreprise.
+        </div>
+
+        <div class="row" *ngIf="isCreateOrEdit">
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Matricule *</mat-label>
+                <input matInput [(ngModel)]="form.matricule" name="matricule" placeholder="Ex: TN-123-AA" required>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Marque *</mat-label>
+                <input matInput [(ngModel)]="form.marque" name="marque" placeholder="Ex: Volvo" required>
+            </mat-form-field>
+        </div>
+
+        <div class="row" *ngIf="isCreateOrEdit">
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Modèle *</mat-label>
+                <input matInput [(ngModel)]="form.modele" name="modele" placeholder="Ex: FH16" required>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Capacité *</mat-label>
+                <input matInput type="number" min="0" step="0.1" [(ngModel)]="form.capacite" name="capacite" placeholder="Ex: 18" required>
+            </mat-form-field>
+        </div>
+
+        <div class="row" *ngIf="isCreateOrEdit">
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Kilométrage</mat-label>
+                <input matInput type="number" min="0" step="1" [(ngModel)]="form.kilometrage" name="kilometrage" placeholder="Ex: 125000">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Statut *</mat-label>
+                <mat-select [(ngModel)]="form.statut" name="statut" required>
+                    <mat-option [value]="'EN_SERVICE'">En Service</mat-option>
+                    <mat-option [value]="'EN_MAINTENANCE'">En Maintenance</mat-option>
+                    <mat-option [value]="'HORS_SERVICE'">Hors Service</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="row" *ngIf="isCreateOrEdit">
+            <mat-form-field appearance="outline" class="col" *ngIf="companies.length > 0">
+                <mat-label>Entreprise *</mat-label>
+                <mat-select [(ngModel)]="form.entrepriseId" name="entrepriseId" [disabled]="companyFixed" required>
+                    <mat-option *ngFor="let company of companies" [value]="company.id">{{ company.name }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="col" *ngIf="drivers.length > 0">
+                <mat-label>Chauffeur assigné</mat-label>
+                <mat-select [(ngModel)]="form.chauffeurId" name="chauffeurId">
+                    <mat-option [value]="null">Aucun</mat-option>
+                    <mat-option *ngFor="let driver of drivers" [value]="driver.id">{{ driver.name }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="info-box" *ngIf="companyFixed && companyName && isCreateOrEdit">
+            <mat-icon>domain</mat-icon>
+            <span>Entreprise fixée : {{ companyName }}</span>
+        </div>
+
+        <div class="row" *ngIf="isStatusMode">
+            <mat-form-field appearance="outline" class="col">
+                <mat-label>Statut du camion</mat-label>
+                <mat-select [(ngModel)]="form.statut" name="statusOnly" required>
+                    <mat-option *ngFor="let status of allowedStatuses" [value]="status">{{
+                        status === 'EN_SERVICE' ? 'En Service' : status === 'EN_MAINTENANCE' ? 'En Maintenance' : 'Hors Service'
+                    }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <div class="row" *ngIf="isAssignMode">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Chauffeur *</mat-label>
+                <mat-select [(ngModel)]="form.chauffeurId" name="assignChauffeurId" required>
+                    <mat-option *ngFor="let driver of drivers" [value]="driver.id">{{ driver.name }}</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end" class="dialog-actions">
+    <button mat-button (click)="onCancel()">Annuler</button>
+    <button mat-raised-button color="primary" [disabled]="vehicleForm.invalid" (click)="onSave()">
+        {{ confirmLabel }}
+    </button>
+</mat-dialog-actions>

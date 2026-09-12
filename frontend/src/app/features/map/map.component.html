@@ -1,0 +1,117 @@
+<div class="map-container-wrapper animate-fade-in map-page" [class.theme-dark]="isDarkMode"
+    [class.theme-light]="!isDarkMode">
+
+    <!-- Main Map -->
+    <div id="map"></div>
+
+
+
+
+
+    <!-- Left Sidebar: Truck List -->
+    <div class="sidebar-container" [class.panel-closed]="!showSidebar" [class.mobile-open]="showMobileSidebar">
+        <div class="mobile-drag-handle" (click)="showMobileSidebar = false">
+            <div class="handle-bar"></div>
+        </div>
+        <app-delivery-list *ngIf="allTrucks" [trucks]="allTrucks" [activeTruckId]="activeTruck"
+            (selectTruck)="selectTruck($event)" (close)="showSidebar = false; showMobileSidebar = false">
+        </app-delivery-list>
+    </div>
+
+    <!-- Mobile Floating Toggle Button -->
+    <button mat-fab class="mobile-reopen-btn" (click)="showMobileSidebar = true" aria-label="Show vehicles">
+        <mat-icon>list</mat-icon> Show vehicles
+    </button>
+
+    <!-- Reopen Toggle (Desktop) -->
+    <button mat-mini-fab class="glass-btn reopen-panel-btn desktop-only" *ngIf="!showSidebar"
+        (click)="showSidebar = true" aria-label="Open vehicle list">
+        <mat-icon>chevron_right</mat-icon>
+    </button>
+
+    <!-- Top Floating Controls (Right Side Icons only now) -->
+    <div class="top-overlay-controls">
+        <app-advanced-map-controls [alertCount]="totalAlerts" (home)="goHome()" (notifications)="activePanel = 'alerts'"
+            (settings)="activePanel = 'settings'">
+        </app-advanced-map-controls>
+    </div>
+
+    <!-- Google-style Side Menu (Hidden/Retained) -->
+    <app-map-menu *ngIf="showMenu" [showSidebar]="showSidebar" (close)="showMenu = false"
+        (toggleSidebar)="showSidebar = $event" (action)="activePanel = $event">
+    </app-map-menu>
+
+    <!-- Map Interaction Controls (Bottom Right) -->
+    <div class="map-interaction-controls">
+        <div class="btn-group">
+            <button mat-mini-fab class="glass-btn" (click)="zoomIn()" title="Zoom Avant">
+                <mat-icon>add</mat-icon>
+            </button>
+            <button mat-mini-fab class="glass-btn" (click)="zoomOut()" title="Zoom Arrière">
+                <mat-icon>remove</mat-icon>
+            </button>
+        </div>
+
+        <button mat-mini-fab class="glass-btn compass" (click)="locateUser()" title="Ma Position"
+            [attr.aria-label]="'Ma Position'">
+            <mat-icon [class.spin-anim]="isLocating">{{ isLocating ? 'donut_large' : 'my_location' }}</mat-icon>
+        </button>
+
+        <button mat-mini-fab class="glass-btn layers-toggle" (click)="activePanel = 'settings'"
+            [class.active]="activePanel === 'settings'" title="Couches & Styles">
+            <mat-icon>layers</mat-icon>
+        </button>
+
+        <button mat-mini-fab class="glass-btn" (click)="regeneratePausesForActiveTrip()"
+            title="Régénérer les pauses" [disabled]="!activeTripId">
+            <mat-icon>refresh</mat-icon>
+        </button>
+    </div>
+
+    <!-- Reusable Toast Notification Container -->
+    <div class="toast-container" *ngIf="toastMessage" [class.toast-enter]="toastVisible">
+        {{ toastMessage }}
+    </div>
+
+    <app-break-notification
+        *ngIf="activePauseAlert"
+        class="pause-alert-overlay"
+        [truckId]="activePauseAlert.alert.trajetId.toString()"
+        [severity]="activePauseAlert.isUrgent ? 'critical' : 'warning'"
+        [message]="activePauseAlert.isUrgent ? 'Pause obligatoire détectée par le modèle IA' : 'Pause recommandée par le modèle IA'"
+        [canClosePausePopup]="!activePauseAlert.isUrgent"
+        [aiScore]="activePauseAlert.alert.score"
+        [typeAlerteIA]="activePauseAlert.alert.typeAlerte"
+        [hoursDriving]="activePauseAlert.alert.hoursDriving"
+        [poiInfo]="activePauseAlert.poi"
+        [estimatedArrivalTime]="activePauseAlert.estimatedArrivalTime"
+        [distanceToPoiM]="activePauseAlert.distanceToPoiM"
+        [currentPointLabel]="activePauseAlert.currentPointLabel"
+        [nextPointLabel]="activePauseAlert.nextPointLabel"
+        [fatigueScore]="activePauseAlert.alert.fatigueScore"
+        [accessibilityScore]="activePauseAlert.alert.accessibilityScore"
+        [contextScore]="activePauseAlert.alert.contextScore"
+        [confidence]="activePauseAlert.alert.confidence"
+        [distanceFromStartKm]="activePauseAlert.alert.distanceFromStartKm"
+        (close)="activePauseAlert = null"
+        (viewOnMap)="focusPauseAlertOnMap()"
+        (markCompleted)="handlePauseAlertMarkCompleted()"
+        (ignore)="handlePauseAlertIgnore()">
+    </app-break-notification>
+
+    <!-- Overlays -->
+    <div class="overlay-container-right" *ngIf="activePanel === 'settings'" animate-fade-in>
+        <app-map-control-panel [mapStyle]="mapStyle" [activeTruck]="activeTruckData" [followTruck]="followTruck"
+            [showRoads]="showRoads" [localWeather]="centerWeather"
+            (styleChange)="mapStyle = $event; updateStyle()" (poiToggle)="handlePoiToggle($event)"
+            (followToggle)="handleFollowToggle($event)" (share)="handleShare()" (print)="handlePrint()"
+            (close)="activePanel = null">
+        </app-map-control-panel>
+    </div>
+
+    <div class="overlay-container-right" *ngIf="activePanel === 'alerts'" animate-fade-in>
+        <app-alert-notifications [alerts]="activeAlerts" (close)="activePanel = null" (treat)="onAlertTreat($event)"
+            (focus)="onAlertFocus($event)">
+        </app-alert-notifications>
+    </div>
+</div>

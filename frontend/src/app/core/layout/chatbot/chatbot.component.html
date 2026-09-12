@@ -1,0 +1,67 @@
+<div class="chatbot-wrapper" [class.open]="isOpen">
+
+  <!-- Bouton flottant -->
+  <button class="fab-btn glow-on-hover" (click)="toggleChat()" [attr.aria-label]="isOpen ? 'Fermer le chatbot' : 'Ouvrir le chatbot'">
+    <mat-icon>{{ isOpen ? 'close' : 'smart_toy' }}</mat-icon>
+  </button>
+
+  <!-- Fenêtre de chat -->
+  <mat-card class="chat-window glass-effect" *ngIf="isOpen">
+
+    <!-- Header -->
+    <div class="chat-header">
+      <mat-icon class="header-icon">smart_toy</mat-icon>
+      <div class="header-text">
+        <span class="header-title">LogiWay Assistant</span>
+        <span class="header-subtitle">Propulsé par Gemini IA</span>
+      </div>
+      <div class="status-dot"></div>
+    </div>
+
+    <!-- Messages -->
+    <div class="messages-list" #messagesContainer>
+      <div
+        *ngFor="let msg of messages; trackBy: trackByFn"
+        class="bubble"
+        [class.bot]="msg.bot"
+        [class.user]="!msg.bot">
+        <div class="bubble-text">{{ msg.text }}</div>
+      </div>
+
+      <!-- Spinner chargement -->
+      <div *ngIf="isLoading" class="bubble bot loading-bubble">
+        <div class="typing-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions rapides -->
+    <div class="quick-suggestions" *ngIf="messages.length <= 1 && !isLoading">
+      <button class="suggestion-chip" (click)="input = 'Combien de véhicules sont disponibles ?'; send()">
+        🚛 Véhicules disponibles
+      </button>
+      <button class="suggestion-chip" (click)="input = 'Quels chauffeurs sont actifs ?'; send()">
+        👤 Chauffeurs actifs
+      </button>
+      <button class="suggestion-chip" (click)="input = 'Statistiques des trajets ce mois'; send()">
+        📊 Trajets du mois
+      </button>
+    </div>
+
+    <!-- Zone de saisie -->
+    <div class="chat-input">
+      <input
+        type="text"
+        placeholder="Posez-moi une question..."
+        [(ngModel)]="input"
+        (keyup.enter)="send()"
+        [disabled]="isLoading"
+        aria-label="Message">
+      <button mat-icon-button (click)="send()" [disabled]="isLoading || !input.trim()" aria-label="Envoyer">
+        <mat-icon>send</mat-icon>
+      </button>
+    </div>
+
+  </mat-card>
+</div>

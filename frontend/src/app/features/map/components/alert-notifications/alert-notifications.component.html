@@ -1,0 +1,37 @@
+<div class="alerts-panel">
+    <div class="alerts-header">
+        <div class="title">
+            <mat-icon matListItemIcon>notifications</mat-icon>
+            <span>Centre d'Alertes</span>
+        </div>
+        <button mat-icon-button (click)="onClose()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <div class="alerts-list">
+        <div class="alert-item" *ngFor="let alert of alerts" [ngClass]="getSeverityClass(alert)">
+            <div class="alert-icon">
+                <mat-icon>{{ getIcon(alert) }}</mat-icon>
+            </div>
+            <div class="alert-content">
+                <div class="alert-msg">{{alert.title}}</div>
+                <div class="alert-submsg">{{alert.message}}</div>
+                <div class="alert-time">{{alert.time}}</div>
+                <div class="alert-actions">
+                    <button mat-stroked-button color="primary" (click)="onFocus(alert)">Voir sur la carte</button>
+                    <button mat-button color="accent" (click)="onTreat(alert)">Traiter</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-empty" *ngIf="alerts.length === 0">
+            <mat-icon>notifications_off</mat-icon>
+            <span>Aucune alerte active</span>
+        </div>
+    </div>
+
+    <div class="alerts-footer">
+        <button mat-button color="primary">Voir tout l'historique</button>
+    </div>
+</div>

@@ -1,0 +1,115 @@
+═══════════════════════════════════════════════════════════════════════════
+                    EXÉCUTER LE FIX - ERREUR 500 PAUSE AI
+═══════════════════════════════════════════════════════════════════════════
+
+SUIVEZ CES ÉTAPES DANS L'ORDRE:
+
+───────────────────────────────────────────────────────────────────────────
+ÉTAPE 1: ARRÊTER FLASK
+───────────────────────────────────────────────────────────────────────────
+
+Dans la console où Flask est en cours d'exécution:
+  
+  Appuyer sur: CTRL + C
+
+Vous devriez voir: "KeyboardInterrupt"
+
+───────────────────────────────────────────────────────────────────────────
+ÉTAPE 2: EXÉCUTER LE FIX
+───────────────────────────────────────────────────────────────────────────
+
+Ouvrir un nouveau CMD et exécuter:
+
+  cd C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service
+  fix_model_version.bat
+
+OU double-cliquer sur:
+  
+  C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service\fix_model_version.bat
+
+───────────────────────────────────────────────────────────────────────────
+ÉTAPE 3: ATTENDRE
+───────────────────────────────────────────────────────────────────────────
+
+Le script va:
+✓ Vérifier Python
+✓ Vérifier scikit-learn
+✓ Ré-entraîner le modèle avec 30,000 échantillons
+
+Durée: 2-3 minutes
+
+Vous verrez:
+✅ ENTRAÎNEMENT RÉUSSI
+✅ Le modèle est maintenant compatible avec scikit-learn 1.9.0
+
+───────────────────────────────────────────────────────────────────────────
+ÉTAPE 4: REDÉMARRER FLASK
+───────────────────────────────────────────────────────────────────────────
+
+Dans le même dossier (pause-ai-service):
+
+  python app.py
+
+Vous devriez voir:
+  * Serving Flask app 'app'
+  * Running on http://127.0.0.1:5000
+
+PAS d'avertissement "InconsistentVersionWarning" ✓
+
+───────────────────────────────────────────────────────────────────────────
+ÉTAPE 5: TESTER
+───────────────────────────────────────────────────────────────────────────
+
+1. Retourner dans votre navigateur
+2. Recharger la page (F5)
+3. Sélectionner le trajet 80
+4. Les pauses devraient s'afficher sur la carte ✓
+
+Plus d'erreur 500 ✓
+
+───────────────────────────────────────────────────────────────────────────
+RÉSUMÉ DES COMMANDES
+───────────────────────────────────────────────────────────────────────────
+
+# 1. Arrêter Flask
+CTRL+C
+
+# 2. Aller dans le dossier
+cd C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service
+
+# 3. Exécuter le fix
+fix_model_version.bat
+
+# 4. Redémarrer Flask
+python app.py
+
+# 5. Recharger l'application
+F5 dans le navigateur
+
+───────────────────────────────────────────────────────────────────────────
+EN CAS DE PROBLÈME
+───────────────────────────────────────────────────────────────────────────
+
+Si le script fix_model_version.bat ne fonctionne pas:
+
+cd C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service
+python retrain_model.py
+
+Puis redémarrer:
+python app.py
+
+───────────────────────────────────────────────────────────────────────────
+VÉRIFICATION
+───────────────────────────────────────────────────────────────────────────
+
+Pour vérifier que tout fonctionne:
+
+powershell -Command "Invoke-WebRequest -Uri http://localhost:5000/api/health -UseBasicParsing"
+
+Résultat attendu: Status 200
+
+═══════════════════════════════════════════════════════════════════════════
+            TOUT EST PRÊT - EXÉCUTEZ LES ÉTAPES CI-DESSUS
+═══════════════════════════════════════════════════════════════════════════
+
+Documentation complète: FIX_ERREUR_MODEL_VERSION.md

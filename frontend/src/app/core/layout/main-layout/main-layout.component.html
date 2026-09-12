@@ -1,0 +1,19 @@
+<div class="layout-wrapper">
+    <mat-sidenav-container class="sidenav-container">
+        <mat-sidenav #drawer class="sidenav" fixedInViewport
+            [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'"
+            [opened]="!(isHandset$ | async) && !isMapRoute">
+            <app-sidebar></app-sidebar>
+        </mat-sidenav>
+        <mat-sidenav-content class="page-content-wrapper">
+            <app-navbar (toggleSidenav)="drawer.toggle()" *ngIf="!isMapRoute"></app-navbar>
+
+            <main class="main-content" [class.map-view]="isMapRoute">
+                <router-outlet></router-outlet>
+            </main>
+
+            <app-footer *ngIf="!isMapRoute"></app-footer>
+        </mat-sidenav-content>
+    </mat-sidenav-container>
+    <app-chatbot></app-chatbot>
+</div>

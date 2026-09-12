@@ -1,0 +1,59 @@
+.dialog-title {
+    color: var(--accent);
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.vehicle-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 10px;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    gap: 16px;
+}
+
+.col {
+    flex: 1;
+}
+
+.section-note {
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    background: rgba(96, 165, 250, 0.08);
+    border: 1px solid rgba(96, 165, 250, 0.18);
+    border-radius: 14px;
+    padding: 12px 14px;
+}
+
+.info-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.16);
+    color: var(--text-primary);
+}
+
+::ng-deep .mat-mdc-dialog-container {
+    border-radius: 20px !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 768px) {
+    .row {
+        flex-direction: column;
+    }
+}

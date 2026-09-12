@@ -1,0 +1,225 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > NotificationToneResolver</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.utils</a>
+</div>
+
+<h1>Coverage Summary for Class: NotificationToneResolver (com.logiway.utils)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NotificationToneResolver</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    87,5%
+  </span>
+  <span class="absValue">
+    (63/72)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (56/56)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.utils;
+&nbsp;
+&nbsp;import com.logiway.entities.enums.TypeNotif;
+&nbsp;
+&nbsp;import java.util.Locale;
+&nbsp;
+&nbsp;public final class NotificationToneResolver {
+&nbsp;
+&nbsp;    private NotificationToneResolver() {
+&nbsp;    }
+&nbsp;
+&nbsp;    public static String resolve(TypeNotif type, String message) {
+<b class="fc">&nbsp;        if (message == null) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String normalized = message.toLowerCase(Locale.ROOT);</b>
+<b class="fc">&nbsp;        if (type == TypeNotif.NOTIF_ENTREPRISE) {</b>
+&nbsp;            // Status-driven color policy for company lifecycle notifications.
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;statut: actif&quot;, &quot; a ete validee&quot;, &quot; est active&quot;, &quot; passe a actif&quot;, &quot;passer a actif&quot;, &quot;status: actif&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;SUCCESS&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;en attente&quot;, &quot;en_attente&quot;, &quot;attente de validation&quot;, &quot;passer a en_attente&quot;, &quot;statut: en attente&quot;, &quot;status: en attente&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;WARNING&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;inactif&quot;, &quot;suspendu&quot;, &quot;suspend&quot;, &quot;desactive&quot;, &quot;désactive&quot;, &quot;bloque&quot;, &quot;bloqué&quot;, &quot;statut: inactif&quot;, &quot;statut: suspendu&quot;, &quot;status: inactif&quot;, &quot;status: suspendu&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;DANGER&quot;;</b>
+&nbsp;            }
+&nbsp;
+<b class="pc">&nbsp;            if (normalized.contains(&quot;supprim&quot;) || normalized.contains(&quot;delete&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;DANGER&quot;;</b>
+&nbsp;            }
+<b class="pc">&nbsp;            if (normalized.contains(&quot;affect&quot;) || normalized.contains(&quot;cre&quot;) || normalized.contains(&quot;cré&quot;) || normalized.contains(&quot;modifi&quot;) || normalized.contains(&quot;mise a jour&quot;) || normalized.contains(&quot;mise à jour&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;SUCCESS&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return &quot;INFO&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (type == TypeNotif.NOTIF_AFFECTATION) {</b>
+&nbsp;            // Driver assignment/reassignment notifications color policy.
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;supprimé&quot;, &quot;supprime&quot;, &quot;retiré&quot;, &quot;retire&quot;, &quot;désaffecté&quot;, &quot;desaffecte&quot;, &quot;retiree&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;DANGER&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;réassigné&quot;, &quot;reassigne&quot;, &quot;transféré&quot;, &quot;transfere&quot;, &quot;changé&quot;, &quot;change&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;INFO&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;assigné&quot;, &quot;assigne&quot;, &quot;reçu&quot;, &quot;recu&quot;, &quot;charge&quot;, &quot;affecté&quot;, &quot;affecte&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;SUCCESS&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return &quot;INFO&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (type == TypeNotif.NOTIF_VEHICULE) {</b>
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;supprim&quot;, &quot;delete&quot;, &quot;archive&quot;, &quot;archiv&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;DANGER&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;maintenance&quot;, &quot;en panne&quot;, &quot;hors service&quot;, &quot;panne&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;WARNING&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;affect&quot;, &quot;assign&quot;, &quot;attrib&quot;, &quot;transfer&quot;, &quot;transfér&quot;, &quot;modifi&quot;, &quot;mise a jour&quot;, &quot;mise à jour&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;SUCCESS&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return &quot;INFO&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (type == TypeNotif.NOTIF_CONGE) {</b>
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;rejet&quot;, &quot;refus&quot;, &quot;annul&quot;, &quot;supprim&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;DANGER&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;approuv&quot;, &quot;valid&quot;, &quot;accept&quot;, &quot;confirm&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;SUCCESS&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (containsAny(normalized, &quot;nouvelle demande&quot;, &quot;demande de congé&quot;, &quot;mise a jour&quot;, &quot;mise à jour&quot;, &quot;modifi&quot;)) {</b>
+<b class="fc">&nbsp;                return &quot;WARNING&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return &quot;INFO&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (type != TypeNotif.NOTIF_COMPTE) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (normalized.contains(&quot;rejet&quot;)) {</b>
+<b class="fc">&nbsp;            return &quot;DANGER&quot;;</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (normalized.contains(&quot;inactif&quot;) || normalized.contains(&quot;desactiv&quot;) || normalized.contains(&quot;désactiv&quot;)) {</b>
+<b class="fc">&nbsp;            return &quot;WARNING&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (normalized.contains(&quot;en attente&quot;)) {</b>
+<b class="fc">&nbsp;            return &quot;WARNING&quot;;</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (normalized.contains(&quot;reactiv&quot;) || normalized.contains(&quot;réactiv&quot;)) {</b>
+<b class="fc">&nbsp;            return &quot;INFO&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (normalized.contains(&quot;activ&quot;)) {</b>
+<b class="fc">&nbsp;            return &quot;SUCCESS&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return &quot;INFO&quot;;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static boolean containsAny(String normalized, String... needles) {
+<b class="fc">&nbsp;        for (String needle : needles) {</b>
+<b class="fc">&nbsp;            if (normalized.contains(needle)) {</b>
+<b class="fc">&nbsp;                return true;</b>
+&nbsp;            }
+&nbsp;        }
+<b class="fc">&nbsp;        return false;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

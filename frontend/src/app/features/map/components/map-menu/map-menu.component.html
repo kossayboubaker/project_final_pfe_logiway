@@ -1,0 +1,41 @@
+<div class="menu-overlay" (click)="onClose()"></div>
+<div class="menu-content animate-slide-in-left">
+    <div class="menu-header">
+        <div class="google-logo">Logi<span>Way</span></div>
+        <button mat-icon-button (click)="onClose()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <div class="menu-scroll-area">
+        <div class="menu-item toggle-item">
+            <div class="label-with-icon">
+                <mat-icon>dashboard</mat-icon>
+                <span>Afficher la barre latérale</span>
+            </div>
+            <mat-slide-toggle color="primary" [ngModel]="showSidebar"
+                (change)="onToggleSidebar($event)"></mat-slide-toggle>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-item" *ngFor="let item of menuItems" (click)="onAction(item.id)">
+            <mat-icon>{{item.icon}}</mat-icon>
+            <span>{{item.label}}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="menu-item" *ngFor="let item of secondaryItems" (click)="onAction(item.id)">
+            <mat-icon>{{item.icon}}</mat-icon>
+            <span>{{item.label}}</span>
+        </div>
+    </div>
+
+    <div class="menu-footer">
+        <span class="version">v1.2.0</span>
+        <div class="footer-links">
+            <a href="#">Confidentialité</a> • <a href="#">Conditions</a>
+        </div>
+    </div>
+</div>

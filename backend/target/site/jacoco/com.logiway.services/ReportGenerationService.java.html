@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportGenerationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services</a> &gt; <span class="el_source">ReportGenerationService.java</span></div><h1>ReportGenerationService.java</h1><pre class="source lang-java linenums">package com.logiway.services;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logiway.dto.request.GenerateReportRequest;
+import com.logiway.dto.response.GenerateReportResponse;
+import com.logiway.dto.response.ReportListResponse;
+import com.logiway.dto.response.ReportMetadataResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.net.MalformedURLException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="fc" id="L29">@RequiredArgsConstructor</span>
+<span class="fc" id="L30">@Slf4j</span>
+public class ReportGenerationService {
+
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    @Value(&quot;${rag.service.url:http://localhost:5003}&quot;)
+    private String ragServiceUrl;
+
+    /**
+     * Génère un rapport en appelant le service RAG Python
+     */
+    public GenerateReportResponse genererRapport(GenerateReportRequest request, String userId, String entrepriseId) {
+        try {
+<span class="fc" id="L44">            log.info(&quot;Génération de rapport pour user {}: {}&quot;, userId, request.getRequeteNaturelle());</span>
+
+            // Construction de la requête pour le service Python
+<span class="fc" id="L47">            Map&lt;String, Object&gt; ragRequest = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L48">            ragRequest.put(&quot;requete_naturelle&quot;, request.getRequeteNaturelle());</span>
+<span class="fc" id="L49">            ragRequest.put(&quot;user_id&quot;, userId);</span>
+<span class="fc" id="L50">            ragRequest.put(&quot;entreprise_id&quot;, entrepriseId);</span>
+<span class="fc bfc" id="L51" title="All 2 branches covered.">            ragRequest.put(&quot;format_prefere&quot;, request.getFormatPrefere() != null ? request.getFormatPrefere() : &quot;PDF&quot;);</span>
+
+            // Appel au service RAG
+<span class="fc" id="L54">            String url = ragServiceUrl + &quot;/api/reports/generate&quot;;</span>
+<span class="fc" id="L55">            HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L56">            headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L57">            HttpEntity&lt;Map&lt;String, Object&gt;&gt; entity = new HttpEntity&lt;&gt;(ragRequest, headers);</span>
+
+<span class="fc" id="L59">            ResponseEntity&lt;String&gt; response = restTemplate.exchange(</span>
+                url,
+                HttpMethod.POST,
+                entity,
+                String.class
+            );
+
+<span class="fc bfc" id="L66" title="All 2 branches covered.">            if (response.getStatusCode() == HttpStatus.OK) {</span>
+<span class="fc" id="L67">                JsonNode jsonResponse = objectMapper.readTree(response.getBody());</span>
+
+                // Extraction des données de la réponse
+<span class="fc" id="L70">                GenerateReportResponse reportResponse = GenerateReportResponse.builder()</span>
+<span class="fc" id="L71">                    .success(jsonResponse.get(&quot;success&quot;).asBoolean())</span>
+<span class="fc" id="L72">                    .reportId(jsonResponse.get(&quot;report_id&quot;).asText())</span>
+<span class="fc" id="L73">                    .message(jsonResponse.get(&quot;message&quot;).asText())</span>
+<span class="fc" id="L74">                    .urlDownload(jsonResponse.get(&quot;url_download&quot;).asText())</span>
+<span class="fc" id="L75">                    .build();</span>
+
+                // Extraction des métadonnées si disponibles
+<span class="pc bpc" id="L78" title="1 of 4 branches missed.">                if (jsonResponse.has(&quot;metadata&quot;) &amp;&amp; !jsonResponse.get(&quot;metadata&quot;).isNull()) {</span>
+<span class="fc" id="L79">                    JsonNode metaNode = jsonResponse.get(&quot;metadata&quot;);</span>
+<span class="fc" id="L80">                    ReportMetadataResponse metadata = ReportMetadataResponse.builder()</span>
+<span class="fc" id="L81">                        .reportId(metaNode.get(&quot;report_id&quot;).asText())</span>
+<span class="fc" id="L82">                        .titre(metaNode.get(&quot;titre&quot;).asText())</span>
+<span class="fc" id="L83">                        .format(metaNode.get(&quot;format&quot;).asText())</span>
+<span class="fc" id="L84">                        .domaine(metaNode.get(&quot;domaine&quot;).asText())</span>
+<span class="fc" id="L85">                        .statut(metaNode.get(&quot;statut&quot;).asText())</span>
+<span class="fc" id="L86">                        .userId(metaNode.get(&quot;user_id&quot;).asText())</span>
+<span class="pc bpc" id="L87" title="1 of 4 branches missed.">                        .entrepriseId(metaNode.has(&quot;entreprise_id&quot;) &amp;&amp; !metaNode.get(&quot;entreprise_id&quot;).isNull() </span>
+<span class="fc" id="L88">                            ? metaNode.get(&quot;entreprise_id&quot;).asText() : null)</span>
+<span class="fc" id="L89">                        .dateCreation(parseDateTime(metaNode.get(&quot;date_creation&quot;).asText()))</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">                        .tailleFichierKo(metaNode.has(&quot;taille_fichier_ko&quot;) ? metaNode.get(&quot;taille_fichier_ko&quot;).asInt() : null)</span>
+<span class="pc bpc" id="L91" title="1 of 2 branches missed.">                        .urlTelechargement(metaNode.has(&quot;url_telechargement&quot;) ? metaNode.get(&quot;url_telechargement&quot;).asText() : null)</span>
+<span class="fc bfc" id="L92" title="All 2 branches covered.">                        .nbLignes(metaNode.has(&quot;nb_lignes&quot;) ? metaNode.get(&quot;nb_lignes&quot;).asInt() : null)</span>
+<span class="fc bfc" id="L93" title="All 2 branches covered.">                        .tempsGenerationMs(metaNode.has(&quot;temps_generation_ms&quot;) ? metaNode.get(&quot;temps_generation_ms&quot;).asInt() : null)</span>
+<span class="fc" id="L94">                        .build();</span>
+
+<span class="fc" id="L96">                    reportResponse.setMetadata(metadata);</span>
+                }
+
+<span class="fc" id="L99">                log.info(&quot;✓ Rapport généré avec succès: {}&quot;, reportResponse.getReportId());</span>
+<span class="fc" id="L100">                return reportResponse;</span>
+            } else {
+<span class="fc" id="L102">                log.error(&quot;Erreur génération rapport: {}&quot;, response.getStatusCode());</span>
+<span class="fc" id="L103">                return GenerateReportResponse.builder()</span>
+<span class="fc" id="L104">                    .success(false)</span>
+<span class="fc" id="L105">                    .message(&quot;Erreur lors de la génération du rapport&quot;)</span>
+<span class="fc" id="L106">                    .build();</span>
+            }
+
+<span class="fc" id="L109">        } catch (Exception e) {</span>
+<span class="fc" id="L110">            log.error(&quot;Erreur appel service RAG: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L111">            return GenerateReportResponse.builder()</span>
+<span class="fc" id="L112">                .success(false)</span>
+<span class="fc" id="L113">                .message(&quot;Erreur technique: &quot; + e.getMessage())</span>
+<span class="fc" id="L114">                .build();</span>
+        }
+    }
+
+    /**
+     * Liste les rapports disponibles
+     */
+    public ReportListResponse listerRapports(String userId, String domaine, Integer limit) {
+        try {
+<span class="fc" id="L123">            StringBuilder urlBuilder = new StringBuilder(ragServiceUrl + &quot;/api/reports?&quot;);</span>
+            
+<span class="fc bfc" id="L125" title="All 4 branches covered.">            if (userId != null &amp;&amp; !userId.isEmpty()) {</span>
+<span class="fc" id="L126">                urlBuilder.append(&quot;user_id=&quot;).append(userId).append(&quot;&amp;&quot;);</span>
+            }
+<span class="fc bfc" id="L128" title="All 4 branches covered.">            if (domaine != null &amp;&amp; !domaine.isEmpty()) {</span>
+<span class="fc" id="L129">                urlBuilder.append(&quot;domaine=&quot;).append(domaine).append(&quot;&amp;&quot;);</span>
+            }
+<span class="fc bfc" id="L131" title="All 2 branches covered.">            if (limit != null) {</span>
+<span class="fc" id="L132">                urlBuilder.append(&quot;limit=&quot;).append(limit);</span>
+            }
+
+<span class="fc" id="L135">            String url = urlBuilder.toString();</span>
+<span class="fc" id="L136">            ResponseEntity&lt;String&gt; response = restTemplate.getForEntity(url, String.class);</span>
+
+<span class="fc bfc" id="L138" title="All 2 branches covered.">            if (response.getStatusCode() == HttpStatus.OK) {</span>
+<span class="fc" id="L139">                JsonNode jsonResponse = objectMapper.readTree(response.getBody());</span>
+
+<span class="fc" id="L141">                List&lt;ReportMetadataResponse&gt; rapports = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L142">                JsonNode rapportsNode = jsonResponse.get(&quot;rapports&quot;);</span>
+
+<span class="pc bpc" id="L144" title="1 of 4 branches missed.">                if (rapportsNode != null &amp;&amp; rapportsNode.isArray()) {</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">                    for (JsonNode rapportNode : rapportsNode) {</span>
+<span class="fc" id="L146">                        ReportMetadataResponse metadata = parseMetadata(rapportNode);</span>
+<span class="fc" id="L147">                        rapports.add(metadata);</span>
+<span class="fc" id="L148">                    }</span>
+                }
+
+<span class="fc" id="L151">                return ReportListResponse.builder()</span>
+<span class="fc" id="L152">                    .total(jsonResponse.get(&quot;total&quot;).asInt())</span>
+<span class="fc" id="L153">                    .rapports(rapports)</span>
+<span class="fc" id="L154">                    .build();</span>
+            } else {
+<span class="fc" id="L156">                log.error(&quot;Erreur récupération rapports: {}&quot;, response.getStatusCode());</span>
+<span class="fc" id="L157">                return ReportListResponse.builder()</span>
+<span class="fc" id="L158">                    .total(0)</span>
+<span class="fc" id="L159">                    .rapports(new ArrayList&lt;&gt;())</span>
+<span class="fc" id="L160">                    .build();</span>
+            }
+
+<span class="fc" id="L163">        } catch (Exception e) {</span>
+<span class="fc" id="L164">            log.error(&quot;Erreur liste rapports: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L165">            return ReportListResponse.builder()</span>
+<span class="fc" id="L166">                .total(0)</span>
+<span class="fc" id="L167">                .rapports(new ArrayList&lt;&gt;())</span>
+<span class="fc" id="L168">                .build();</span>
+        }
+    }
+
+    /**
+     * Récupère les métadonnées d'un rapport spécifique
+     */
+    public ReportMetadataResponse getMetadataRapport(String reportId) {
+        try {
+<span class="fc" id="L177">            String url = ragServiceUrl + &quot;/api/reports/&quot; + reportId;</span>
+<span class="fc" id="L178">            ResponseEntity&lt;String&gt; response = restTemplate.getForEntity(url, String.class);</span>
+
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            if (response.getStatusCode() == HttpStatus.OK) {</span>
+<span class="fc" id="L181">                JsonNode jsonResponse = objectMapper.readTree(response.getBody());</span>
+<span class="fc" id="L182">                return parseMetadata(jsonResponse);</span>
+            } else {
+<span class="fc" id="L184">                log.error(&quot;Rapport {} non trouvé&quot;, reportId);</span>
+<span class="fc" id="L185">                return null;</span>
+            }
+
+<span class="fc" id="L188">        } catch (Exception e) {</span>
+<span class="fc" id="L189">            log.error(&quot;Erreur métadonnées rapport: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L190">            return null;</span>
+        }
+    }
+
+    /**
+     * Télécharge un rapport depuis le service RAG
+     */
+    public ResponseEntity&lt;byte[]&gt; telechargerRapport(String reportId) {
+        try {
+<span class="fc" id="L199">            String url = ragServiceUrl + &quot;/api/reports/download/&quot; + reportId;</span>
+            
+<span class="fc" id="L201">            ResponseEntity&lt;byte[]&gt; response = restTemplate.getForEntity(url, byte[].class);</span>
+
+<span class="fc bfc" id="L203" title="All 2 branches covered.">            if (response.getStatusCode() == HttpStatus.OK) {</span>
+<span class="fc" id="L204">                HttpHeaders headers = new HttpHeaders();</span>
+                
+                // Copier les headers importants
+<span class="fc bfc" id="L207" title="All 2 branches covered.">                if (response.getHeaders().getContentType() != null) {</span>
+<span class="fc" id="L208">                    headers.setContentType(response.getHeaders().getContentType());</span>
+                }
+<span class="pc bpc" id="L210" title="1 of 2 branches missed.">                if (response.getHeaders().getContentDisposition() != null) {</span>
+<span class="fc" id="L211">                    headers.setContentDisposition(response.getHeaders().getContentDisposition());</span>
+                }
+
+<span class="fc" id="L214">                return ResponseEntity.ok()</span>
+<span class="fc" id="L215">                    .headers(headers)</span>
+<span class="fc" id="L216">                    .body(response.getBody());</span>
+            } else {
+<span class="fc" id="L218">                log.error(&quot;Rapport {} non trouvé&quot;, reportId);</span>
+<span class="fc" id="L219">                return ResponseEntity.notFound().build();</span>
+            }
+
+<span class="fc" id="L222">        } catch (Exception e) {</span>
+<span class="fc" id="L223">            log.error(&quot;Erreur téléchargement rapport: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L224">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Supprime un rapport
+     */
+    public boolean supprimerRapport(String reportId) {
+        try {
+<span class="fc" id="L233">            String url = ragServiceUrl + &quot;/api/reports/&quot; + reportId;</span>
+<span class="fc" id="L234">            restTemplate.delete(url);</span>
+<span class="fc" id="L235">            log.info(&quot;✓ Rapport {} supprimé&quot;, reportId);</span>
+<span class="fc" id="L236">            return true;</span>
+
+<span class="fc" id="L238">        } catch (Exception e) {</span>
+<span class="fc" id="L239">            log.error(&quot;Erreur suppression rapport: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L240">            return false;</span>
+        }
+    }
+
+    /**
+     * Parse les métadonnées depuis un JsonNode
+     */
+    private ReportMetadataResponse parseMetadata(JsonNode node) {
+<span class="fc" id="L248">        return ReportMetadataResponse.builder()</span>
+<span class="fc" id="L249">            .reportId(node.get(&quot;report_id&quot;).asText())</span>
+<span class="fc" id="L250">            .titre(node.get(&quot;titre&quot;).asText())</span>
+<span class="fc" id="L251">            .format(node.get(&quot;format&quot;).asText())</span>
+<span class="fc" id="L252">            .domaine(node.get(&quot;domaine&quot;).asText())</span>
+<span class="fc" id="L253">            .statut(node.get(&quot;statut&quot;).asText())</span>
+<span class="fc" id="L254">            .userId(node.get(&quot;user_id&quot;).asText())</span>
+<span class="fc bfc" id="L255" title="All 4 branches covered.">            .entrepriseId(node.has(&quot;entreprise_id&quot;) &amp;&amp; !node.get(&quot;entreprise_id&quot;).isNull() </span>
+<span class="fc" id="L256">                ? node.get(&quot;entreprise_id&quot;).asText() : null)</span>
+<span class="fc" id="L257">            .dateCreation(parseDateTime(node.get(&quot;date_creation&quot;).asText()))</span>
+<span class="fc bfc" id="L258" title="All 4 branches covered.">            .dateDebutDonnees(node.has(&quot;date_debut_donnees&quot;) &amp;&amp; !node.get(&quot;date_debut_donnees&quot;).isNull() </span>
+<span class="fc" id="L259">                ? parseDateTime(node.get(&quot;date_debut_donnees&quot;).asText()) : null)</span>
+<span class="fc bfc" id="L260" title="All 4 branches covered.">            .dateFinDonnees(node.has(&quot;date_fin_donnees&quot;) &amp;&amp; !node.get(&quot;date_fin_donnees&quot;).isNull() </span>
+<span class="fc" id="L261">                ? parseDateTime(node.get(&quot;date_fin_donnees&quot;).asText()) : null)</span>
+<span class="fc bfc" id="L262" title="All 4 branches covered.">            .tailleFichierKo(node.has(&quot;taille_fichier_ko&quot;) &amp;&amp; !node.get(&quot;taille_fichier_ko&quot;).isNull() </span>
+<span class="fc" id="L263">                ? node.get(&quot;taille_fichier_ko&quot;).asInt() : null)</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">            .urlTelechargement(node.has(&quot;url_telechargement&quot;) ? node.get(&quot;url_telechargement&quot;).asText() : null)</span>
+<span class="fc bfc" id="L265" title="All 4 branches covered.">            .nbLignes(node.has(&quot;nb_lignes&quot;) &amp;&amp; !node.get(&quot;nb_lignes&quot;).isNull() </span>
+<span class="fc" id="L266">                ? node.get(&quot;nb_lignes&quot;).asInt() : null)</span>
+<span class="fc bfc" id="L267" title="All 4 branches covered.">            .tempsGenerationMs(node.has(&quot;temps_generation_ms&quot;) &amp;&amp; !node.get(&quot;temps_generation_ms&quot;).isNull() </span>
+<span class="fc" id="L268">                ? node.get(&quot;temps_generation_ms&quot;).asInt() : null)</span>
+<span class="fc bfc" id="L269" title="All 4 branches covered.">            .erreur(node.has(&quot;erreur&quot;) &amp;&amp; !node.get(&quot;erreur&quot;).isNull() </span>
+<span class="fc" id="L270">                ? node.get(&quot;erreur&quot;).asText() : null)</span>
+<span class="fc" id="L271">            .build();</span>
+    }
+
+    /**
+     * Parse une date/heure depuis différents formats
+     */
+    private LocalDateTime parseDateTime(String dateStr) {
+<span class="pc bpc" id="L278" title="1 of 4 branches missed.">        if (dateStr == null || dateStr.isEmpty()) {</span>
+<span class="fc" id="L279">            return null;</span>
+        }
+
+        try {
+            // Essayer le format ISO avec T
+<span class="fc bfc" id="L284" title="All 2 branches covered.">            if (dateStr.contains(&quot;T&quot;)) {</span>
+<span class="fc" id="L285">                return LocalDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME);</span>
+            }
+            // Format avec espace
+<span class="fc" id="L288">            return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern(&quot;yyyy-MM-dd HH:mm:ss&quot;));</span>
+<span class="fc" id="L289">        } catch (Exception e) {</span>
+<span class="fc" id="L290">            log.warn(&quot;Impossible de parser la date: {}&quot;, dateStr);</span>
+<span class="fc" id="L291">            return null;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

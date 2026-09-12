@@ -1,0 +1,39 @@
+# Dockerfile for Truck Movement Simulator
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+
+# Copy application code
+COPY simulate_truck.py .
+
+# Create logs directory
+RUN mkdir -p logs
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash --uid 1000 simulator
+RUN chown -R simulator:simulator /app
+USER simulator
+
+# Set environment variables with defaults
+ENV PYTHONUNBUFFERED=1
+ENV LOG_LEVEL=INFO
+ENV BACKEND_URL=http://backend:8080
+ENV OSRM_URL=http://osrm:5000
+
+# Run the truck simulator
+CMD ["python", "simulate_truck.py"]

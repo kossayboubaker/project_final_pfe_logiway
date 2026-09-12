@@ -1,0 +1,137 @@
+═══════════════════════════════════════════════════════════════════
+   GUIDE POWERSHELL - DÉMARRER LES SERVICES IA
+═══════════════════════════════════════════════════════════════════
+
+⚠️  TU UTILISES POWERSHELL - ATTENTION AUX COMMANDES !
+
+
+═══════════════════════════════════════════════════════════════════
+   SOLUTION RAPIDE : UTILISE CMD AU LIEU DE POWERSHELL
+═══════════════════════════════════════════════════════════════════
+
+1. Appuie sur Windows + R
+2. Tape : cmd
+3. Appuie sur Entrée
+
+Puis dans CMD, tape:
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais
+   FIX_RECLAMATION_SERVICE.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   SI TU VEUX RESTER DANS POWERSHELL
+═══════════════════════════════════════════════════════════════════
+
+⚠️  Dans PowerShell, il faut mettre ".\" devant les fichiers .bat
+
+
+ÉTAPE 1 : Installe le module Python manquant
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service
+   pip install transformers torch flask flask-cors
+
+
+ÉTAPE 2 : Démarre le service
+
+   python .\app_simple.py
+
+
+═══════════════════════════════════════════════════════════════════
+   COMMANDES POWERSHELL POUR LES 3 SERVICES
+═══════════════════════════════════════════════════════════════════
+
+📍 SERVICE 1 : PAUSE AI (Port 5000)
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service
+   .\start_pause_ai.bat
+
+
+📍 SERVICE 2 : RÉCLAMATION AI (Port 5001)
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service
+   pip install transformers torch flask flask-cors
+   python .\app_simple.py
+
+
+📍 SERVICE 3 : RAG CHATBOT (Port 8000)
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\rag-service
+   .\START_SIMPLE.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   ERREUR "Module 'transformers' not found"
+═══════════════════════════════════════════════════════════════════
+
+✅ SOLUTION RAPIDE :
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service
+   pip install transformers torch
+
+
+⚠️  ATTENTION : L'installation de transformers + torch peut prendre
+              5-10 minutes et ~3-4 GB d'espace disque !
+
+
+═══════════════════════════════════════════════════════════════════
+   ALTERNATIVE : UTILISER app_simple.py (SANS TRANSFORMERS)
+═══════════════════════════════════════════════════════════════════
+
+Le fichier app_simple.py utilise des règles simples SANS ML lourd.
+
+✅ Démarre juste avec :
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service
+   python .\app_simple.py
+
+Si erreur, installe seulement :
+
+   pip install flask flask-cors
+
+
+═══════════════════════════════════════════════════════════════════
+   POURQUOI ".\" DANS POWERSHELL ?
+═══════════════════════════════════════════════════════════════════
+
+PowerShell ne cherche PAS dans le dossier actuel par défaut.
+
+❌ FAUX (dans PowerShell) :  start_simple.bat
+✅ VRAI (dans PowerShell)  :  .\start_simple.bat
+
+OU
+
+✅ UTILISE CMD (pas besoin de ".\") :  start_simple.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   COMMANDE SIMPLE POUR TOUT INSTALLER
+═══════════════════════════════════════════════════════════════════
+
+Double-clique sur ce fichier (utilise CMD automatiquement) :
+
+   📄 FIX_RECLAMATION_SERVICE.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   VÉRIFIER QUE ÇA MARCHE
+═══════════════════════════════════════════════════════════════════
+
+Dans PowerShell ou CMD:
+
+   curl http://localhost:5001/health
+
+Tu dois voir :  {"status":"ok"}
+
+
+═══════════════════════════════════════════════════════════════════
+   RÉSUMÉ 30 SECONDES
+═══════════════════════════════════════════════════════════════════
+
+1. Double-clique :  FIX_RECLAMATION_SERVICE.bat
+2. Attends l'installation (~2-10 minutes)
+3. Le service démarre automatiquement
+4. ✅ C'EST BON !
+
+
+═══════════════════════════════════════════════════════════════════

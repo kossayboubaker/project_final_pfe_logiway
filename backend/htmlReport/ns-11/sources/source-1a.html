@@ -1,0 +1,140 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PauseAIService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: PauseAIService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">PauseAIService$MockitoMock$pZVnRvn2</td>
+  </tr>
+  <tr>
+    <td class="name">PauseAIService$MockitoMock$pZVnRvn2$auxiliary$8uhMuWlW</td>
+  </tr>
+  <tr>
+    <td class="name">PauseAIService$MockitoMock$pZVnRvn2$auxiliary$Xr8iSv7f</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services;
+&nbsp;
+&nbsp;import com.logiway.dto.pause.PauseAIDashboardResponse;
+&nbsp;import com.logiway.dto.pause.PauseAIPredictionResponse;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;public interface PauseAIService {
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Évalue la nécessité d&#39;une pause pour un trajet en cours
+&nbsp;     * Appelle le modèle Python Flask et persiste le résultat
+&nbsp;     * Déclenche un événement SSE si nécessaire
+&nbsp;     * 
+&nbsp;     * @param trajetId ID du trajet
+&nbsp;     * @param currentLatitude Latitude GPS actuelle
+&nbsp;     * @param currentLongitude Longitude GPS actuelle
+&nbsp;     * @param distanceParcourueKm Distance parcourue depuis le départ
+&nbsp;     * @return La prédiction IA persistée
+&nbsp;     */
+&nbsp;    PauseAIPredictionResponse evaluerPause(Long trajetId, Double currentLatitude, 
+&nbsp;                                           Double currentLongitude, Double distanceParcourueKm);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Retourne l&#39;historique des prédictions IA pour un trajet
+&nbsp;     * 
+&nbsp;     * @param trajetId ID du trajet
+&nbsp;     * @return Liste des prédictions ordonnées par timestamp
+&nbsp;     */
+&nbsp;    List&lt;PauseAIPredictionResponse&gt; getHistoriquePredictions(Long trajetId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Retourne les statistiques agrégées pour le dashboard analytique
+&nbsp;     * Filtré par entreprise selon le rôle de l&#39;utilisateur
+&nbsp;     * 
+&nbsp;     * @param startDate Date de début de la période
+&nbsp;     * @param endDate Date de fin de la période
+&nbsp;     * @param chauffeurId Filtre optionnel par chauffeur
+&nbsp;     * @return Statistiques dashboard
+&nbsp;     */
+&nbsp;    PauseAIDashboardResponse getDashboardStats(LocalDateTime startDate, LocalDateTime endDate, Long chauffeurId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Exporte les statistiques Pause AI au format CSV.
+&nbsp;     *
+&nbsp;     * @param startDate début de période
+&nbsp;     * @param endDate fin de période
+&nbsp;     * @param chauffeurId filtre optionnel par chauffeur
+&nbsp;     * @return contenu CSV
+&nbsp;     */
+&nbsp;    String exportDashboardCsv(LocalDateTime startDate, LocalDateTime endDate, Long chauffeurId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Retourne TOUS les points de pause (réglementaires + POI IA) pour un trajet
+&nbsp;     * en appelant directement l&#39;API Flask /api/predict
+&nbsp;     * 
+&nbsp;     * @param trajetId ID du trajet
+&nbsp;     * @return Réponse complète du modèle IA avec tous les stops
+&nbsp;     */
+&nbsp;    Map&lt;String, Object&gt; getPausesCompletes(Long trajetId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

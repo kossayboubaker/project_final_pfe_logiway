@@ -1,0 +1,70 @@
+<div class="calendar-page animate-fade-up">
+    <div class="header">
+        <div>
+            <h1 class="text-gradient">Calendrier Logistique</h1>
+            <p class="subtitle">Jours fériés tunisiens, fêtes religieuses et congés de l'équipe</p>
+        </div>
+        <button mat-raised-button color="primary" class="glow-on-hover" (click)="openEventDialog()">
+            <mat-icon>add</mat-icon> NOUVEL ÉVÉNEMENT
+        </button>
+    </div>
+
+    <div class="calendar-container glass-card">
+        <div class="calendar-header">
+            <div class="month-nav">
+                <button mat-icon-button (click)="prev()"><mat-icon>chevron_left</mat-icon></button>
+                <h2>{{getCurrentLabel()}}</h2>
+                <button mat-icon-button (click)="next()"><mat-icon>chevron_right</mat-icon></button>
+            </div>
+            <div class="view-toggle">
+                <button mat-button [class.active]="viewMode === 'month'" (click)="setView('month')">Mois</button>
+                <button mat-button [class.active]="viewMode === 'week'" (click)="setView('week')">Semaine</button>
+                <button mat-button [class.active]="viewMode === 'day'" (click)="setView('day')">Jour</button>
+            </div>
+        </div>
+
+        <div class="calendar-grid" [style.grid-template-columns]="viewMode === 'day' ? '1fr' : 'repeat(7, 1fr)'">
+            <ng-container *ngIf="viewMode !== 'day'">
+                <div class="day-label" *ngFor="let day of weekDays">{{day}}</div>
+            </ng-container>
+
+            <div class="calendar-day" *ngFor="let day of calendarDays" 
+                [class.empty]="!day.currentMonth"
+                [class.today]="day.today"
+                [class.weekend]="isWeekend(day.date)"
+                [style.min-height]="viewMode === 'day' ? '300px' : '120px'"
+                (click)="day.currentMonth || viewMode !== 'month' ? openEventDialog(day.date) : null">
+
+                <!-- Date number -->
+                <span class="date-num">{{day.date.getDate()}}</span>
+
+                <!-- Holiday or religious event name -->
+                <div class="holiday-badge" *ngIf="getHolidayForDate(day.date) as holiday">
+                    <span class="holiday-name" [class]="holiday.type">{{holiday.name}}</span>
+                </div>
+
+                <!-- Leave events (bars spanning multiple days) -->
+                <div class="leaves-section">
+                    <div class="leave" *ngFor="let leave of getLeaveEventsForDate(day.date)"
+                        [class.leave-vacances]="leave.leaveType === 'VACANCES'"
+                        [class.leave-maladie]="leave.leaveType === 'MALADIE'"
+                        [class.leave-mariage]="leave.leaveType === 'MARIAGE'"
+                        [matTooltip]="leave.requesterName + ' - ' + leave.typeLabel + ' (' + leave.duration + ' jours)'">
+                        <span class="leave-badge">{{leave.requesterName}}</span>
+                    </div>
+                </div>
+
+                <!-- Manual events -->
+                <div class="events">
+                    <div class="event" *ngFor="let ev of getManualEventsForDate(day.date)" 
+                        [class]="ev.type"
+                        [matTooltip]="ev.title + ': ' + ev.description">
+                        <mat-icon *ngIf="ev.type === 'maintenance' || ev.type === 'leave'"
+                            style="font-size: 10px; height: 10px; width: 10px;">build</mat-icon>
+                        {{ev.title}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,93 @@
+<mat-toolbar class="main-toolbar glass-effect">
+    <button mat-icon-button (click)="onToggleSidenav()" class="menu-btn">
+        <mat-icon>menu_open</mat-icon>
+    </button>
+
+    <div class="brand">
+        <span class="text-gradient">LogiWay</span>
+    </div>
+
+    <span class="toolbar-spacer"></span>
+
+    <div class="nav-actions">
+        <button mat-icon-button routerLink="/dashboard/messenger" class="action-btn" aria-label="Messenger">
+            <mat-icon [matBadge]="messengerUnreadCount || 0" matBadgeColor="accent">chat_bubble_outline</mat-icon>
+        </button>
+
+        <button mat-icon-button [matMenuTriggerFor]="notifyMenu" (menuOpened)="onNotificationsMenuOpened()" class="action-btn">
+            <mat-icon [matBadge]="unreadBadge" matBadgeColor="accent">notifications</mat-icon>
+        </button>
+
+        <div class="user-profile" [matMenuTriggerFor]="profileMenu">
+            <div class="user-text">
+                <span class="username">{{ user?.firstName ? (user.firstName + ' ' + user.lastName) : user?.username }}</span>
+                <span class="user-role">{{ user?.role }}</span>
+            </div>
+            <img *ngIf="user?.avatar" [src]="user.avatar" alt="Avatar" class="avatar-img">
+            <mat-icon *ngIf="!user?.avatar" class="avatar-icon-fallback">account_circle</mat-icon>
+        </div>
+    </div>
+
+    <mat-menu #notifyMenu="matMenu" class="premium-menu glass-effect">
+        <div class="menu-header">Notifications</div>
+
+        <!-- Multi-type Notifications -->
+        <div #notificationList class="notification-list" [class.scroll-enabled]="showAllNotifications">
+            <div class="notification-item" *ngFor="let alert of (showAllNotifications ? alerts : alerts.slice(0, 3))"
+                [class.unread]="!alert.isRead" (click)="onNotificationClick(alert)">
+                <button class="dismiss-btn-x" (click)="dismissNotification(alert.id, $event)">
+                    <mat-icon>close</mat-icon>
+                </button>
+                <div class="notif-content">
+                    <div class="icon-avatar" [ngClass]="getNotifColorClass(alert)">
+                        <mat-icon>{{ getNotifIcon(alert.category) }}</mat-icon>
+                    </div>
+                    <div class="notif-text">
+                        <div class="notif-header">
+                            <span class="notif-title">{{ alert.title }}</span>
+                            <span class="notif-badge" [ngClass]="getNotifColorClass(alert)">{{
+                                getNotifLabel(alert.category) }}</span>
+                        </div>
+                        <p class="notif-msg">{{ alert.message }}</p>
+                        <span class="notif-time">{{ alert.time }}</span>
+                    </div>
+                </div>
+
+                <div class="notif-actions"
+                    *ngIf="alert.type === 'ACTION' && !(alert.category === 'NOTIF_CONGE' && user?.role === 'DRIVER')">
+                    <button mat-flat-button class="btn-accept" (click)="handleAction(alert, 'ACCEPT')">Accepter</button>
+                    <button mat-flat-button class="btn-reject" (click)="handleAction(alert, 'REJECT')">Refuser</button>
+                </div>
+                <mat-divider></mat-divider>
+            </div>
+        </div>
+
+        <div class="see-more-container" *ngIf="alerts.length > 3">
+            <button mat-button class="see-more-btn" (click)="toggleShowAll($event)">
+                {{ showAllNotifications ? 'Voir moins' : 'Voir plus (' + (alerts.length - 3) + ')' }}
+                <mat-icon>{{ showAllNotifications ? 'expand_less' : 'expand_more' }}</mat-icon>
+            </button>
+        </div>
+
+        <div class="empty-notif" *ngIf="alerts.length === 0">
+            <mat-icon color="accent">notifications_none</mat-icon>
+            <span>Aucune nouvelle notification</span>
+        </div>
+    </mat-menu>
+
+    <mat-menu #profileMenu="matMenu" class="premium-menu glass-effect">
+        <button mat-menu-item routerLink="/dashboard/profile">
+            <mat-icon>person_outline</mat-icon>
+            <span>Mon Profil</span>
+        </button>
+        <button mat-menu-item>
+            <mat-icon>settings</mat-icon>
+            <span>Paramètres</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item class="logout-item" (click)="onLogout()">
+            <mat-icon color="warn">logout</mat-icon>
+            <span class="text-warn">Déconnexion</span>
+        </button>
+    </mat-menu>
+</mat-toolbar>

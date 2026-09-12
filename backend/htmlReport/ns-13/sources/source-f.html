@@ -1,0 +1,120 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PauseAIPredictionRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: PauseAIPredictionRepository (com.logiway.repositories)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">PauseAIPredictionRepository$MockitoMock$v552wwu0</td>
+  </tr>
+  <tr>
+    <td class="name">PauseAIPredictionRepository$MockitoMock$v552wwu0$auxiliary$FkmAs8O4</td>
+  </tr>
+  <tr>
+    <td class="name">PauseAIPredictionRepository$MockitoMock$v552wwu0$auxiliary$ZDIuSswG</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.repositories;
+&nbsp;
+&nbsp;import com.logiway.entities.PauseAIPrediction;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;import org.springframework.data.jpa.repository.Query;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;import org.springframework.stereotype.Repository;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;@Repository
+&nbsp;public interface PauseAIPredictionRepository extends JpaRepository&lt;PauseAIPrediction, Long&gt; {
+&nbsp;
+&nbsp;    List&lt;PauseAIPrediction&gt; findByTrajetIdOrderByTimestampAsc(Long trajetId);
+&nbsp;
+&nbsp;    @Query(&quot;SELECT p FROM PauseAIPrediction p WHERE p.trajet.id = :trajetId ORDER BY p.timestamp DESC LIMIT 1&quot;)
+&nbsp;    Optional&lt;PauseAIPrediction&gt; findLastPredictionForTrajet(@Param(&quot;trajetId&quot;) Long trajetId);
+&nbsp;
+&nbsp;    @Query(&quot;SELECT p FROM PauseAIPrediction p WHERE p.trajet.chauffeur.id = :chauffeurId &quot; +
+&nbsp;           &quot;AND p.timestamp &gt;= :startDate AND p.timestamp &lt;= :endDate ORDER BY p.timestamp ASC&quot;)
+&nbsp;    List&lt;PauseAIPrediction&gt; findByChauffeurIdAndDateRange(
+&nbsp;        @Param(&quot;chauffeurId&quot;) Long chauffeurId,
+&nbsp;        @Param(&quot;startDate&quot;) LocalDateTime startDate,
+&nbsp;        @Param(&quot;endDate&quot;) LocalDateTime endDate
+&nbsp;    );
+&nbsp;
+&nbsp;    @Query(&quot;SELECT p FROM PauseAIPrediction p WHERE p.trajet.chauffeur.entreprise.id = :entrepriseId &quot; +
+&nbsp;           &quot;AND p.timestamp &gt;= :startDate AND p.timestamp &lt;= :endDate ORDER BY p.timestamp ASC&quot;)
+&nbsp;    List&lt;PauseAIPrediction&gt; findByEntrepriseIdAndDateRange(
+&nbsp;        @Param(&quot;entrepriseId&quot;) Long entrepriseId,
+&nbsp;        @Param(&quot;startDate&quot;) LocalDateTime startDate,
+&nbsp;        @Param(&quot;endDate&quot;) LocalDateTime endDate
+&nbsp;    );
+&nbsp;
+&nbsp;    @Query(&quot;SELECT p FROM PauseAIPrediction p WHERE p.timestamp &gt;= :startDate AND p.timestamp &lt;= :endDate &quot; +
+&nbsp;           &quot;ORDER BY p.timestamp ASC&quot;)
+&nbsp;    List&lt;PauseAIPrediction&gt; findByDateRange(
+&nbsp;        @Param(&quot;startDate&quot;) LocalDateTime startDate,
+&nbsp;        @Param(&quot;endDate&quot;) LocalDateTime endDate
+&nbsp;    );
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

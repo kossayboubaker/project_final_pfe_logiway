@@ -1,0 +1,79 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║          🎯 QUE VEUX-TU FAIRE MAINTENANT ?                   ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+┌───────────────────────────────────────────────────────────────┐
+│                                                               │
+│  OPTION 1 : EXÉCUTER LES TESTS UNITAIRES (RECOMMANDÉ)       │
+│                                                               │
+│  ✅ Dis-moi juste :  "corrige avec mocks"                    │
+│                                                               │
+│  Je vais :                                                    │
+│    • Corriger ReclamationServiceTest.java                    │
+│    • Ajouter des mocks pour le service IA                   │
+│    • Tests s'exécutent en 10 secondes                       │
+│    • AUCUN service IA requis                                 │
+│                                                               │
+│  Avantages :                                                  │
+│    ✅ Rapide                                                  │
+│    ✅ Simple                                                  │
+│    ✅ Tests unitaires vrais                                   │
+│    ✅ Pas d'installation lourde                              │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│                                                               │
+│  OPTION 2 : DÉMARRER LES SERVICES IA RÉELS                  │
+│                                                               │
+│  Double-clique sur :                                          │
+│                                                               │
+│      📄 INSTALLER_ET_DEMARRER_SERVICES.bat                   │
+│                                                               │
+│  Avantages :                                                  │
+│    ✅ Teste la vraie intégration IA                          │
+│    ✅ Services prêts pour le développement                   │
+│                                                               │
+│  Inconvénients :                                              │
+│    ❌ Installation ~5-10 minutes                             │
+│    ❌ Tests plus lents                                        │
+│    ❌ Services doivent rester actifs                         │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════
+
+🎯 MA RECOMMANDATION POUR TOI
+
+Pour ton PFE et les tests unitaires :
+
+   → OPTION 1 : "corrige avec mocks"
+
+C'est la méthode standard de l'industrie pour les tests unitaires.
+
+Les services IA réels sont pour les tests d'intégration (plus tard).
+
+═══════════════════════════════════════════════════════════════
+
+
+📊 ÉTAT ACTUEL
+
+✅ Backend Java compile sans erreur
+✅ 61 tests unitaires créés et corrigés
+✅ Tous les guides créés
+⏳ En attente : Correction mocks OU installation services
+
+═══════════════════════════════════════════════════════════════
+
+
+💬 RÉPONDS JUSTE
+
+1. "corrige avec mocks"     ← Pour exécuter les tests rapidement
+2. "installer services"     ← Pour démarrer les services IA réels
+
+═══════════════════════════════════════════════════════════════

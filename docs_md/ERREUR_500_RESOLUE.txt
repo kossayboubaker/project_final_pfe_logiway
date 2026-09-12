@@ -1,0 +1,47 @@
+╔═══════════════════════════════════════════════════════════════╗
+║           🎯 ERREUR 500 RESOLUE - PAUSE AI SERVICE           ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ PROBLÈME TROUVÉ ET CORRIGÉ !
+
+📌 CAUSE:
+   Variable 'amenity' utilisée sans être définie dans la boucle
+   de génération des pauses (ligne ~445 de app.py)
+
+🔧 CORRECTION APPLIQUÉE:
+   Ajout de ces 2 lignes dans la boucle for ac in accepted_candidates:
+   
+   amenity = tags.get("amenity", "")
+   highway_type = tags.get("highway", "")
+
+📂 FICHIER MODIFIÉ:
+   pause-ai-service/app.py (lignes 410-411)
+
+🚀 PROCHAINE ÉTAPE - REDÉMARRER LE SERVICE:
+
+   Option 1 - Script automatique:
+   ─────────────────────────────
+   cd pause-ai-service
+   .\RESTART_SERVICE.bat
+
+   Option 2 - Manuel:
+   ──────────────────
+   1. Arrêter le service actuel (CTRL+C)
+   2. python app.py
+   3. Tester le trajet 80 dans le Frontend
+
+📊 RÉSULTAT ATTENDU:
+
+   Console Flask:
+   ✅ POST /api/predict HTTP/1.1" 200 -
+
+   Console Browser:
+   ✅ [PauseMap] Pauses chargées: 3 arrêts recommandés
+   ✅ Markers affichés sur la carte
+
+───────────────────────────────────────────────────────────────
+📖 Documentation complète: CORRECTION_ERREUR_500_FINALE.md
+───────────────────────────────────────────────────────────────
+
+Date: 27/07/2026 17:30
+Statut: ✅ PRÊT À TESTER

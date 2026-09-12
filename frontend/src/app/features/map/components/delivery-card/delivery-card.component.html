@@ -1,0 +1,65 @@
+<div class="truck-card" id="truck-card-{{truck.id}}" [class.active]="isActive" (click)="onCardClick()" role="button"
+    tabindex="0" (keydown.enter)="onCardClick()" (keydown.space)="onCardClick()">
+
+    <div class="card-header">
+        <span class="tag-eco" *ngIf="truck.eco"><mat-icon>leaf</mat-icon>ECO</span>
+        <span class="tag-normal" *ngIf="!truck.eco">NORMAL</span>
+        <span class="truck-id">{{truck.id}} <mat-icon class="dot-icon">circle</mat-icon></span>
+    </div>
+
+    <div class="truck-name">
+        <span class="truck-emoji">
+            {{
+            truck.type === 'small'
+            ? '🚚'
+            : truck.type === 'van'
+            ? '🚐'
+            : '🚛'
+            }}
+        </span>
+        {{truck.name}}
+    </div>
+
+    <div class="truck-subinfo">
+        <mat-icon>opacity</mat-icon> {{truck.consumption}}
+        <span class="speed"><mat-icon>speed</mat-icon> {{truck.speed}} km/h</span>
+    </div>
+
+    <div class="progress-section">
+        <div class="progress-header">
+            <span class="progress-label">{{truck.progress}}% Progress Route</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="truck.progress"></div>
+        </div>
+    </div>
+
+    <div class="route-info">
+        <div class="route-point">
+            <div class="point-dot start"></div>
+            <div class="point-text">
+                <span class="label">Départ</span>
+                <span class="value">{{truck.from}}</span>
+            </div>
+        </div>
+        <div class="route-point">
+            <div class="point-dot end"></div>
+            <div class="point-text">
+                <span class="label">Destination & Zone</span>
+                <span class="value" [title]="truck.zone">{{truck.to}}{{truck.zone ? ' (' + truck.zone + ')' :
+                    ''}}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <div class="driver-info">
+            <mat-icon>account_circle</mat-icon>
+            <div class="driver-text">
+                <div class="name">{{truck.driver}}</div>
+                <div class="phone">{{truck.phone || 'Maj: temps réel'}}</div>
+            </div>
+        </div>
+        <span class="badge" [class.en-cours]="truck.status === 'En cours'">{{truck.status}}</span>
+    </div>
+</div>

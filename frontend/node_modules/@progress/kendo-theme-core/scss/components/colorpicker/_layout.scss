@@ -1,0 +1,13 @@
+@mixin kendo-color-picker--layout-base() {
+
+    // Color picker
+    .k-color-picker {
+        width: min-content;
+    }
+
+    // Alias
+    .k-colorpicker {
+        @extend .k-color-picker !optional;
+    }
+
+}

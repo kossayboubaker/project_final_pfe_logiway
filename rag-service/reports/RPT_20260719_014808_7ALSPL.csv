@@ -1,0 +1,12 @@
+﻿# Rapport Conges - Toutes périodes
+# Généré le: 19/07/2026 01:48:08
+# Domaine: conges
+# Période: Toutes périodes
+# Nombre d'enregistrements: 5
+#
+id,chauffeur_id,type,date_debut,date_fin,statut,motif,periode
+5,,VACANCES,2026-06-26,2026-06-28,APPROUVE,je veu prendre une vacance pour deux jours,3
+3,42,VACANCES,2026-05-19,2026-05-20,REJETE,je veux faire une vacance,2
+4,,MARIAGE,2026-05-19,2026-06-21,REJETE,je veux marie,34
+1,,VACANCES,2026-05-13,2026-05-17,APPROUVE,je veux faire une vacance pour reduire le stresse,5
+2,42,MALADIE,2026-05-10,2026-05-13,APPROUVE,je suis maladie et je veux prendre un conge pour 3 jours,4

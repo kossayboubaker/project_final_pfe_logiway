@@ -1,0 +1,242 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MessengerController</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.controllers</a>
+</div>
+
+<h1>Coverage Summary for Class: MessengerController (com.logiway.controllers)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">MessengerController</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (13/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (24/24)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.controllers;
+&nbsp;
+&nbsp;import com.logiway.dto.request.MessengerTextRequest;
+&nbsp;import com.logiway.dto.request.MessengerMessageUpdateRequest;
+&nbsp;import com.logiway.dto.response.MessengerConversationResponse;
+&nbsp;import com.logiway.dto.response.MessengerMessagePageResponse;
+&nbsp;import com.logiway.dto.response.MessengerMessageResponse;
+&nbsp;import com.logiway.dto.response.MessengerPresenceResponse;
+&nbsp;import com.logiway.dto.response.MessengerReadResponse;
+&nbsp;import com.logiway.dto.response.MessengerUserResponse;
+&nbsp;import com.logiway.security.AuthenticatedUserService;
+&nbsp;import com.logiway.services.MessengerRealtimeService;
+&nbsp;import com.logiway.services.MessengerService;
+&nbsp;import jakarta.validation.Valid;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.core.io.Resource;
+&nbsp;import org.springframework.http.HttpHeaders;
+&nbsp;import org.springframework.http.HttpStatus;
+&nbsp;import org.springframework.http.MediaType;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.security.access.prepost.PreAuthorize;
+&nbsp;import org.springframework.web.bind.annotation.*;
+&nbsp;import org.springframework.web.multipart.MultipartFile;
+&nbsp;import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@RestController
+&nbsp;@RequestMapping(&quot;/api/messenger&quot;)
+&nbsp;@RequiredArgsConstructor
+&nbsp;@PreAuthorize(&quot;hasAnyAuthority(&#39;ROLE_SUPERADMIN&#39;,&#39;ROLE_MANAGER&#39;,&#39;ROLE_CHAUFFEUR&#39;)&quot;)
+&nbsp;public class MessengerController {
+&nbsp;
+&nbsp;    private final MessengerService messengerService;
+&nbsp;    private final MessengerRealtimeService messengerRealtimeService;
+&nbsp;    private final AuthenticatedUserService authenticatedUserService;
+&nbsp;
+&nbsp;    @GetMapping(&quot;/conversations&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;MessengerConversationResponse&gt;&gt; getConversations(@RequestParam(required = false) String search) {
+<b class="fc">&nbsp;        return ResponseEntity.ok(messengerService.getConversations(search));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/conversations/{destinataireId}/messages&quot;)
+&nbsp;    public ResponseEntity&lt;MessengerMessagePageResponse&gt; getConversationMessages(@PathVariable Long destinataireId,
+&nbsp;                                                                                @RequestParam(defaultValue = &quot;0&quot;) int page,
+&nbsp;                                                                                @RequestParam(defaultValue = &quot;30&quot;) int size) {
+<b class="fc">&nbsp;        return ResponseEntity.ok(messengerService.getConversationMessages(destinataireId, page, size));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/messages&quot;)
+&nbsp;    public ResponseEntity&lt;MessengerMessageResponse&gt; sendTextMessage(@Valid @RequestBody MessengerTextRequest request) {
+<b class="fc">&nbsp;        return ResponseEntity.status(HttpStatus.CREATED).body(messengerService.sendTextMessage(request));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(value = &quot;/messages/fichiers&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+&nbsp;    public ResponseEntity&lt;MessengerMessageResponse&gt; sendFileMessage(@RequestParam Long destinataireId,
+&nbsp;                                                                    @RequestParam MultipartFile fichier) {
+<b class="fc">&nbsp;        return ResponseEntity.status(HttpStatus.CREATED).body(messengerService.sendFileMessage(destinataireId, fichier));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(value = &quot;/messages/vocal&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+&nbsp;    public ResponseEntity&lt;MessengerMessageResponse&gt; sendVocalMessage(@RequestParam Long destinataireId,
+&nbsp;                                                                     @RequestParam MultipartFile fichier,
+&nbsp;                                                                     @RequestParam(required = false) Integer dureeVocale) {
+<b class="fc">&nbsp;        return ResponseEntity.status(HttpStatus.CREATED).body(messengerService.sendVocalMessage(destinataireId, fichier, dureeVocale));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PutMapping(&quot;/messages/{messageId}&quot;)
+&nbsp;    public ResponseEntity&lt;MessengerMessageResponse&gt; updateMessage(@PathVariable Long messageId,
+&nbsp;                                                                  @Valid @RequestBody MessengerMessageUpdateRequest request) {
+<b class="fc">&nbsp;        return ResponseEntity.ok(messengerService.updateMessage(messageId, request));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @DeleteMapping(&quot;/messages/{messageId}&quot;)
+&nbsp;    public ResponseEntity&lt;Void&gt; deleteMessage(@PathVariable Long messageId) {
+<b class="fc">&nbsp;        messengerService.deleteMessage(messageId);</b>
+<b class="fc">&nbsp;        return ResponseEntity.noContent().build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/fichiers/{filename}&quot;)
+&nbsp;    public ResponseEntity&lt;Resource&gt; getFile(@PathVariable String filename) {
+<b class="fc">&nbsp;        Resource resource = messengerService.loadFile(filename);</b>
+<b class="fc">&nbsp;        String contentType = &quot;application/octet-stream&quot;;</b>
+&nbsp;        try {
+<b class="fc">&nbsp;            contentType = resource.getURL().toString().toLowerCase().endsWith(&quot;.pdf&quot;) ? MediaType.APPLICATION_PDF_VALUE : contentType;</b>
+&nbsp;        } catch (IOException ignored) {
+&nbsp;            // Fallback to octet-stream.
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return ResponseEntity.ok()</b>
+<b class="fc">&nbsp;            .header(HttpHeaders.CONTENT_DISPOSITION, &quot;inline; filename=\&quot;&quot; + filename + &quot;\&quot;&quot;)</b>
+<b class="fc">&nbsp;            .contentType(MediaType.parseMediaType(contentType))</b>
+<b class="fc">&nbsp;            .body(resource);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PutMapping(&quot;/conversations/{destinataireId}/lu&quot;)
+&nbsp;    public ResponseEntity&lt;MessengerReadResponse&gt; markAsRead(@PathVariable Long destinataireId) {
+<b class="fc">&nbsp;        return ResponseEntity.ok(messengerService.markConversationAsRead(destinataireId));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(&quot;/utilisateurs&quot;)
+&nbsp;    public ResponseEntity&lt;List&lt;MessengerUserResponse&gt;&gt; getAuthorizedUsers(@RequestParam(required = false) String search) {
+<b class="fc">&nbsp;        return ResponseEntity.ok(messengerService.getAuthorizedUsers(search));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @GetMapping(value = &quot;/stream&quot;, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+&nbsp;    public SseEmitter stream() {
+<b class="fc">&nbsp;        Long currentUserId = authenticatedUserService.getCurrentUser().getId();</b>
+<b class="fc">&nbsp;        if (currentUserId == null) {</b>
+<b class="fc">&nbsp;            throw new com.logiway.exceptions.UnauthorizedException(&quot;User id is missing&quot;);</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return messengerRealtimeService.register(currentUserId);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/presence&quot;)
+&nbsp;    public ResponseEntity&lt;MessengerPresenceResponse&gt; heartbeat() {
+<b class="fc">&nbsp;        return ResponseEntity.ok(messengerService.heartbeat());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @PostMapping(&quot;/presence/disconnect&quot;)
+&nbsp;    public ResponseEntity&lt;MessengerPresenceResponse&gt; disconnectPresence() {
+<b class="fc">&nbsp;        messengerService.disconnectPresence();</b>
+<b class="fc">&nbsp;        return ResponseEntity.ok(new MessengerPresenceResponse(authenticatedUserService.getCurrentUser().getId(), false, java.time.LocalDateTime.now()));</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!-- ════════════════════════════════════════════════════
+     LOGIWAY — PowerBI-Style Trip History Dashboard
+     Accessible pour: Chauffeur · Manager · SuperAdmin
+     ════════════════════════════════════════════════════ -->
+
+<div class="lw-analytics-shell">
+
+    <!-- ── PAGE HEADER ─────────────────────────────── -->
+    <div class="lw-page-header">
+        <div class="lw-page-header__left">
+            <div class="lw-page-header__icon-wrap">
+                <mat-icon>insights</mat-icon>
+            </div>
+            <div>
+                <h1 class="lw-page-header__title">Historique des Trajets</h1>
+                <p class="lw-page-header__subtitle">Tableau de bord analytique — Suivi détaillé de l'activité logistique</p>
+            </div>
+        </div>
+        <div class="lw-page-header__badge">
+            <mat-icon>route</mat-icon>
+            <span>{{ kpiTotalTrips }} trajets chargés</span>
+        </div>
+    </div>
+
+    <!-- ── SECTOR BAR (TOP — CONFORME DEMANDE) ── -->
+    <div class="lw-sector-bar animate-fade-up" *ngIf="userRole === 'MANAGER' && sectorStats" style="margin-bottom: 0.5rem;">
+        <div class="lw-sector-bar__left">
+            <div class="lw-sector-bar__icon">
+                <mat-icon>business</mat-icon>
+            </div>
+            <div class="lw-sector-bar__info">
+                <span class="lw-sector-bar__name">{{ sectorStats.nom }}</span>
+                <span class="lw-sector-bar__geo">{{ sectorStats.zoneGeographique }}</span>
+            </div>
+        </div>
+        <div class="lw-sector-bar__right">
+            <div class="lw-sector-pill">
+                <mat-icon>person</mat-icon>
+                <span>{{ sectorStats.driversCount }} chauffeurs</span>
+            </div>
+            <div class="lw-sector-pill">
+                <mat-icon>sync_alt</mat-icon>
+                <span>{{ sectorStats.trajetsCount }} trajets</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── KPI CARDS & DRIVER FILTER INTEGRATION ── -->
+    <div class="lw-kpis-and-filter animate-fade-up">
+        <!-- Dashboard Filters / Driver Selection (Premium Driver Filter Integration) -->
+        <div class="lw-driver-selector-v2 card-v2-alt" *ngIf="userRole !== 'DRIVER'">
+            <div class="lw-selector-header">
+                <mat-icon>account_circle</mat-icon>
+                <span>Filtrage par Chauffeur</span>
+                <small *ngIf="drivers.length > 0">— {{ drivers.length }} chauffeur(s)</small>
+            </div>
+            <div class="lw-driver-chips">
+                <button class="chip chip--all"
+                        [class.chip--active]="selectedDriverId === null"
+                        (click)="onDriverSelect(null)">
+                    <mat-icon>group</mat-icon>
+                    <span>Tous</span>
+                    <span class="chip-count">{{ drivers.length }}</span>
+                </button>
+
+                <button *ngFor="let d of drivers"
+                        class="chip chip--driver"
+                        [class.chip--active]="selectedDriverId === d.id"
+                        (click)="onDriverSelect(d.id)">
+                    <div class="chip-avatar">{{ d.prenom[0] }}{{ d.nom[0] }}</div>
+                    <span class="chip-name">{{ d.prenom }} {{ d.nom }}</span>
+                    <div class="status-dot online"></div>
+                </button>
+            </div>
+        </div>
+
+        <div class="lw-kpi-grid-v3">
+            <!-- Missions Actives -->
+            <div class="lw-kpi-card-v2 lw-kpi-card-v2--small lw-kpi-card-v2--indigo">
+                <div class="lw-kpi-card-v2__icon"><mat-icon>sync</mat-icon></div>
+                <div class="lw-kpi-card-v2__body">
+                    <span class="lw-kpi-card-v2__label">Missions Actives</span>
+                    <span class="lw-kpi-card-v2__value">{{ kpiActiveCount }}</span>
+                </div>
+                <div class="lw-kpi-card-v2__glow"></div>
+            </div>
+
+            <!-- Missions Terminées -->
+            <div class="lw-kpi-card-v2 lw-kpi-card-v2--small lw-kpi-card-v2--emerald">
+                <div class="lw-kpi-card-v2__icon"><mat-icon>task_alt</mat-icon></div>
+                <div class="lw-kpi-card-v2__body">
+                    <span class="lw-kpi-card-v2__label">Terminées</span>
+                    <span class="lw-kpi-card-v2__value">{{ kpiCompletedCount }}</span>
+                </div>
+                <div class="lw-kpi-card-v2__glow"></div>
+            </div>
+
+            <!-- Distance Totale -->
+            <div class="lw-kpi-card-v2 lw-kpi-card-v2--small lw-kpi-card-v2--cyan">
+                <div class="lw-kpi-card-v2__icon"><mat-icon>straighten</mat-icon></div>
+                <div class="lw-kpi-card-v2__body">
+                    <span class="lw-kpi-card-v2__label">Distance</span>
+                    <span class="lw-kpi-card-v2__value">{{ kpiTotalDistance | number }}<small>km</small></span>
+                </div>
+                <div class="lw-kpi-card-v2__glow"></div>
+            </div>
+
+            <!-- Véhicules -->
+            <div class="lw-kpi-card-v2 lw-kpi-card-v2--small lw-kpi-card-v2--teal">
+                <div class="lw-kpi-card-v2__icon"><mat-icon>local_shipping</mat-icon></div>
+                <div class="lw-kpi-card-v2__body">
+                    <span class="lw-kpi-card-v2__label">Véhicules</span>
+                    <span class="lw-kpi-card-v2__value">{{ vehicleCount }}</span>
+                </div>
+                <div class="lw-kpi-card-v2__glow"></div>
+            </div>
+
+            <!-- Taux Ponctualité -->
+            <div class="lw-kpi-card-v2 lw-kpi-card-v2--small lw-kpi-card-v2--green">
+                <div class="lw-kpi-card-v2__icon"><mat-icon>verified</mat-icon></div>
+                <div class="lw-kpi-card-v2__body">
+                    <span class="lw-kpi-card-v2__label">Fiabilité</span>
+                    <span class="lw-kpi-card-v2__value">{{ kpiOnTimeRate }}%</span>
+                </div>
+                <div class="lw-kpi-card-v2__glow"></div>
+            </div>
+
+            <!-- Retard Moyen -->
+            <div class="lw-kpi-card-v2 lw-kpi-card-v2--small lw-kpi-card-v2--amber">
+                <div class="lw-kpi-card-v2__icon"><mat-icon>assignment_late</mat-icon></div>
+                <div class="lw-kpi-card-v2__body">
+                    <span class="lw-kpi-card-v2__label">Retard</span>
+                    <span class="lw-kpi-card-v2__value">{{ kpiAvgDelay }}<small>min</small></span>
+                </div>
+                <div class="lw-kpi-card-v2__glow"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- (Driver filter now integrated in top segment) -->
+
+    <!-- ── FILTER PANEL ─────────────────────────────── -->
+    <div class="lw-filter-panel">
+        <div class="lw-filter-panel__title">
+            <mat-icon>filter_alt</mat-icon>
+            <span>Filtres analytiques</span>
+            <span class="lw-filter-active-badge" *ngIf="hasActiveFilters">
+                {{ activeFilterCount }} actif(s)
+            </span>
+        </div>
+
+        <div class="lw-filter-grid">
+            <!-- Statut -->
+            <div class="lw-filter-group">
+                <label class="lw-filter-label">
+                    <mat-icon>flag</mat-icon> Statut
+                </label>
+                <select class="lw-select" [value]="selectedStatus" (change)="onStatusChange($any($event.target).value)">
+                    <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+                </select>
+            </div>
+
+            <!-- Jour de semaine -->
+            <div class="lw-filter-group">
+                <label class="lw-filter-label">
+                    <mat-icon>today</mat-icon> Jour
+                </label>
+                <select class="lw-select" [value]="selectedDay" (change)="onDayChange($any($event.target).value)">
+                    <option *ngFor="let opt of dayOptions" [value]="opt.value">{{ opt.label }}</option>
+                </select>
+            </div>
+
+            <!-- Date début -->
+            <div class="lw-filter-group">
+                <label class="lw-filter-label">
+                    <mat-icon>event</mat-icon> Date début
+                </label>
+                <input type="date" class="lw-input-date" [value]="filterDateFrom" (change)="onDateFromChange($any($event.target).value)" />
+            </div>
+
+            <!-- Date fin -->
+            <div class="lw-filter-group">
+                <label class="lw-filter-label">
+                    <mat-icon>event_available</mat-icon> Date fin
+                </label>
+                <input type="date" class="lw-input-date" [value]="filterDateTo" (change)="onDateToChange($any($event.target).value)" />
+            </div>
+
+            <!-- Reset -->
+            <div class="lw-filter-group lw-filter-group--reset" *ngIf="hasActiveFilters">
+                <button class="lw-btn-reset" (click)="clearFilters()">
+                    <mat-icon>restart_alt</mat-icon>
+                    Réinitialiser
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── CHARTS SECTION ───────────────────────────── -->
+    <div class="lw-charts-section">
+
+        <!-- Chart switcher tabs -->
+        <div class="lw-chart-tabs">
+            <button class="lw-chart-tab" [class.lw-chart-tab--active]="activeChart === 'bar'" (click)="setActiveChart('bar')">
+                <mat-icon>bar_chart</mat-icon>
+                <span>Missions / Jour</span>
+            </button>
+            <button class="lw-chart-tab" [class.lw-chart-tab--active]="activeChart === 'line'" (click)="setActiveChart('line')">
+                <mat-icon>show_chart</mat-icon>
+                <span>Distance / Jour</span>
+            </button>
+            <button class="lw-chart-tab" [class.lw-chart-tab--active]="activeChart === 'doughnut'" (click)="setActiveChart('doughnut')">
+                <mat-icon>donut_large</mat-icon>
+                <span>Répartition Statuts</span>
+            </button>
+        </div>
+
+        <!-- Charts cards side by side -->
+        <div class="lw-charts-grid">
+
+            <!-- Main active chart -->
+            <div class="lw-chart-card lw-chart-card--main">
+                <div class="lw-chart-card__header">
+                    <div class="lw-chart-card__title-wrap">
+                        <span class="lw-chart-card__dot" [class.lw-dot--blue]="activeChart==='bar'" [class.lw-dot--emerald]="activeChart==='line'" [class.lw-dot--violet]="activeChart==='doughnut'"></span>
+                        <h3 class="lw-chart-card__title">
+                            <ng-container *ngIf="activeChart==='bar'">Flux de missions par jour de semaine</ng-container>
+                            <ng-container *ngIf="activeChart==='line'">Distance parcourue par jour de semaine</ng-container>
+                            <ng-container *ngIf="activeChart==='doughnut'">Répartition par statut de mission</ng-container>
+                        </h3>
+                    </div>
+                    <span class="lw-chart-card__total">{{ totalElements }} résultats filtrés</span>
+                </div>
+                <div class="lw-chart-canvas-wrap">
+                    <canvas *ngIf="activeChart === 'bar'" baseChart [data]="barChartData" [options]="barChartOptions" [type]="barChartType"></canvas>
+                    <canvas *ngIf="activeChart === 'line'" baseChart [data]="lineChartData" [options]="lineChartOptions" [type]="lineChartType"></canvas>
+                    <canvas *ngIf="activeChart === 'doughnut'" baseChart [data]="doughnutChartData" [options]="doughnutChartOptions" [type]="doughnutChartType"></canvas>
+                </div>
+            </div>
+
+            <!-- Secondary inline mini charts -->
+            <div class="lw-mini-charts">
+                <div class="lw-mini-chart-card" [class.lw-mini-chart-card--active]="activeChart==='bar'" (click)="setActiveChart('bar')">
+                    <div class="lw-mini-chart__label"><mat-icon>bar_chart</mat-icon> Missions/Jour</div>
+                    <div class="lw-mini-canvas">
+                        <canvas baseChart [data]="barChartData" [options]="barMiniOptions" [type]="barChartType"></canvas>
+                    </div>
+                </div>
+                <div class="lw-mini-chart-card" [class.lw-mini-chart-card--active]="activeChart==='line'" (click)="setActiveChart('line')">
+                    <div class="lw-mini-chart__label"><mat-icon>show_chart</mat-icon> Distance/Jour</div>
+                    <div class="lw-mini-canvas">
+                        <canvas baseChart [data]="lineChartData" [options]="lineMiniOptions" [type]="lineChartType"></canvas>
+                    </div>
+                </div>
+                <div class="lw-mini-chart-card" [class.lw-mini-chart-card--active]="activeChart==='doughnut'" (click)="setActiveChart('doughnut')">
+                    <div class="lw-mini-chart__label"><mat-icon>donut_large</mat-icon> Statuts</div>
+                    <div class="lw-mini-canvas">
+                        <canvas baseChart [data]="doughnutChartData" [options]="doughnutMiniOptions" [type]="doughnutChartType"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── DATA TABLE ───────────────────────────────── -->
+    <div class="lw-table-section">
+        <div class="lw-table-header">
+            <div class="lw-table-title">
+                <mat-icon>table_chart</mat-icon>
+                <h3>Détail des trajets</h3>
+                <span class="lw-table-count">{{ totalElements }} enregistrements</span>
+            </div>
+        </div>
+
+        <div class="lw-table-container">
+            <table mat-table [dataSource]="dataSource" class="lw-premium-table">
+
+                <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>event</mat-icon> Date</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-date-cell">{{ element.date }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="origin">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>trip_origin</mat-icon> Origine</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <div class="lw-route-cell lw-route-cell--from">
+                            <span class="lw-route-dot lw-route-dot--from"></span>
+                            {{ element.origin }}
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="destination">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>place</mat-icon> Destination</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <div class="lw-route-cell lw-route-cell--to">
+                            <span class="lw-route-dot lw-route-dot--to"></span>
+                            {{ element.destination }}
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="vehicle">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>local_shipping</mat-icon> Véhicule</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-vehicle-tag">{{ element.vehicle }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="chauffeur">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>person</mat-icon> Chauffeur</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-driver-tag">{{ element.chauffeur }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="distance">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>straighten</mat-icon> Distance</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-metric-cell lw-metric-cell--distance">{{ element.distance }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="duration">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>timer</mat-icon> Durée réelle</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-metric-cell">{{ element.duration }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="delay">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>more_time</mat-icon> Retard</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-delay-cell" [class.lw-delay-cell--late]="element.rawDelay > 0" [class.lw-delay-cell--ontime]="element.rawDelay <= 0">
+                            {{ element.delay }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="performance">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>speed</mat-icon> Performance</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-perf-cell">{{ element.performance }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="lw-th-content"><mat-icon>flag</mat-icon> Statut</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="lw-status-badge" [ngClass]="'lw-status-badge--' + element.statusClass">
+                            {{ element.status }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="lw-table-row"></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell lw-no-data" colspan="9">
+                        <div class="lw-empty-state">
+                            <mat-icon>search_off</mat-icon>
+                            <h4>Aucun trajet trouvé</h4>
+                            <p>Modifiez vos filtres pour afficher des résultats.</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Paginator -->
+        <div class="lw-paginator">
+            <mat-paginator
+                [length]="totalElements"
+                [pageIndex]="pageIndex"
+                [pageSize]="pageSize"
+                [pageSizeOptions]="[5, 10, 20, 50]"
+                (page)="onPageChange($event)"
+                aria-label="Pagination des trajets">
+            </mat-paginator>
+        </div>
+    </div>
+
+</div>

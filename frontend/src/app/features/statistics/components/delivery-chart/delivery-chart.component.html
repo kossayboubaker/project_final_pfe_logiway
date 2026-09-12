@@ -1,0 +1,618 @@
+<!-- ════════════════════════════════════════════════════
+     LOGIWAY — Dashboard Livraisons Intelligence Logistique Avancée
+     ════════════════════════════════════════════════════ -->
+
+<div class="dc-dashboard">
+
+    <!-- ── HEADER ─────────────────────────────────────── -->
+    <header class="dc-header">
+        <div class="dc-header__left">
+            <div class="dc-header__icon-wrap">
+                <mat-icon>local_shipping</mat-icon>
+            </div>
+            <div>
+                <h1 class="dc-header__title">Dashboard Livraisons & Trajets</h1>
+                <p class="dc-header__subtitle">Suivi de performance des tournées, distances parcourues et routes
+                    optimales</p>
+            </div>
+        </div>
+        <div class="dc-header__right">
+            <div class="dc-header__live-badge">
+                <span class="dc-live-dot"></span>
+                <span>{{ kpiTotalTrips }} Trajets au total</span>
+            </div>
+            <div class="dc-header__stat-badge dc-header__stat-badge--emerald">
+                <mat-icon>verified</mat-icon>
+                <span>{{ kpiOnTimeRate }}% Ponctualité</span>
+            </div>
+            <div class="dc-header__stat-badge dc-header__stat-badge--score"
+                [style.background]="healthScore.color + '22'" [style.borderColor]="healthScore.color + '44'"
+                [style.color]="healthScore.color">
+                <mat-icon>monitor_heart</mat-icon>
+                <span>Score: {{ healthScore.score }}/100</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── KPI STRIP ENHANCED ─────────────────────────── -->
+    <section class="dc-kpi-strip">
+        <div class="dc-kpi dc-kpi--indigo">
+            <div class="dc-kpi__icon"><mat-icon>alt_route</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Nombre Total</span>
+                <span class="dc-kpi__value">{{ kpiTotalTrips }}</span>
+                <span class="dc-kpi__trend" [ngClass]="trendTotal >= 0 ? 'dc-kpi__trend--up' : 'dc-kpi__trend--down'">
+                    <mat-icon>{{ trendTotal >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                    {{ trendTotal >= 0 ? '+' : '' }}{{ trendTotal }}%
+                </span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--emerald">
+            <div class="dc-kpi__icon"><mat-icon>map</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Distance Cumulée</span>
+                <span class="dc-kpi__value">{{ kpiTotalDistance >= 1000 ? (kpiTotalDistance / 1000).toFixed(1) + 'k' :
+                    kpiTotalDistance }} <small>km</small></span>
+                <span class="dc-kpi__trend"
+                    [ngClass]="trendDistance >= 0 ? 'dc-kpi__trend--up' : 'dc-kpi__trend--down'">
+                    <mat-icon>{{ trendDistance >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                    {{ trendDistance >= 0 ? '+' : '' }}{{ trendDistance }}%
+                </span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--violet">
+            <div class="dc-kpi__icon"><mat-icon>schedule</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Durée Moyenne</span>
+                <span class="dc-kpi__value">{{ formatDuration(kpiAvgDuration) }}</span>
+                <span class="dc-kpi__trend"
+                    [ngClass]="trendDuration <= 0 ? 'dc-kpi__trend--up' : 'dc-kpi__trend--down'">
+                    <mat-icon>{{ trendDuration <= 0 ? 'trending_down' : 'trending_up' }}</mat-icon>
+                            {{ trendDuration >= 0 ? '+' : '' }}{{ trendDuration }}%
+                </span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--amber">
+            <div class="dc-kpi__icon"><mat-icon>timer</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Taux Ponctualité</span>
+                <span class="dc-kpi__value">{{ kpiOnTimeRate }}%</span>
+                <span class="dc-kpi__trend" [ngClass]="trendOnTime >= 0 ? 'dc-kpi__trend--up' : 'dc-kpi__trend--down'">
+                    <mat-icon>{{ trendOnTime >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+                    {{ trendOnTime >= 0 ? '+' : '' }}{{ trendOnTime }}%
+                </span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--rose">
+            <div class="dc-kpi__icon"><mat-icon>checklist</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Taux Complétion</span>
+                <span class="dc-kpi__value">{{ kpiCompletionRate }}%</span>
+                <span class="dc-kpi__trend dc-kpi__trend--up">
+                    <mat-icon>verified</mat-icon> Trajets terminés
+                </span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--cyan">
+            <div class="dc-kpi__icon"><mat-icon>directions_run</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Trajets Actifs</span>
+                <span class="dc-kpi__value">{{ kpiActiveRate }}%</span>
+                <span class="dc-kpi__trend" [ngClass]="kpiActiveRate > 0 ? 'dc-kpi__trend--up' : 'dc-kpi__trend--down'">
+                    <mat-icon>{{ kpiActiveRate > 0 ? 'trending_up' : 'trending_flat' }}</mat-icon>
+                    En cours
+                </span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+    </section>
+
+    <!-- ── FILTER BAR ─────────────────────────────────── -->
+    <section class="dc-filter-bar">
+        <div class="dc-filter-bar__left">
+            <mat-icon class="dc-filter-icon">tune</mat-icon>
+            <span class="dc-filter-label">Filtres</span>
+            <span class="dc-filter-badge"
+                *ngIf="filterSearch || filterOptType || filterStatus || filterDateFrom || filterDateTo">
+                {{ (filterSearch ? 1 : 0) + (filterOptType ? 1 : 0) + (filterStatus ? 1 : 0) + (filterDateFrom ? 1 : 0)
+                + (filterDateTo ? 1 : 0) }}
+            </span>
+        </div>
+        <div class="dc-filter-bar__controls">
+            <input type="text" class="dc-search-input" placeholder="Rechercher trajet, véhicule, chauffeur..."
+                [(ngModel)]="filterSearch" (input)="onSearchChange()">
+            <select class="dc-select" [value]="filterOptType" (change)="onOptTypeChange($any($event.target).value)">
+                <option value="">Optimisation (Toutes)</option>
+                <option value="Rapide">Rapide</option>
+                <option value="Économique">Économique</option>
+                <option value="Écologique">Écologique</option>
+            </select>
+            <select class="dc-select" [value]="filterStatus" (change)="onStatusChange($any($event.target).value)">
+                <option value="">Statut (Tous)</option>
+                <option value="Planifié">Planifié</option>
+                <option value="En Cours">En Cours</option>
+                <option value="Terminé">Terminé</option>
+                <option value="Annulé">Annulé</option>
+            </select>
+            <input type="date" class="dc-date-input" [value]="filterDateFrom"
+                (change)="onDateFromChange($any($event.target).value)" title="Date début">
+            <input type="date" class="dc-date-input" [value]="filterDateTo"
+                (change)="onDateToChange($any($event.target).value)" title="Date fin">
+            <button class="dc-btn-clear"
+                *ngIf="filterSearch || filterOptType || filterStatus || filterDateFrom || filterDateTo"
+                (click)="clearFilters()">
+                <mat-icon>restart_alt</mat-icon> Réinitialiser
+            </button>
+        </div>
+    </section>
+
+    <!-- ── ALERTES INTELLIGENTES ──────────────────────── -->
+    <section class="dc-alerts-strip" *ngIf="smartAlerts.length > 0">
+        <div class="dc-alerts-strip__inner">
+            <mat-icon class="dc-alerts-icon">notifications_active</mat-icon>
+            <span class="dc-alerts-title">Alertes</span>
+            <div class="dc-alerts-scroll">
+                <span class="dc-alert-item" *ngFor="let alert of smartAlerts" [ngClass]="'dc-alert--' + alert.severity">
+                    <mat-icon>{{ getAlertIcon(alert.icon) }}</mat-icon>
+                    {{ alert.message }}
+                </span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── FILTRE ACTIF ──────────────────────────────── -->
+    <div class="dc-filter-chip-bar" *ngIf="chartFilter">
+        <span class="dc-filter-chip-label">Filtre actif</span>
+        <span class="dc-filter-chip-value">{{ chartFilter.type === 'optimization' ? 'Optimisation : ' : chartFilter.type
+            === 'delay' ? 'Retard : ' : chartFilter.type === 'driver' ? 'Chauffeur : ' : chartFilter.type ===
+            'evolution' ? 'Semaine : ' : 'Période : ' }}{{ chartFilter.value }}</span>
+        <button class="dc-filter-chip-clear" (click)="clearChartFilter()">&times;</button>
+    </div>
+
+    <!-- ── CHARTS ROW 1 ───────────────────────────────── -->
+    <section class="dc-charts-grid">
+        <div class="dc-panel dc-panel--evolution">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--indigo"></span>
+                    <h3 class="dc-panel__title">Évolution de l'activité</h3>
+                </div>
+                <span class="dc-panel__hint"><mat-icon>show_chart</mat-icon> Trajets · Distance · Ponctualité</span>
+            </div>
+            <div class="dc-panel__chart-wrap">
+                <canvas baseChart [data]="evolutionData" [options]="evolutionOptions" [type]="evolutionType"
+                    (chartClick)="onChartClick($event, 'evolution')"></canvas>
+            </div>
+        </div>
+
+        <div class="dc-panel dc-panel--donut">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--violet"></span>
+                    <h3 class="dc-panel__title">Répartition par Optimisation</h3>
+                </div>
+                <span class="dc-panel__hint"><mat-icon>donut_large</mat-icon> Route Preference</span>
+            </div>
+            <div class="dc-panel__chart-wrap">
+                <div class="dc-donut-center">
+                    <span class="dc-donut-center__value">{{ kpiTotalTrips }}</span>
+                    <span class="dc-donut-center__label">Trajets</span>
+                </div>
+                <canvas baseChart [data]="donutData" [options]="donutOptions" [type]="donutType"
+                    (chartClick)="onChartClick($event, 'optimization')"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CHARTS ROW 2 : Carte Intelligente + Analyse Retards ── -->
+    <section class="dc-charts-grid2">
+        <div class="dc-panel dc-panel--map">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <mat-icon class="panel-icon-geo">public</mat-icon>
+                    <h3 class="dc-panel__title">Carte Géographique Intelligente</h3>
+                </div>
+                <div class="dc-map-toggle">
+                    <button class="dc-toggle-btn" [ngClass]="{'active': mapShowAllDestinations}"
+                        (click)="toggleMapMode(true)">Tout l'historique</button>
+                    <button class="dc-toggle-btn" [ngClass]="{'active': !mapShowAllDestinations}"
+                        (click)="toggleMapMode(false)">Période filtrée</button>
+                </div>
+            </div>
+            <div class="dc-map-container-wrap">
+                <div id="delivery-destinations-map" class="dc-map"></div>
+            </div>
+            <div class="dc-map-legend">
+                <span><span class="dc-legend-dot dc-legend-dot--blue"></span> Départs</span>
+                <span><span class="dc-legend-dot dc-legend-dot--green"></span> Destinations</span>
+                <span><span class="dc-legend-line dc-legend-line--green"></span> À l'heure</span>
+                <span><span class="dc-legend-line dc-legend-line--orange"></span> Retard léger</span>
+                <span><span class="dc-legend-line dc-legend-line--red"></span> Retard critique</span>
+            </div>
+        </div>
+
+        <div class="dc-panel dc-panel--kpis">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--amber"></span>
+                    <h3 class="dc-panel__title">Analyse Comparative & Extrêmes</h3>
+                </div>
+                <span class="dc-panel__hint"><mat-icon>assessment</mat-icon> Performance</span>
+            </div>
+
+            <div class="dc-comparison-container">
+                <h4 class="dc-sub-title">Comparaison par type d'optimisation</h4>
+                <div class="dc-table-container dc-table-container--mini">
+                    <table class="dc-table dc-table--mini">
+                        <thead>
+                            <tr>
+                                <th>Optimisation</th>
+                                <th class="text-center">Trajets</th>
+                                <th class="text-right">Dist. Moy.</th>
+                                <th class="text-right">Durée Moy.</th>
+                                <th class="text-right">Retard Moy.</th>
+                                <th class="text-center">Ponctualité</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr *ngFor="let stat of optStats">
+                                <td><span class="dc-opt-label" [ngClass]="stat.type.toLowerCase()">{{ stat.type
+                                        }}</span></td>
+                                <td class="text-center">{{ stat.count }}</td>
+                                <td class="text-right"><strong>{{ stat.avgDist }} km</strong></td>
+                                <td class="text-right">{{ formatDuration(stat.avgDureeReelle) }}</td>
+                                <td class="text-right" [ngClass]="stat.avgDelay > 5 ? 'text-red' : 'text-green'">
+                                    {{ stat.avgDelay > 0 ? '+' : '' }}{{ stat.avgDelay }} min
+                                </td>
+                                <td class="text-center">
+                                    <span class="dc-perf-badge"
+                                        [ngClass]="stat.onTimeRate >= 80 ? 'perf--ontime' : 'perf--delayed'">
+                                        {{ stat.onTimeRate }}%
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="dc-opt-ranking" *ngIf="optStats.length > 0">
+                    <span class="dc-ranking-chip dc-ranking-chip--fast">
+                        <mat-icon>speed</mat-icon> Plus rapide : <strong>{{ bestOptimization('plusRapide') }}</strong>
+                    </span>
+                    <span class="dc-ranking-chip dc-ranking-chip--punctual">
+                        <mat-icon>check_circle</mat-icon> Plus ponctuel : <strong>{{ bestOptimization('plusPonctuel')
+                            }}</strong>
+                    </span>
+                    <span class="dc-ranking-chip dc-ranking-chip--profitable">
+                        <mat-icon>savings</mat-icon> Plus rentable : <strong>{{ bestOptimization('plusRentable')
+                            }}</strong>
+                    </span>
+                </div>
+            </div>
+
+            <div class="dc-extremes-container">
+                <h4 class="dc-sub-title">Trajets extrêmes de la période</h4>
+                <div class="dc-extreme-cards">
+                    <div class="dc-extreme-card dc-extreme-card--longest" *ngIf="longestTrip">
+                        <div class="dc-extreme-header"><mat-icon>trending_up</mat-icon><span>Le plus long</span></div>
+                        <div class="dc-extreme-value">{{ longestTrip.distanceKm }} <small>km</small></div>
+                        <div class="dc-extreme-route"><strong>{{ longestTrip.from }}</strong> <span
+                                class="dc-route-arrow">➔</span> <strong>{{ longestTrip.to }}</strong></div>
+                        <div class="dc-extreme-footer"><span>🚛</span><span>{{ longestTrip.driver }}</span></div>
+                    </div>
+                    <div class="dc-extreme-card dc-extreme-card--shortest" *ngIf="shortestTrip">
+                        <div class="dc-extreme-header"><mat-icon>trending_down</mat-icon><span>Le plus court</span>
+                        </div>
+                        <div class="dc-extreme-value">{{ shortestTrip.distanceKm }} <small>km</small></div>
+                        <div class="dc-extreme-route"><strong>{{ shortestTrip.from }}</strong> <span
+                                class="dc-route-arrow">➔</span> <strong>{{ shortestTrip.to }}</strong></div>
+                        <div class="dc-extreme-footer"><span>🚛</span><span>{{ shortestTrip.driver }}</span></div>
+                    </div>
+                    <div class="dc-extreme-card dc-extreme-card--fastest" *ngIf="fastestTrip">
+                        <div class="dc-extreme-header"><mat-icon>flash_on</mat-icon><span>Le plus rapide</span></div>
+                        <div class="dc-extreme-value">{{ formatDuration(fastestTrip.dureeReelleMinutes || 0) }}</div>
+                        <div class="dc-extreme-route"><strong>{{ fastestTrip.from }}</strong> <span
+                                class="dc-route-arrow">➔</span> <strong>{{ fastestTrip.to }}</strong></div>
+                        <div class="dc-extreme-footer"><span>🚛</span><span>{{ fastestTrip.driver }}</span></div>
+                    </div>
+                    <div class="dc-extreme-card dc-extreme-card--delayed" *ngIf="mostDelayedTrip">
+                        <div class="dc-extreme-header"><mat-icon>access_alarm</mat-icon><span>Le plus retardé</span>
+                        </div>
+                        <div class="dc-extreme-value">{{ mostDelayedTrip.retardMinutes }} <small>min</small></div>
+                        <div class="dc-extreme-route"><strong>{{ mostDelayedTrip.from }}</strong> <span
+                                class="dc-route-arrow">➔</span> <strong>{{ mostDelayedTrip.to }}</strong></div>
+                        <div class="dc-extreme-footer"><span>🚛</span><span>{{ mostDelayedTrip.driver }}</span></div>
+                    </div>
+                    <div class="dc-extreme-empty" *ngIf="!longestTrip && !shortestTrip">Aucun traité disponible.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── CHARTS ROW 3 : Analyse Temporelle + Retards ── -->
+    <section class="dc-charts-grid3">
+        <div class="dc-panel dc-panel--temporal">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--cyan"></span>
+                    <h3 class="dc-panel__title">Analyse Temporelle</h3>
+                </div>
+                <div class="dc-map-toggle">
+                    <button class="dc-toggle-btn" [ngClass]="{'active': temporalGranularity === 'day'}"
+                        (click)="onGranularityChange('day')">Jour</button>
+                    <button class="dc-toggle-btn" [ngClass]="{'active': temporalGranularity === 'week'}"
+                        (click)="onGranularityChange('week')">Semaine</button>
+                    <button class="dc-toggle-btn" [ngClass]="{'active': temporalGranularity === 'month'}"
+                        (click)="onGranularityChange('month')">Mois</button>
+                </div>
+            </div>
+            <div class="dc-panel__chart-wrap">
+                <canvas baseChart [data]="temporalData" [options]="temporalOptions" [type]="areaType"
+                    (chartClick)="onChartClick($event, 'temporal')"></canvas>
+            </div>
+        </div>
+
+        <div class="dc-panel dc-panel--delays">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--red"></span>
+                    <h3 class="dc-panel__title">Analyse des Retards</h3>
+                </div>
+                <span class="dc-panel__hint"><mat-icon>donut_large</mat-icon> Répartition</span>
+            </div>
+            <div class="dc-panel__chart-wrap dc-panel__chart-wrap--sm">
+                <canvas baseChart [data]="delayData" [options]="delayOptions" [type]="delayType"
+                    (chartClick)="onChartClick($event, 'delay')"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── PRÉDICTIONS ────────────────────────────────── -->
+    <section class="dc-insight-strip" *ngIf="predictions">
+        <div class="dc-insight-card dc-insight-card--prediction">
+            <mat-icon>trending_up</mat-icon>
+            <span class="dc-insight-label">Prévision trajets (sem. prochaine)</span>
+            <span class="dc-insight-value">{{ predictions.nextWeekTrips }}</span>
+        </div>
+        <div class="dc-insight-card dc-insight-card--prediction">
+            <mat-icon>route</mat-icon>
+            <span class="dc-insight-label">Distance estimée</span>
+            <span class="dc-insight-value">{{ predictions.nextWeekDistance >= 1000 ? (predictions.nextWeekDistance /
+                1000).toFixed(1) + 'k' : predictions.nextWeekDistance }} <small>km</small></span>
+        </div>
+        <div class="dc-insight-card dc-insight-card--prediction">
+            <mat-icon>location_on</mat-icon>
+            <span class="dc-insight-label">Destination probable</span>
+            <span class="dc-insight-value dc-insight-value--sm">{{ predictions.topDestinations[0] || '—' }}</span>
+        </div>
+        <div class="dc-insight-card dc-insight-card--prediction">
+            <mat-icon>priority_high</mat-icon>
+            <span class="dc-insight-label">Risque de retard</span>
+            <span class="dc-insight-value"
+                [style.color]="predictions.delayRisk === 'Élevé' ? '#ef4444' : predictions.delayRisk === 'Moyen' ? '#f59e0b' : '#4ade80'">{{
+                predictions.delayRisk }}</span>
+        </div>
+    </section>
+
+    <!-- ── CHAUFFEURS ANALYSIS ────────────────────────── -->
+    <section class="dc-analysis-section" *ngIf="driverStats.length > 0">
+        <div class="dc-analysis-header">
+            <mat-icon>groups</mat-icon>
+            <h3>Analyse des Chauffeurs</h3>
+            <span class="dc-analysis-count">{{ driverStats.length }} chauffeurs</span>
+        </div>
+        <div class="dc-analysis-table-wrap">
+            <table class="dc-table dc-table--analysis">
+                <thead>
+                    <tr>
+                        <th>Chauffeur</th>
+                        <th class="text-center">Trajets</th>
+                        <th class="text-right">Distance totale</th>
+                        <th class="text-right">Durée moyenne</th>
+                        <th class="text-center">Ponctualité</th>
+                        <th class="text-center">Badge</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let d of driverStats.slice(0, 10)" class="dc-clickable-row"
+                        (click)="onDriverClick(d.id)">
+                        <td>
+                            <span class="dc-driver-name-cell">{{ d.name }}</span>
+                        </td>
+                        <td class="text-center">{{ d.count }}</td>
+                        <td class="text-right"><strong>{{ d.totalDist >= 1000 ? (d.totalDist / 1000).toFixed(1) + 'k' :
+                                d.totalDist }}</strong> km</td>
+                        <td class="text-right">{{ formatDuration(d.avgDuration) }}</td>
+                        <td class="text-center">
+                            <span class="dc-perf-badge"
+                                [ngClass]="d.onTimeRate >= 80 ? 'perf--ontime' : d.onTimeRate >= 50 ? 'perf--advance' : 'perf--delayed'">
+                                {{ d.onTimeRate }}%
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="dc-top-badge" *ngIf="d.isTopPerformer">🥇 Meilleur du mois</span>
+                            <span class="dc-top-badge dc-top-badge--rising"
+                                *ngIf="!d.isTopPerformer && d.onTimeRate >= 80">⭐ Fiable</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ── VÉHICULES ANALYSIS ────────────────────────── -->
+    <section class="dc-analysis-section" *ngIf="vehicleStats.length > 0">
+        <div class="dc-analysis-header">
+            <mat-icon>directions_car</mat-icon>
+            <h3>Analyse des Véhicules</h3>
+            <span class="dc-analysis-count">{{ vehicleStats.length }} véhicules</span>
+        </div>
+        <div class="dc-analysis-table-wrap">
+            <table class="dc-table dc-table--analysis">
+                <thead>
+                    <tr>
+                        <th>Véhicule</th>
+                        <th class="text-center">Trajets</th>
+                        <th class="text-right">Kilomètres</th>
+                        <th class="text-right">Temps moyen</th>
+                        <th class="text-center">Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let v of vehicleStats.slice(0, 10)">
+                        <td><span class="dc-vehicle-badge"><mat-icon>directions_car</mat-icon> {{ v.model || v.plate }}
+                                <small *ngIf="v.model && v.plate !== v.model" class="dc-vehicle-plate">{{ v.plate
+                                    }}</small></span></td>
+                        <td class="text-center">{{ v.count }}</td>
+                        <td class="text-right"><strong>{{ v.totalKm >= 1000 ? (v.totalKm / 1000).toFixed(1) + 'k' :
+                                v.totalKm }}</strong> km</td>
+                        <td class="text-right">{{ formatDuration(v.avgDuration) }}</td>
+                        <td class="text-center">
+                            <span class="dc-top-badge" *ngIf="v.isMostUsed">🚛 Le plus utilisé</span>
+                            <span class="dc-perf-badge perf--ontime" *ngIf="!v.isMostUsed && v.count > 0">Actif</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ── DESTINATIONS ANALYSIS ──────────────────────── -->
+    <section class="dc-insight-strip" *ngIf="destinationStats.length > 0">
+        <div class="dc-insight-card dc-insight-card--dest">
+            <mat-icon>star</mat-icon>
+            <span class="dc-insight-label">Destination la plus utilisée</span>
+            <span class="dc-insight-value dc-insight-value--sm">{{ topDestination }}</span>
+            <span class="dc-insight-sub">{{ destinationStats[0].count }} trajet(s)</span>
+        </div>
+        <div class="dc-insight-card dc-insight-card--dest">
+            <mat-icon>star_border</mat-icon>
+            <span class="dc-insight-label">Destination la moins utilisée</span>
+            <span class="dc-insight-value dc-insight-value--sm">{{ leastDestination }}</span>
+            <span class="dc-insight-sub">{{ destinationStats[destinationStats.length - 1].count }} trajet(s)</span>
+        </div>
+        <div class="dc-insight-card dc-insight-card--dest">
+            <mat-icon>speed</mat-icon>
+            <span class="dc-insight-label">Distance moyenne globale</span>
+            <span class="dc-insight-value">{{ avgGlobalDistance }} <small>km</small></span>
+        </div>
+    </section>
+
+    <!-- ── LOGISTICS HEALTH SCORE ──────────────────────── -->
+    <section class="dc-health-section">
+        <div class="dc-health-card" [style.borderColor]="healthScore.color + '44'">
+            <div class="dc-health-header">
+                <mat-icon>monitor_heart</mat-icon>
+                <h3>Logistics Health Score</h3>
+                <span class="dc-health-badge" [style.background]="healthScore.color" [style.color]="'#fff'">{{
+                    healthScore.label }}</span>
+            </div>
+            <div class="dc-health-score-wrap">
+                <svg viewBox="0 0 120 70" class="dc-health-gauge">
+                    <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="10"
+                        stroke-linecap="round" />
+                    <path d="M 10 65 A 50 50 0 0 1 110 65" fill="none" [attr.stroke]="healthScore.color"
+                        stroke-width="10" stroke-linecap="round"
+                        [attr.stroke-dasharray]="(healthScore.score / 100 * 157) + ' 157'" />
+                </svg>
+                <div class="dc-health-score-text">
+                    <span class="dc-health-score-value" [style.color]="healthScore.color">{{ healthScore.score }}</span>
+                    <span class="dc-health-score-label">/100</span>
+                </div>
+            </div>
+            <div class="dc-health-breakdown">
+                <div class="dc-health-row" *ngFor="let item of healthScore.breakdown">
+                    <span class="dc-health-row-label">{{ item.label }}</span>
+                    <div class="dc-health-bar-bg">
+                        <div class="dc-health-bar-fill" [style.width.%]="(item.value / item.max) * 100"
+                            [style.background]="healthScore.color"></div>
+                    </div>
+                    <span class="dc-health-row-value">{{ item.value }}/{{ item.max }}</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── DETAILED TRAJETS TABLE ──────────────────────── -->
+    <section class="dc-panel dc-panel--table">
+        <div class="dc-panel__header">
+            <div class="dc-panel__title-group">
+                <mat-icon class="panel-icon-history">history</mat-icon>
+                <h3 class="dc-panel__title">Détail des Trajets Réalisés</h3>
+            </div>
+            <span class="dc-table-count">{{ tripTotalElements }} trajets</span>
+        </div>
+        <div class="dc-table-container">
+            <table class="dc-table">
+                <thead>
+                    <tr>
+                        <th class="text-center">Départ</th>
+                        <th class="text-center">Arrivée prévue</th>
+                        <th class="text-center">Point départ</th>
+                        <th class="text-center">Destination</th>
+                        <th class="text-center">Véhicule</th>
+                        <th class="text-center">Chauffeur</th>
+                        <th class="text-center">Arrivée réelle</th>
+
+
+                        <th class="text-center">Distance</th>
+                        <th class="text-center">Optimisation</th>
+
+
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let trip of paginatedTrips">
+                        <td class="dc-td-date"><mat-icon>event</mat-icon><span>{{
+                                formatDate(trip.dateDepartIso || trip.date) }}</span></td>
+                        <td class="dc-td-date">{{ formatDate(trip.dateArriveeIso) }}</td>
+                        <td class="dc-td-date">{{ formatDate(trip.dateArrivee) }}</td>
+                        <td><strong>{{ trip.from }}</strong></td>
+                        <td><strong>{{ trip.to }}</strong></td>
+                        <td>
+                            <div class="dc-vehicle-badge"><mat-icon>directions_car</mat-icon><span>{{ trip.vehicle
+                                    }}</span></div>
+                        </td>
+                        <td class="text-center">{{ trip.chauffeurNom || trip.driver }}</td>
+                        <td class="text-center"><strong>{{ trip.distanceKm }}</strong></td>
+                        <td class="text-center">
+                            <span class="dc-opt-badge" [ngClass]="getTripOptimizationType(trip).toLowerCase()">
+                                {{ getTripOptimizationType(trip) }}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="dc-status-badge" [ngClass]="getStatusClass(trip.status)">{{ trip.status
+                                }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="dc-perf-badge" [ngClass]="getPerformanceClass(getPerformanceLabel(trip))">
+                                {{ getPerformanceLabel(trip) }}
+                            </span>
+                        </td>
+
+                    </tr>
+                    <tr *ngIf="paginatedTrips.length === 0">
+                        <td colspan="12" class="dc-no-data">Aucun trajet ne correspond à vos filtres.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="dc-paginator">
+            <mat-paginator [length]="tripTotalElements" [pageIndex]="tripPageIndex" [pageSize]="tripPageSize"
+                [pageSizeOptions]="[5, 10, 20]" (page)="onPageChange($event)" aria-label="Pagination trajets">
+            </mat-paginator>
+        </div>
+    </section>
+
+
+</div>

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PauseAIDashboardResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.dto.pause</a> &gt; <span class="el_source">PauseAIDashboardResponse.java</span></div><h1>PauseAIDashboardResponse.java</h1><pre class="source lang-java linenums">package com.logiway.dto.pause;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+<span class="pc bpc" id="L12" title="42 of 70 branches missed.">@Data</span>
+<span class="pc" id="L13">@Builder</span>
+<span class="nc" id="L14">@NoArgsConstructor</span>
+<span class="fc" id="L15">@AllArgsConstructor</span>
+public class PauseAIDashboardResponse {
+    // Statistiques globales
+<span class="fc" id="L18">    private Integer totalPausesRecommandees;</span>
+<span class="fc" id="L19">    private Integer pausesEffectuees;</span>
+<span class="fc" id="L20">    private Integer pausesIgnorees;</span>
+<span class="fc" id="L21">    private Double tauxConformite;</span>
+<span class="fc" id="L22">    private Double scoreMoyenFatigue;</span>
+    
+    // Nouvelles statistiques ML avancées
+<span class="fc" id="L25">    private MLInsights mlInsights;</span>
+    
+    // Statistiques par chauffeur
+<span class="fc" id="L28">    private List&lt;ChauffeurStats&gt; chauffeurStats;</span>
+    
+    // Points de carte (heatmap)
+<span class="fc" id="L31">    private List&lt;HeatmapPoint&gt; heatmapPoints;</span>
+    
+<span class="pc bpc" id="L33" title="61 of 102 branches missed.">    @Data</span>
+<span class="pc" id="L34">    @Builder</span>
+<span class="nc" id="L35">    @NoArgsConstructor</span>
+<span class="fc" id="L36">    @AllArgsConstructor</span>
+    public static class MLInsights {
+        // Prédictions de risque
+<span class="fc" id="L39">        private Integer chauffeursCritiquesFatigue; // Score fatigue &gt; 85</span>
+<span class="fc" id="L40">        private Integer chauffeursModereesFatigue; // Score fatigue 60-85</span>
+<span class="fc" id="L41">        private Double scoreFatigueMax;</span>
+<span class="fc" id="L42">        private String chauffeurPlusRisque;</span>
+        
+        // Tendances temporelles
+<span class="fc" id="L45">        private Double tendanceConformite; // % change sur période</span>
+<span class="fc" id="L46">        private Double tendanceScoreFatigue; // Score moyen change</span>
+        
+        // Patterns de pause
+<span class="fc" id="L49">        private Integer pausesHeuresRepas; // Pauses pendant heures repas</span>
+<span class="fc" id="L50">        private Integer pausesNuit; // Pauses entre 22h-6h</span>
+<span class="fc" id="L51">        private Double tauxPausesMiParcours; // % pauses entre 40-60% du trajet</span>
+        
+        // Efficacité IA
+<span class="fc" id="L54">        private Double tauxAcceptationAI; // % recommandations suivies</span>
+<span class="fc" id="L55">        private Integer pausesVolontaires; // Pauses non suggérées par IA</span>
+<span class="fc" id="L56">        private Double scoreMoyenPausesEffectuees; // Score AI des pauses effectuées</span>
+    }
+    
+<span class="pc bpc" id="L59" title="102 of 166 branches missed.">    @Data</span>
+<span class="pc" id="L60">    @Builder</span>
+<span class="nc" id="L61">    @NoArgsConstructor</span>
+<span class="fc" id="L62">    @AllArgsConstructor</span>
+    public static class ChauffeurStats {
+<span class="fc" id="L64">        private Long chauffeurId;</span>
+<span class="fc" id="L65">        private String nomChauffeur;</span>
+<span class="fc" id="L66">        private Integer nombreMissions;</span>
+<span class="fc" id="L67">        private Double scoreFatigueMoyen;</span>
+<span class="fc" id="L68">        private Integer alertesUrgentes;</span>
+<span class="fc" id="L69">        private Integer pausesIgnorees;</span>
+<span class="fc" id="L70">        private Double tauxConformite;</span>
+        
+        // Nouvelles métriques ML
+<span class="fc" id="L73">        private String niveauRisque; // LOW, MODERATE, HIGH, CRITICAL</span>
+<span class="fc" id="L74">        private Double distanceMoyenneParJour;</span>
+<span class="fc" id="L75">        private Double heuresMoyennesConduite;</span>
+<span class="fc" id="L76">        private Integer pausesRecommandees;</span>
+<span class="fc" id="L77">        private Integer pausesEffectuees;</span>
+<span class="fc" id="L78">        private Double scoreMoyenAccessibilite; // Qualité des POI choisis</span>
+<span class="fc" id="L79">        private String sentiment; // VERY_DISSATISFIED, DISSATISFIED, NEUTRAL, SATISFIED</span>
+
+        // Arrivée estimée et distance réelle
+<span class="fc" id="L82">        private LocalDateTime arriveeEstimee;</span>
+<span class="fc" id="L83">        private Double distanceReelle;</span>
+<span class="fc" id="L84">        private String pointDepart;</span>
+<span class="fc" id="L85">        private String pointArrivee;</span>
+<span class="fc" id="L86">        private String statutTrajet;</span>
+<span class="fc" id="L87">        private String immatriculationVehicule;</span>
+    }
+    
+<span class="pc bpc" id="L90" title="47 of 78 branches missed.">    @Data</span>
+<span class="pc" id="L91">    @Builder</span>
+<span class="nc" id="L92">    @NoArgsConstructor</span>
+<span class="fc" id="L93">    @AllArgsConstructor</span>
+    public static class HeatmapPoint {
+<span class="fc" id="L95">        private Double latitude;</span>
+<span class="fc" id="L96">        private Double longitude;</span>
+<span class="fc" id="L97">        private String type; // URGENTE_IGNOREE, RECOMMANDEE_EFFECTUEE, VOLONTAIRE</span>
+<span class="fc" id="L98">        private Integer score;</span>
+<span class="fc" id="L99">        private String nomLieu;</span>
+        
+        // Nouvelles propriétés
+<span class="fc" id="L102">        private Integer fatigueScore;</span>
+<span class="fc" id="L103">        private Integer accessibilityScore;</span>
+<span class="fc" id="L104">        private LocalDateTime timestamp;</span>
+<span class="fc" id="L105">        private String chauffeurNom;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

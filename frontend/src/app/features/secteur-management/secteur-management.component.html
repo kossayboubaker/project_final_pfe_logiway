@@ -1,0 +1,289 @@
+<div class="management-container animate-fade-up" [class.theme-light]="isLightMode" [class.theme-dark]="!isLightMode">
+    <!-- Header -->
+    <div class="header-section mb-4">
+        <div>
+            <h1 class="text-gradient">Gestion des Secteurs</h1>
+            <p class="subtitle">Gérer les secteurs géographiques, leurs managers et les chauffeurs rattachés</p>
+        </div>
+        <button *ngIf="canManageSectors" mat-raised-button color="primary" (click)="openForm()"
+            class="header-action-btn">
+            <mat-icon>add_business</mat-icon>
+            Nouveau Secteur
+        </button>
+    </div>
+
+    <!-- Formulaire CRUD: Ajout / Modification -->
+    <div class="add-user-section animate-fade-down" *ngIf="showForm && canManageSectors">
+        <mat-card class="glass-card form-card">
+            <mat-card-header>
+                <mat-card-title class="card-title">
+                    {{ isEditMode ? 'Modifier le Secteur' : 'Créer un Secteur' }}
+                </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+                <form (ngSubmit)="saveSecteur()">
+                    <div class="form-grid">
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Entreprise</mat-label>
+                            <mat-select [(ngModel)]="selectedEntrepriseId" name="entrepriseId"
+                                (selectionChange)="onEntrepriseSelectionChange()" required>
+                                <mat-option *ngFor="let entreprise of availableEnterprises" [value]="entreprise.id">
+                                    {{ entreprise.name }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-hint *ngIf="!isEditMode">Seules les entreprises sans secteur sont proposées en
+                                création.</mat-hint>
+                            <mat-hint *ngIf="isEditMode">En modification, toutes les entreprises sont proposées pour
+                                permettre une réaffectation.</mat-hint>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Manager</mat-label>
+                            <mat-select [(ngModel)]="selectedManagerId" name="managerId"
+                                [disabled]="!selectedEntrepriseId || !availableManagers.length" required>
+                                <mat-option *ngFor="let manager of availableManagers; trackBy: trackByManagerId"
+                                    [value]="manager.id">
+                                    {{ manager.fullName }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-hint *ngIf="selectedEntrepriseId && !availableManagers.length">Aucun manager disponible
+                                pour cette entreprise.</mat-hint>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Nom du Secteur</mat-label>
+                            <input matInput [(ngModel)]="currentSecteur.nom" name="nomSecteur"
+                                placeholder="Ex: Secteur Nord" required minlength="3" maxlength="100">
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Zone géographique</mat-label>
+                            <input matInput [(ngModel)]="currentSecteur.zoneGeographique" name="zoneSecteur"
+                                placeholder="Ex: Sousse Est" required>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-span">
+                            <mat-label>Description du Secteur</mat-label>
+                            <textarea matInput [(ngModel)]="currentSecteur.description" name="descSecteur" rows="3"
+                                placeholder="Décrivez la zone et les particularités du secteur"></textarea>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-span">
+                            <mat-label>Codes postaux</mat-label>
+                            <input matInput [(ngModel)]="currentSecteur.codesPostaux" name="codesPostaux"
+                                placeholder="Ex: 7000, 7010">
+                        </mat-form-field>
+
+                        <div class="full-span warning-box"
+                            *ngIf="isEditMode && selectedEntrepriseId && currentSecteur.entrepriseId && selectedEntrepriseId !== currentSecteur.entrepriseId.toString()">
+                            <mat-icon>warning</mat-icon>
+                            <span>Changer l'entreprise désassignera tous les managers et chauffeurs de ce secteur et les
+                                notifiera automatiquement.</span>
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions">
+                        <button mat-button type="button" (click)="closeForm()">Annuler</button>
+                        <button mat-flat-button color="primary" type="submit"
+                            [disabled]="!currentSecteur.nom || !currentSecteur.zoneGeographique || !selectedEntrepriseId">
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </mat-card-content>
+        </mat-card>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-row mb-4">
+        <mat-card class="glass-card stat-mini">
+            <mat-icon color="primary">map</mat-icon>
+            <div class="stat-mini-info">
+                <span class="label">Total</span>
+                <span class="value">{{dataSource.data.length}}</span>
+            </div>
+        </mat-card>
+        <mat-card class="glass-card stat-mini">
+            <mat-icon style="color: var(--success);">how_to_reg</mat-icon>
+            <div class="stat-mini-success">
+                <span class="label">Avec Managers</span>
+                <span class="value">{{getAssignedCount()}}</span>
+            </div>
+        </mat-card>
+        <mat-card class="glass-card stat-mini">
+            <mat-icon style="color: var(--warning);">person_off</mat-icon>
+            <div class="stat-mini-warning">
+                <span class="label">Sans Manager</span>
+                <span class="value">{{getUnassignedCount()}}</span>
+            </div>
+        </mat-card>
+        <mat-card class="glass-card stat-mini">
+            <mat-icon style="color: var(--accent);">local_shipping</mat-icon>
+            <div class="stat-mini-info">
+                <span class="label">Chauffeurs</span>
+                <span class="value">{{getTotalChauffeurs()}}</span>
+            </div>
+        </mat-card>
+    </div>
+
+    <!-- Barre de Recherche -->
+    <div class="table-actions animate-fade-up" style="animation-delay: 0.2s">
+        <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Rechercher un secteur (Nom, zone, manager...)</mat-label>
+            <input matInput (keyup)="applyFilter($event)" placeholder="Ex: Sousse Est" #input>
+            <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+    </div>
+
+    <div *ngIf="isLoading" class="loading-state glass-card">
+        Chargement des secteurs depuis le backend...
+    </div>
+
+    <div *ngIf="loadError && !isLoading" class="error-state glass-card">
+        {{ loadError }}
+    </div>
+
+    <!-- Table -->
+    <mat-card class="glass-card table-card animate-fade-up" style="animation-delay: 0.3s">
+        <mat-card-header>
+            <mat-card-title>Liste des Secteurs & Affectations</mat-card-title>
+        </mat-card-header>
+        <div class="premium-table-container">
+            <table mat-table [dataSource]="dataSource" matSort class="premium-table">
+
+                <!-- Nom Column -->
+                <ng-container matColumnDef="nom">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Nom du Secteur </th>
+                    <td mat-cell *matCellDef="let secteur">
+                        <span class="user-name">{{secteur.nom}}</span>
+                    </td>
+                </ng-container>
+
+                <!-- Zone Column -->
+                <ng-container matColumnDef="zone">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Zone Géographique </th>
+                    <td mat-cell *matCellDef="let secteur">
+                        <span class="text-muted">{{secteur.zoneGeographique}}</span>
+                        <small class="cell-subtext">Codes: {{secteur.codesPostaux || '—'}}</small>
+                        <small class="cell-subtext" *ngIf="secteur.description">{{secteur.description}}</small>
+                    </td>
+                </ng-container>
+
+                <!-- Managers Column -->
+                <ng-container matColumnDef="managers">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Managers Affectés </th>
+                    <td mat-cell *matCellDef="let secteur">
+                        <div class="manager-summary" [matTooltip]="getManagerTooltip(secteur.id)">
+                            <span class="badge approved">{{ getAssignedManagers(secteur.id).length }}</span>
+                            <span class="manager-list"
+                                *ngIf="getAssignedManagers(secteur.id).length; else emptyManagers">
+                                <ng-container
+                                    *ngFor="let manager of getAssignedManagers(secteur.id); let last = last; trackBy: trackByManagerId">
+                                    {{ manager.fullName }}<span *ngIf="!last">, </span>
+                                </ng-container>
+                            </span>
+                            <ng-template #emptyManagers>
+                                <span class="badge rejected">Aucun Manager</span>
+                            </ng-template>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Chauffeurs Column -->
+                <ng-container matColumnDef="chauffeurs">
+                    <th mat-header-cell *matHeaderCellDef> Chauffeurs </th>
+                    <td mat-cell *matCellDef="let secteur">
+                        <span class="badge approved">{{ getChauffeurCount(secteur.id) }}</span>
+                    </td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> Actions </th>
+                    <td mat-cell *matCellDef="let secteur">
+                        <div class="action-btns" *ngIf="canManageSectors; else viewOnlyActions">
+                            <button mat-icon-button class="view-btn" matTooltip="Détails"
+                                (click)="selectSecteur(secteur)">
+                                <mat-icon>visibility</mat-icon>
+                            </button>
+                            <button *ngIf="canManageSectors" mat-icon-button class="edit-btn" matTooltip="Modifier"
+                                (click)="openForm(secteur)">
+                                <mat-icon>edit</mat-icon>
+                            </button>
+                            <button *ngIf="canManageSectors" mat-icon-button class="reject-btn" matTooltip="Supprimer"
+                                (click)="deleteSecteur(secteur)">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </div>
+                        <ng-template #viewOnlyActions>
+                            <div class="action-btns">
+                                <button mat-icon-button class="view-btn" matTooltip="Détails"
+                                    (click)="selectSecteur(secteur)">
+                                    <mat-icon>visibility</mat-icon>
+                                </button>
+                            </div>
+                        </ng-template>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="mat-row-hover"
+                    [class.active-row]="selectedSecteur?.id === row.id"></tr>
+
+                <!-- Row shown when there is no matching data. -->
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell" colspan="5"
+                        style="padding: 24px; text-align: center; color: var(--text-muted);">
+                        <ng-container *ngIf="input.value">Aucun secteur ne correspond à la recherche
+                            "{{input.value}}"</ng-container>
+                        <ng-container *ngIf="!input.value">La liste des secteurs est vide.</ng-container>
+                    </td>
+                </tr>
+            </table>
+
+            <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"
+                aria-label="Sélectionner la page"></mat-paginator>
+        </div>
+    </mat-card>
+
+    <mat-card class="glass-card details-card animate-fade-up" *ngIf="selectedSecteur" style="animation-delay: 0.4s">
+        <mat-card-header class="details-header">
+            <mat-card-title>Détails du secteur</mat-card-title>
+            <button mat-icon-button class="close-details-btn" matTooltip="Fermer" (click)="clearSelection()">
+                <mat-icon>close</mat-icon>
+            </button>
+        </mat-card-header>
+
+        <mat-card-content>
+            <div class="details-grid">
+                <div class="detail-block">
+                    <span class="detail-label">Nom</span>
+                    <strong>{{ selectedSecteur.nom }}</strong>
+                </div>
+                <div class="detail-block">
+                    <span class="detail-label">Zone géographique</span>
+                    <strong>{{ selectedSecteur.zoneGeographique }}</strong>
+                </div>
+                <div class="detail-block">
+                    <span class="detail-label">Codes postaux</span>
+                    <strong>{{ selectedSecteur.codesPostaux || '—' }}</strong>
+                </div>
+                <div class="detail-block full-span">
+                    <span class="detail-label">Description</span>
+                    <p>{{ selectedSecteur.description || 'Aucune description renseignée.' }}</p>
+                </div>
+                <div class="detail-block">
+                    <span class="detail-label">Managers assignés</span>
+                    <strong>{{ getAssignedManagers(selectedSecteur.id).length }}</strong>
+                </div>
+                <div class="detail-block">
+                    <span class="detail-label">Chauffeurs assignés</span>
+                    <strong>{{ getChauffeurCount(selectedSecteur.id) }}</strong>
+                </div>
+            </div>
+
+        </mat-card-content>
+    </mat-card>
+</div>

@@ -1,0 +1,101 @@
+<div class="map-sidebar map-vehicle-panel">
+    <!-- Header: Title + Close & Stats (Fixed Height) -->
+    <div class="sidebar-header">
+        <div class="stats-header">
+            <h3>Flotte Active</h3>
+            <button mat-icon-button (click)="onClose()" aria-label="Close vehicle list">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item trucks" [class.active]="filterType === 'all'" (click)="setFilter('all')">
+                <span class="count">{{counts.total}}</span>
+                <span>Camions</span>
+            </div>
+            <div class="stat-item en-route" [class.active]="filterType === 'en-route'" (click)="setFilter('en-route')">
+                <span class="count">{{counts.enRoute}}</span>
+                <span>En route</span>
+            </div>
+            <div class="stat-item arrived" [class.active]="filterType === 'arrived'" (click)="setFilter('arrived')">
+                <span class="count">{{counts.arrived}}</span>
+                <span>Arrivés</span>
+            </div>
+            <div class="stat-item alerts" [class.active]="filterType === 'alerts'" (click)="setFilter('alerts')">
+                <span class="count">{{counts.alerts}}</span>
+                <span>Alertes</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Section (Fixed Height) -->
+    <div class="search-section">
+        <div class="custom-search-wrapper">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input type="text" 
+                   [ngModel]="searchQuery" 
+                   (ngModelChange)="onSearchInput($event)"
+                   class="custom-search-input" 
+                   placeholder="Rechercher par nom, chauffeur, statut..." 
+                   aria-label="Search vehicles" 
+                   role="searchbox">
+            <button class="clear-btn" *ngIf="searchQuery?.trim()" (click)="clearSearch()" aria-label="Clear search">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <!-- Scrollable Card List -->
+    <div class="truck-list" tabindex="-1">
+        <div class="section-title">
+            <span>Véhicules Correspondants</span>
+            <span class="pagination-info">
+                {{filteredTrucks.length > 0 ? (currentPage-1)*pageSize + 1 : 0}} - 
+                {{currentPage*pageSize > filteredTrucks.length ? filteredTrucks.length : currentPage*pageSize}} 
+                / {{filteredTrucks.length}}
+            </span>
+        </div>
+
+        <app-delivery-card *ngFor="let truck of paginatedTrucks" 
+            [truck]="truck" 
+            [isActive]="activeTruckId === truck.id"
+            (select)="onTruckSelect($event)">
+        </app-delivery-card>
+
+        <div class="empty-state" *ngIf="filteredTrucks.length === 0">
+            <div class="empty-illustration">
+                <mat-icon>local_shipping</mat-icon>
+                <mat-icon class="overlay-icon">search_off</mat-icon>
+            </div>
+            <h4 class="empty-msg">No vehicles found</h4>
+            <p class="empty-sub">Try adjusting your search</p>
+        </div>
+    </div>
+
+    <!-- Pinned Pagination Footer -->
+    <div class="pagination-footer">
+        <button class="page-arrow" (click)="prevPage()" [disabled]="currentPage === 1" aria-label="Previous page">
+            <mat-icon>chevron_left</mat-icon>
+        </button>
+        
+        <!-- Desktop: Numbered Pages -->
+        <div class="page-numbers desktop-pages">
+            <button class="page-num-btn" 
+                    *ngFor="let p of pageNumbers" 
+                    [class.active]="p === currentPage"
+                    [attr.aria-current]="p === currentPage ? 'page' : null"
+                    (click)="goToPage(p)">
+                {{p}}
+            </button>
+        </div>
+
+        <!-- Mobile: Current / Total indicator -->
+        <div class="page-numbers mobile-pages">
+            <span class="mobile-page-indicator">{{currentPage}} / {{totalPages || 1}}</span>
+        </div>
+
+        <button class="page-arrow" (click)="nextPage()" [disabled]="currentPage === totalPages || totalPages === 0" aria-label="Next page">
+            <mat-icon>chevron_right</mat-icon>
+        </button>
+    </div>
+</div>

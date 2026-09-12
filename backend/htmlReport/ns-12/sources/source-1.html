@@ -1,0 +1,217 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > NotificationMessageResolver</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.utils</a>
+</div>
+
+<h1>Coverage Summary for Class: NotificationMessageResolver (com.logiway.utils)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NotificationMessageResolver</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (5/5)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    85,4%
+  </span>
+  <span class="absValue">
+    (41/48)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    97,6%
+  </span>
+  <span class="absValue">
+    (40/41)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.utils;
+&nbsp;
+&nbsp;import com.logiway.entities.Notification;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.enums.TypeNotif;
+&nbsp;
+&nbsp;import java.util.regex.Matcher;
+&nbsp;
+&nbsp;public final class NotificationMessageResolver {
+&nbsp;
+&nbsp;    private NotificationMessageResolver() {
+&nbsp;    }
+&nbsp;
+&nbsp;    public static String resolveForRecipient(Utilisateur recipient, Notification notification) {
+<b class="fc">&nbsp;        if (notification == null || notification.getMessage() == null) {</b>
+<b class="fc">&nbsp;            return &quot;&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String originalMessage = notification.getMessage();</b>
+<b class="fc">&nbsp;        Utilisateur targetUser = notification.getUtilisateur();</b>
+&nbsp;        
+<b class="fc">&nbsp;        if (recipient == null || targetUser == null) {</b>
+<b class="fc">&nbsp;            return originalMessage;</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (recipient.getId() != null &amp;&amp; recipient.getId().equals(targetUser.getId())) {</b>
+<b class="fc">&nbsp;            return originalMessage;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (notification.getType() == TypeNotif.NOTIF_CONGE) {</b>
+<b class="fc">&nbsp;            return resolveLeaveMessageForRecipient(originalMessage, targetUser);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String targetLabel = resolveUserLabel(targetUser);</b>
+<b class="fc">&nbsp;        if (notification.getType() == TypeNotif.NOTIF_COMPTE) {</b>
+<b class="fc">&nbsp;            return replaceLeadingVotreCompte(originalMessage, &quot;Le compte &quot; + targetLabel);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return &quot;Utilisateur &quot; + targetLabel + &quot; : &quot; + originalMessage;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static String resolveLeaveMessageForRecipient(String originalMessage, Utilisateur targetUser) {
+<b class="fc">&nbsp;        String targetLabel = resolveUserLabel(targetUser);</b>
+&nbsp;
+<b class="pc">&nbsp;        if (originalMessage == null || originalMessage.isBlank()) {</b>
+<b class="fc">&nbsp;            return &quot;Congé de &quot; + targetLabel;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String normalized = originalMessage.trim();</b>
+<b class="fc">&nbsp;        if (normalized.matches(&quot;(?i)^votre demande de congé.*&quot;)) {</b>
+<b class="fc">&nbsp;            return normalized.replaceFirst(&quot;(?i)^votre demande de congé&quot;, &quot;Demande de congé de &quot; + targetLabel);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (normalized.matches(&quot;(?i)^votre demande.*&quot;)) {</b>
+<b class="fc">&nbsp;            return normalized.replaceFirst(&quot;(?i)^votre demande&quot;, &quot;Demande de congé de &quot; + targetLabel);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (normalized.matches(&quot;(?i)^votre congé.*&quot;)) {</b>
+<b class="fc">&nbsp;            return normalized.replaceFirst(&quot;(?i)^votre congé&quot;, &quot;Congé de &quot; + targetLabel);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (normalized.matches(&quot;(?i)^demande de congé.*&quot;) || normalized.matches(&quot;(?i)^nouvelle demande de congé.*&quot;)) {</b>
+<b class="fc">&nbsp;            return normalized;</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (normalized.matches(&quot;(?i)^congé.*&quot;) || normalized.matches(&quot;(?i)^le congé.*&quot;)) {</b>
+<b class="fc">&nbsp;            return normalized;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return &quot;Congé de &quot; + targetLabel + &quot; : &quot; + normalized;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static String replaceLeadingVotreCompte(String message, String replacement) {
+<b class="pc">&nbsp;        if (message == null || message.isBlank()) {</b>
+<b class="nc">&nbsp;            return replacement;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (message.matches(&quot;(?i)^votre compte.*&quot;)) {</b>
+<b class="fc">&nbsp;            return message.replaceFirst(&quot;(?i)^votre compte&quot;, Matcher.quoteReplacement(replacement));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return replacement + &quot; : &quot; + message;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static String resolveUserLabel(Utilisateur user) {
+<b class="fc">&nbsp;        String fullName = ((safe(user.getPrenom()) + &quot; &quot; + safe(user.getNom())).trim());</b>
+<b class="fc">&nbsp;        if (!fullName.isBlank()) {</b>
+<b class="fc">&nbsp;            return fullName;</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (user.getEmail() != null &amp;&amp; !user.getEmail().isBlank()) {</b>
+<b class="fc">&nbsp;            return user.getEmail();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return &quot;#&quot; + user.getId();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private static String safe(String value) {
+<b class="fc">&nbsp;        return value == null ? &quot;&quot; : value;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

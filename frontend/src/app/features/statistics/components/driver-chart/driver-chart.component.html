@@ -1,0 +1,319 @@
+<div class="dc-dashboard">
+
+    <header class="dc-header">
+        <div class="dc-header__left">
+            <div class="dc-header__icon-wrap">
+                <mat-icon>group</mat-icon>
+            </div>
+            <div>
+                <h1 class="dc-header__title">Dashboard Chauffeurs</h1>
+                <p class="dc-header__subtitle">Performance et analyse des conducteurs</p>
+            </div>
+        </div>
+        <div class="dc-header__right">
+            <div class="dc-header__live-badge">
+                <span class="dc-live-dot"></span>
+                <span>{{ kpiTotal }} chauffeurs</span>
+            </div>
+            <div class="dc-header__stat-badge dc-header__stat-badge--green">
+                <mat-icon>speed</mat-icon>
+                <span>Score moy. {{ kpiAvgScore }}</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="dc-kpi-strip">
+        <div class="dc-kpi dc-kpi--violet">
+            <div class="dc-kpi__icon"><mat-icon>group</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Total Chauffeurs</span>
+                <span class="dc-kpi__value">{{ kpiTotal }}</span>
+                <span class="dc-kpi__sub">inscrits</span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--emerald">
+            <div class="dc-kpi__icon"><mat-icon>directions_car</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">En Mission</span>
+                <span class="dc-kpi__value">{{ kpiOnMission }}</span>
+                <span class="dc-kpi__sub">actuellement</span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--blue">
+            <div class="dc-kpi__icon"><mat-icon>person_outline</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Disponibles</span>
+                <span class="dc-kpi__value">{{ kpiAvailable }}</span>
+                <span class="dc-kpi__sub">prêts</span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+
+        <div class="dc-kpi dc-kpi--green">
+            <div class="dc-kpi__icon"><mat-icon>star</mat-icon></div>
+            <div class="dc-kpi__body">
+                <span class="dc-kpi__label">Score Moyen</span>
+                <span class="dc-kpi__value">{{ kpiAvgScore }}</span>
+                <span class="dc-kpi__sub">/ 100</span>
+            </div>
+            <div class="dc-kpi__glow"></div>
+        </div>
+    </section>
+
+    <section class="dc-insight-strip">
+        <div class="dc-insight-card">
+            <div class="dc-insight-card__icon dc-insight-card__icon--cyan"><mat-icon>route</mat-icon></div>
+            <div class="dc-insight-card__body">
+                <span class="dc-insight-card__label">Distance Totale</span>
+                <span class="dc-insight-card__value">{{ formatKm(kpiTotalDistanceKm) }} <small>km</small></span>
+            </div>
+        </div>
+        <div class="dc-insight-card">
+            <div class="dc-insight-card__icon dc-insight-card__icon--violet"><mat-icon>map</mat-icon></div>
+            <div class="dc-insight-card__body">
+                <span class="dc-insight-card__label">Trajets Effectués</span>
+                <span class="dc-insight-card__value">{{ kpiTotalTrips }}</span>
+            </div>
+        </div>
+        <div class="dc-insight-card">
+            <div class="dc-insight-card__icon dc-insight-card__icon--pink"><mat-icon>speed</mat-icon></div>
+            <div class="dc-insight-card__body">
+                <span class="dc-insight-card__label">Vitesse Moyenne</span>
+                <span class="dc-insight-card__value">{{ kpiAvgSpeed }} <small>km/h</small></span>
+            </div>
+        </div>
+        <div class="dc-insight-card">
+            <div class="dc-insight-card__icon dc-insight-card__icon--amber"><mat-icon>check_circle</mat-icon></div>
+            <div class="dc-insight-card__body">
+                <span class="dc-insight-card__label">Respect Pauses</span>
+                <span class="dc-insight-card__value">{{ kpiPauseRate }}<small>%</small></span>
+            </div>
+        </div>
+        <div class="dc-insight-card">
+            <div class="dc-insight-card__icon dc-insight-card__icon--emerald"><mat-icon>coffee</mat-icon></div>
+            <div class="dc-insight-card__body">
+                <span class="dc-insight-card__label">Pauses Prises</span>
+                <span class="dc-insight-card__value">{{ kpiTotalPausesOk }}</span>
+            </div>
+        </div>
+        <div class="dc-insight-card">
+            <div class="dc-insight-card__icon dc-insight-card__icon--red"><mat-icon>coffee_off</mat-icon></div>
+            <div class="dc-insight-card__body">
+                <span class="dc-insight-card__label">Pauses Manquées</span>
+                <span class="dc-insight-card__value">{{ kpiTotalPausesMissed }}</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="dc-filter-bar">
+        <div class="dc-filter-bar__left">
+            <mat-icon class="dc-filter-icon">tune</mat-icon>
+            <span class="dc-filter-label">Filtres</span>
+            <span class="dc-filter-badge" *ngIf="hasActiveFilters">{{ activeFilterCount }}</span>
+        </div>
+        <div class="dc-filter-bar__controls">
+            <select class="dc-select" [value]="filterStatus" (change)="onFilterStatusChange($any($event.target).value)">
+                <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <select class="dc-select" [value]="filterScore" (change)="onFilterScoreChange($any($event.target).value)">
+                <option *ngFor="let opt of scoreOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <button class="dc-btn-clear" *ngIf="hasActiveFilters" (click)="clearFilters()">
+                <mat-icon>restart_alt</mat-icon> Réinitialiser
+            </button>
+        </div>
+    </section>
+
+    <section class="dc-charts-grid">
+        <div class="dc-panel dc-panel--weekly">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--indigo"></span>
+                    <h3 class="dc-panel__title">Temps de conduite hebdomadaire</h3>
+                </div>
+                <span class="dc-panel__hint"><mat-icon>access_time</mat-icon> Heures</span>
+            </div>
+            <div class="dc-panel__chart-wrap">
+                <canvas baseChart [data]="weeklyHoursData" [options]="weeklyHoursOptions" [type]="lineType" (chartClick)="onChartClick('weeklyHours', $event)"></canvas>
+            </div>
+        </div>
+
+        <div class="dc-panel dc-panel--eco">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--emerald"></span>
+                    <h3 class="dc-panel__title">Classement Éco-Conduite</h3>
+                </div>
+                <span class="dc-panel__hint"><mat-icon>eco</mat-icon> Score</span>
+            </div>
+            <div class="dc-donut-wrap">
+                <div class="dc-donut-center">
+                    <span class="dc-donut-center__value">{{ kpiAvgScore }}</span>
+                    <span class="dc-donut-center__label">moy.</span>
+                </div>
+                <canvas baseChart [data]="ecoDonutData" [options]="ecoDonutOptions" [type]="donutType" (chartClick)="onChartClick('ecoDonut', $event)"></canvas>
+            </div>
+        </div>
+
+        <div class="dc-panel dc-panel--combined">
+            <div class="dc-panel__header">
+                <div class="dc-panel__title-group">
+                    <span class="dc-panel__dot dc-panel__dot--violet"></span>
+                    <h3 class="dc-panel__title">Ancienneté & Conformité Pauses</h3>
+                </div>
+                <span class="dc-panel__hint"><mat-icon>coffee</mat-icon> Top 8</span>
+            </div>
+            <div class="dc-combined-body">
+                <div class="dc-combined-body__left">
+                    <div class="dc-seniority-grid">
+                        <div class="dc-seniority-card" *ngFor="let item of seniorityGrid" (click)="onSeniorityCardClick(item)" style="cursor:pointer">
+                            <div class="dc-seniority-card__accent" [style.background]="item.color"></div>
+                            <div class="dc-seniority-card__body">
+                                <div class="dc-seniority-card__top">
+                                    <span class="dc-seniority-card__count">{{ item.count }}</span>
+                                    <span class="dc-seniority-card__pct">{{ item.pct }}%</span>
+                                </div>
+                                <span class="dc-seniority-card__label">{{ item.label }}</span>
+                                <div class="dc-seniority-card__track">
+                                    <div class="dc-seniority-card__fill" [style.background]="item.color" [style.width.%]="item.pct"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dc-combined-body__right">
+                    <div class="dc-panel__chart-wrap">
+                        <canvas baseChart [data]="pauseData" [options]="pauseOptions" [type]="barType" (chartClick)="onChartClick('pauseChart', $event)"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="dc-table-section">
+        <div class="dc-table-header">
+            <div class="dc-table-title-group">
+                <mat-icon>table_chart</mat-icon>
+                <h3>Performance par chauffeur</h3>
+                <span class="dc-table-count">{{ totalElements }}</span>
+            </div>
+        </div>
+        <div class="dc-table-container">
+            <table mat-table [dataSource]="dataSource" class="dc-table">
+                <ng-container matColumnDef="name">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('name')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>person</mat-icon> Chauffeur <mat-icon class="dc-sort-icon">{{ getSortIcon('name') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="dc-cell-name">{{ row.name }}</span></td>
+                </ng-container>
+                <ng-container matColumnDef="vehicle">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="dc-th"><mat-icon>directions_car</mat-icon> Véhicule</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="dc-cell-model">
+                            <span class="dc-cell-model__name">{{ row.vehiclePlate }}</span>
+                            <span class="dc-cell-model__brand">{{ row.vehicleModel }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="trips">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('tripCount')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>map</mat-icon> Trajets <mat-icon class="dc-sort-icon">{{ getSortIcon('tripCount') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="dc-cell-num">{{ row.tripCount }}</span></td>
+                </ng-container>
+                <ng-container matColumnDef="distance">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('totalDistanceKm')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>route</mat-icon> Distance <mat-icon class="dc-sort-icon">{{ getSortIcon('totalDistanceKm') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="dc-cell-km">{{ formatKm(row.totalDistanceKm) }} km</span></td>
+                </ng-container>
+                <ng-container matColumnDef="speed">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('avgSpeedKmh')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>speed</mat-icon> Vitesse <mat-icon class="dc-sort-icon">{{ getSortIcon('avgSpeedKmh') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="dc-cell-speed">{{ row.avgSpeedKmh }} km/h</span></td>
+                </ng-container>
+                <ng-container matColumnDef="score">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('drivingScore')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>star</mat-icon> Score <mat-icon class="dc-sort-icon">{{ getSortIcon('drivingScore') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="dc-score-pill" [ngClass]="getScoreClass(row.drivingScore)">
+                            {{ row.drivingScore }}
+                        </span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="pauseTaken">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('pauseTaken')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>coffee</mat-icon> Prises <mat-icon class="dc-sort-icon">{{ getSortIcon('pauseTaken') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="dc-cell-pause--ok">{{ row.pauseTaken }}</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="pauseMissed">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('pauseMissed')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>block</mat-icon> Manquées <mat-icon class="dc-sort-icon">{{ getSortIcon('pauseMissed') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="dc-cell-pause--missed">{{ row.pauseMissed }}</span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="pauses">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('pauseComplianceRate')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>verified</mat-icon> Conformité <mat-icon class="dc-sort-icon">{{ getSortIcon('pauseComplianceRate') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="dc-cell-pause" [class.dc-cell-pause--warn]="row.pauseComplianceRate < 80">
+                            {{ row.pauseComplianceRate }}%
+                        </span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="hours">
+                    <th mat-header-cell *matHeaderCellDef (click)="onSort('weeklyDrivingHours')" style="cursor:pointer">
+                        <div class="dc-th"><mat-icon>access_time</mat-icon> Heures <mat-icon class="dc-sort-icon">{{ getSortIcon('weeklyDrivingHours') }}</mat-icon></div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="dc-cell-hours" [class.dc-cell-hours--warn]="row.warningNearLimit">
+                            {{ row.weeklyDrivingHours }}h
+                            <mat-icon *ngIf="row.warningNearLimit" class="dc-warn-icon">warning</mat-icon>
+                        </span>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="dc-th"><mat-icon>flag</mat-icon> Statut</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="dc-status-pill" [ngClass]="'dc-status-pill--' + row.statusClass">
+                            <mat-icon>{{ getStatusIcon(row.status) }}</mat-icon> {{ getStatusLabel(row.status) }}
+                        </span>
+                    </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="dc-table-row" (click)="onRowClick(row)" style="cursor:pointer"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell dc-no-data" [attr.colspan]="displayedColumns.length">
+                        <div class="dc-empty-state">
+                            <mat-icon>group</mat-icon>
+                            <h4>Aucun chauffeur trouvé</h4>
+                            <p>Modifiez vos filtres.</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="dc-paginator">
+            <mat-paginator [length]="totalElements" [pageIndex]="pageIndex" [pageSize]="pageSize"
+                [pageSizeOptions]="[5, 10, 20, 50]" (page)="onPageChange($event)" aria-label="Pagination chauffeurs">
+            </mat-paginator>
+        </div>
+    </section>
+
+</div>

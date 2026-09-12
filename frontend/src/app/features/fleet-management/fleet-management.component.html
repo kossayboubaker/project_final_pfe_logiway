@@ -1,0 +1,149 @@
+<div class="fleet-page animate-fade-up">
+    <div class="header-section">
+        <div class="header-text">
+            <h1 class="text-gradient">Gérer la Flotte</h1>
+            <p class="subtitle">Suivi de maintenance, affectation chauffeur et état du parc automobile</p>
+        </div>
+        <div class="header-actions">
+            <button *ngIf="canCreateVehicle()" mat-flat-button color="primary" class="glow-on-hover"
+                (click)="addVehicle()">
+                <mat-icon>add</mat-icon>
+                AJOUTER UN CAMION
+            </button>
+        </div>
+    </div>
+
+    <div class="management-grid mt-4">
+        <!-- Stats Summary -->
+        <div class="stats-row mb-4">
+            <mat-card class="glass-card stat-mini">
+                <mat-icon color="primary">local_shipping</mat-icon>
+                <div class="stat-mini-info">
+                    <span class="label">Total</span>
+                    <span class="value">{{dataSource.data.length}}</span>
+                </div>
+            </mat-card>
+            <mat-card class="glass-card stat-mini">
+                <mat-icon class="success-text">check_circle</mat-icon>
+                <div class="stat-mini-success">
+                    <span class="label">En Service</span>
+                    <span class="value">{{getActiveCount()}}</span>
+                </div>
+            </mat-card>
+            <mat-card class="glass-card stat-mini">
+                <mat-icon class="warn-text">build</mat-icon>
+                <div class="stat-mini-warning">
+                    <span class="label">Maintenance</span>
+                    <span class="value">{{getMaintenanceCount()}}</span>
+                </div>
+            </mat-card>
+            <mat-card class="glass-card stat-mini">
+                <mat-icon style="color: var(--error);">do_not_disturb</mat-icon>
+                <div class="stat-mini-wrong">
+                    <span class="label">Hors Service</span>
+                    <span class="value">{{getHorsServiceCount()}}</span>
+                </div>
+            </mat-card>
+
+
+        </div>
+
+        <mat-card class="glass-card table-card">
+            <div class="table-actions animate-fade-up" style="animation-delay: 0.2s">
+                <mat-form-field appearance="outline" class="search-field">
+                    <mat-label>Rechercher un camion...</mat-label>
+                    <input matInput (keyup)="applyFilter($event)" placeholder="Ex. Volvo, TN-..." #input>
+                    <mat-icon matSuffix>search</mat-icon>
+                </mat-form-field>
+            </div>
+
+
+
+            <div class="premium-table-container">
+                <table mat-table [dataSource]="dataSource" matSort class="premium-table">
+
+                    <ng-container matColumnDef="plate">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Immatriculation </th>
+                        <td mat-cell *matCellDef="let v"> <span class="plate-number">{{v.plate}}</span> </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="company">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Entreprise </th>
+                        <td mat-cell *matCellDef="let v">
+                            <span class="company-badge">{{getCompanyLabel(v)}}</span>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="model">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Modèle </th>
+                        <td mat-cell *matCellDef="let v"> {{v.model}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="status">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
+                        <td mat-cell *matCellDef="let v">
+                            <span class="status-badge"
+                                [class]="v.status.toLowerCase().replace(' ', '-')">{{v.status}}</span>
+                        </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="manager">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Manager </th>
+                        <td mat-cell *matCellDef="let v"> {{getManagerLabel(v)}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="driver">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Chauffeur </th>
+                        <td mat-cell *matCellDef="let v"> {{getDriverLabel(v)}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="capacite">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header class="col-capacite"> Capacité </th>
+                        <td mat-cell *matCellDef="let v" class="col-capacite"> {{v.capacity}} </td>
+                    </ng-container>
+
+                    <ng-container matColumnDef="kilometrage">
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Kilométrage </th>
+                        <td mat-cell *matCellDef="let v"> {{v.mileage}} </td>
+                    </ng-container>
+                    <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef> Actions </th>
+                        <td mat-cell *matCellDef="let v">
+                            <button mat-icon-button [matMenuTriggerFor]="menu" class="action-btn">
+                                <mat-icon>more_vert</mat-icon>
+                            </button>
+                            <mat-menu #menu="matMenu" class="premium-menu glass-effect">
+                                <button *ngIf="canEditVehicle()" mat-menu-item (click)="editVehicle(v)">
+                                    <mat-icon color="accent">edit</mat-icon>
+                                    <span>Modifier</span>
+                                </button>
+                                <button *ngIf="canChangeStatus(v)" mat-menu-item (click)="changeStatus(v)">
+                                    <mat-icon color="primary">swap_vert</mat-icon>
+                                    <span>Changer statut</span>
+                                </button>
+                                <button *ngIf="canAssignDriver(v)" mat-menu-item (click)="assignDriver(v)">
+                                    <mat-icon>person_add</mat-icon>
+                                    <span>Affecter Chauffeur</span>
+                                </button>
+                                <button *ngIf="canClearDriver() && v.driverId" mat-menu-item (click)="clearDriver(v)">
+                                    <mat-icon>person_remove</mat-icon>
+                                    <span>Retirer Chauffeur</span>
+                                </button>
+                                <hr *ngIf="canEditVehicle() || canAssignDriver(v) || canClearDriver()"
+                                    class="menu-divider">
+                                <button *ngIf="canDeleteVehicle()" mat-menu-item (click)="deleteVehicle(v)">
+                                    <mat-icon color="warn">delete</mat-icon>
+                                    <span>Supprimer</span>
+                                </button>
+                            </mat-menu>
+                        </td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </table>
+                <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+            </div>
+        </mat-card>
+    </div>
+</div>

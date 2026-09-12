@@ -1,0 +1,260 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MessengerMessage</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.entities</a>
+</div>
+
+<h1>Coverage Summary for Class: MessengerMessage (com.logiway.entities)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">MessengerMessage</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (26/26)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (12/12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (37/37)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">MessengerMessage$MessengerMessageBuilder</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (27/27)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (12/12)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (38/38)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.entities;
+&nbsp;
+&nbsp;import com.logiway.entities.enums.MessengerMessageStatus;
+&nbsp;import com.logiway.entities.enums.MessengerMessageType;
+&nbsp;import jakarta.persistence.*;
+&nbsp;import lombok.*;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;
+&nbsp;@Entity
+&nbsp;@Table(name = &quot;messenger_messages&quot;)
+&nbsp;@Getter
+<b class="fc">&nbsp;@Setter</b>
+<b class="fc">&nbsp;@NoArgsConstructor</b>
+<b class="fc">&nbsp;@AllArgsConstructor</b>
+<b class="fc">&nbsp;@Builder</b>
+&nbsp;public class MessengerMessage {
+&nbsp;
+&nbsp;    @Id
+&nbsp;    @GeneratedValue(strategy = GenerationType.IDENTITY)
+<b class="fc">&nbsp;    private Long id;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;expediteur_id&quot;, nullable = false)
+<b class="fc">&nbsp;    private Long expediteurId;</b>
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;expediteur_id&quot;, insertable = false, updatable = false)
+<b class="fc">&nbsp;    private Utilisateur expediteur;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;destinataire_id&quot;, nullable = false)
+<b class="fc">&nbsp;    private Long destinataireId;</b>
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;destinataire_id&quot;, insertable = false, updatable = false)
+<b class="fc">&nbsp;    private Utilisateur destinataire;</b>
+&nbsp;
+&nbsp;    @Lob
+&nbsp;    @Column(columnDefinition = &quot;LONGTEXT&quot;)
+<b class="fc">&nbsp;    private String contenu;</b>
+&nbsp;
+&nbsp;    @Enumerated(EnumType.STRING)
+&nbsp;    @Column(nullable = false, length = 20)
+<b class="fc">&nbsp;    private MessengerMessageType type;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;chemin_fichier&quot;, length = 500)
+<b class="fc">&nbsp;    private String cheminFichier;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;nom_fichier_original&quot;, length = 255)
+<b class="fc">&nbsp;    private String nomFichierOriginal;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;taille_fichier&quot;)
+<b class="fc">&nbsp;    private Long tailleFichier;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;duree_vocale&quot;)
+<b class="fc">&nbsp;    private Integer dureeVocale;</b>
+&nbsp;
+&nbsp;    @Enumerated(EnumType.STRING)
+&nbsp;    @Column(nullable = false, length = 20)
+<b class="fc">&nbsp;    private MessengerMessageStatus statut;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;date_envoi&quot;, nullable = false)
+<b class="fc">&nbsp;    private LocalDateTime dateEnvoi;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;date_lecture&quot;)
+<b class="fc">&nbsp;    private LocalDateTime dateLecture;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;modifie&quot;, nullable = true)
+<b class="fc">&nbsp;    private Boolean modifie;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;date_modification&quot;)
+<b class="fc">&nbsp;    private LocalDateTime dateModification;</b>
+&nbsp;
+&nbsp;    @Lob
+&nbsp;    @Column(name = &quot;contenu_original&quot;, columnDefinition = &quot;LONGTEXT&quot;)
+<b class="fc">&nbsp;    private String contenuOriginal;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;supprime&quot;, nullable = true)
+<b class="fc">&nbsp;    private Boolean supprime;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;date_suppression&quot;)
+<b class="fc">&nbsp;    private LocalDateTime dateSuppression;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;connecte&quot;)
+<b class="fc">&nbsp;    private Boolean connecte;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;derniere_activite&quot;)
+<b class="fc">&nbsp;    private LocalDateTime derniereActivite;</b>
+&nbsp;
+&nbsp;    @PrePersist
+&nbsp;    void onCreate() {
+<b class="fc">&nbsp;        if (dateEnvoi == null) {</b>
+<b class="fc">&nbsp;            dateEnvoi = LocalDateTime.now();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (statut == null) {</b>
+<b class="fc">&nbsp;            statut = MessengerMessageStatus.NON_LU;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (connecte == null) {</b>
+<b class="fc">&nbsp;            connecte = Boolean.TRUE;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (derniereActivite == null) {</b>
+<b class="fc">&nbsp;            derniereActivite = LocalDateTime.now();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (modifie == null) {</b>
+<b class="fc">&nbsp;            modifie = Boolean.FALSE;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (supprime == null) {</b>
+<b class="fc">&nbsp;            supprime = Boolean.FALSE;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

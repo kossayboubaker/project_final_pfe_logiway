@@ -1,0 +1,13 @@
+<div class="dashboard">
+    <h2>Statistiques Globales</h2>
+    <div class="stats-grid">
+        <div class="card">Trajets en cours: 5</div>
+        <div class="card">Chauffeurs actifs: 12</div>
+        <div class="card">Alertes: 0</div>
+        <div class="card manager-card" *ngIf="isManager">
+            <div class="card-label">Secteurs associés</div>
+            <div class="card-value">{{ managerSectorCount }}</div>
+            <div class="card-help">Secteur(s) lié(s) au manager connecté</div>
+        </div>
+    </div>
+</div>

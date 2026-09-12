@@ -1,0 +1,462 @@
+<!-- ════════════════════════════════════════════════════
+     LOGIWAY — Dashboard Congés Power BI Style
+     ════════════════════════════════════════════════════ -->
+
+<div class="pbi-dashboard" [class.pbi-dashboard--blur]="drillDownOpen">
+
+    <!-- ── HEADER ────────────────────────────────────── -->
+    <header class="pbi-header">
+        <div class="pbi-header__left">
+            <div class="pbi-header__icon-wrap">
+                <mat-icon>analytics</mat-icon>
+            </div>
+            <div>
+                <h1 class="pbi-header__title">Dashboard Congés</h1>
+                <p class="pbi-header__subtitle">Vue analytique complète — Suivi et pilotage des absences</p>
+            </div>
+        </div>
+        <div class="pbi-header__right">
+            <div class="pbi-header__date-range">
+                <mat-icon>date_range</mat-icon>
+                <input type="date" class="pbi-date-input" [value]="filterDateFrom"
+                    (change)="onDateFromChange($any($event.target).value)" placeholder="Début" />
+                <span class="pbi-date-sep">→</span>
+                <input type="date" class="pbi-date-input" [value]="filterDateTo"
+                    (change)="onDateToChange($any($event.target).value)" placeholder="Fin" />
+            </div>
+            <div class="pbi-header__live-badge">
+                <span class="pbi-live-dot"></span>
+                <span>{{ kpiTotal }} demandes</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ── KPI CARDS ─────────────────────────────────── -->
+    <section class="pbi-kpi-strip">
+        <!-- Total -->
+        <div class="pbi-kpi pbi-kpi--violet">
+            <div class="pbi-kpi__icon-bg"><mat-icon>description</mat-icon></div>
+            <div class="pbi-kpi__content">
+                <span class="pbi-kpi__label">Total Demandes</span>
+                <span class="pbi-kpi__value">{{ kpiTotal }}</span>
+                <span class="pbi-kpi__trend" [class.pbi-kpi__trend--up]="trendTotal > 0"
+                    [class.pbi-kpi__trend--down]="trendTotal < 0">
+                    <mat-icon *ngIf="trendTotal > 0">trending_up</mat-icon>
+                    <mat-icon *ngIf="trendTotal < 0">trending_down</mat-icon>
+                    <mat-icon *ngIf="trendTotal === 0">trending_flat</mat-icon>
+                    {{ trendTotal >= 0 ? '+' : '' }}{{ trendTotal }}% vs mois préc.
+                </span>
+            </div>
+            <div class="pbi-kpi__glow"></div>
+        </div>
+
+        <!-- Approuvées -->
+        <div class="pbi-kpi pbi-kpi--emerald">
+            <div class="pbi-kpi__icon-bg"><mat-icon>check_circle</mat-icon></div>
+            <div class="pbi-kpi__content">
+                <span class="pbi-kpi__label">Approuvées</span>
+                <span class="pbi-kpi__value">{{ kpiApproved }}</span>
+                <span class="pbi-kpi__trend" [class.pbi-kpi__trend--up]="trendApproved > 0"
+                    [class.pbi-kpi__trend--down]="trendApproved < 0">
+                    <mat-icon *ngIf="trendApproved > 0">trending_up</mat-icon>
+                    <mat-icon *ngIf="trendApproved < 0">trending_down</mat-icon>
+                    <mat-icon *ngIf="trendApproved === 0">trending_flat</mat-icon>
+                    {{ trendApproved >= 0 ? '+' : '' }}{{ trendApproved }}%
+                </span>
+            </div>
+            <div class="pbi-kpi__glow"></div>
+        </div>
+
+        <!-- Refusées -->
+        <div class="pbi-kpi pbi-kpi--red">
+            <div class="pbi-kpi__icon-bg"><mat-icon>cancel</mat-icon></div>
+            <div class="pbi-kpi__content">
+                <span class="pbi-kpi__label">Refusées</span>
+                <span class="pbi-kpi__value">{{ kpiRejected }}</span>
+                <span class="pbi-kpi__trend" [class.pbi-kpi__trend--up]="trendRejected > 0"
+                    [class.pbi-kpi__trend--down]="trendRejected < 0">
+                    <mat-icon *ngIf="trendRejected > 0">trending_up</mat-icon>
+                    <mat-icon *ngIf="trendRejected < 0">trending_down</mat-icon>
+                    <mat-icon *ngIf="trendRejected === 0">trending_flat</mat-icon>
+                    {{ trendRejected >= 0 ? '+' : '' }}{{ trendRejected }}%
+                </span>
+            </div>
+            <div class="pbi-kpi__glow"></div>
+        </div>
+
+        <!-- En Attente -->
+        <div class="pbi-kpi pbi-kpi--blue">
+            <div class="pbi-kpi__icon-bg"><mat-icon>pending</mat-icon></div>
+            <div class="pbi-kpi__content">
+                <span class="pbi-kpi__label">En Attente</span>
+                <span class="pbi-kpi__value">{{ kpiPending }}</span>
+                <span class="pbi-kpi__trend" [class.pbi-kpi__trend--up]="trendPending > 0"
+                    [class.pbi-kpi__trend--down]="trendPending < 0">
+                    <mat-icon *ngIf="trendPending > 0">trending_up</mat-icon>
+                    <mat-icon *ngIf="trendPending < 0">trending_down</mat-icon>
+                    <mat-icon *ngIf="trendPending === 0">trending_flat</mat-icon>
+                    {{ trendPending >= 0 ? '+' : '' }}{{ trendPending }}%
+                </span>
+            </div>
+            <div class="pbi-kpi__glow"></div>
+        </div>
+
+        <!-- Taux d'approbation -->
+        <div class="pbi-kpi pbi-kpi--green">
+            <div class="pbi-kpi__icon-bg"><mat-icon>thumb_up</mat-icon></div>
+            <div class="pbi-kpi__content">
+                <span class="pbi-kpi__label">Taux d'Approbation</span>
+                <span class="pbi-kpi__value">{{ kpiApprovalRate }}<small>%</small></span>
+            </div>
+            <div class="pbi-kpi__glow"></div>
+        </div>
+
+        <!-- Délai moyen -->
+        <div class="pbi-kpi pbi-kpi--amber">
+            <div class="pbi-kpi__icon-bg"><mat-icon>schedule</mat-icon></div>
+            <div class="pbi-kpi__content">
+                <span class="pbi-kpi__label">Délai Moyen Traitement</span>
+                <span class="pbi-kpi__value">{{ kpiAvgProcessingDays }}<small>j</small></span>
+            </div>
+            <div class="pbi-kpi__glow"></div>
+        </div>
+    </section>
+
+    <!-- ── FILTER BAR ────────────────────────────────── -->
+    <section class="pbi-filter-bar">
+        <div class="pbi-filter-bar__left">
+            <mat-icon class="pbi-filter-bar__icon">tune</mat-icon>
+            <span class="pbi-filter-bar__label">Filtres</span>
+            <span class="pbi-filter-badge" *ngIf="hasActiveFilters">{{ activeFilterCount }}</span>
+        </div>
+        <div class="pbi-filter-bar__controls">
+            <select class="pbi-select" [value]="selectedStatus" (change)="onStatusChange($any($event.target).value)">
+                <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <select class="pbi-select" [value]="selectedType" (change)="onTypeChange($any($event.target).value)">
+                <option *ngFor="let opt of typeOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <select class="pbi-select" *ngIf="userRole !== 'CHAUFFEUR'" [value]="selectedRequester"
+                (change)="onRequesterChange($any($event.target).value)">
+                <option value="">Tous les demandeurs</option>
+                <option *ngFor="let req of requesters" [value]="req.id">{{ req.name }}</option>
+            </select>
+            <button class="pbi-btn-clear" *ngIf="hasActiveFilters" (click)="clearFilters()">
+                <mat-icon>restart_alt</mat-icon> Réinitialiser
+            </button>
+        </div>
+    </section>
+
+    <!-- ── CHARTS GRID ───────────────────────────────── -->
+    <section class="pbi-charts-grid">
+
+        <!-- Main Monthly Chart -->
+        <div class="pbi-panel pbi-panel--main">
+            <div class="pbi-panel__header">
+                <div class="pbi-panel__title-group">
+                    <span class="pbi-panel__dot pbi-panel__dot--violet"></span>
+                    <h3 class="pbi-panel__title">Répartition mensuelle des congés</h3>
+                </div>
+                <span class="pbi-panel__hint">
+                    <mat-icon>touch_app</mat-icon> Cliquez sur une barre pour les détails
+                </span>
+            </div>
+            <div class="pbi-panel__chart-wrap">
+                <canvas baseChart [data]="monthlyChartData" [options]="monthlyChartOptions"
+                    [type]="monthlyChartType"></canvas>
+            </div>
+        </div>
+
+        <!-- Status Donut -->
+        <div class="pbi-panel pbi-panel--donut">
+            <div class="pbi-panel__header">
+                <div class="pbi-panel__title-group">
+                    <span class="pbi-panel__dot pbi-panel__dot--emerald"></span>
+                    <h3 class="pbi-panel__title">Par Statut</h3>
+                </div>
+            </div>
+            <div class="pbi-donut-wrap">
+                <div class="pbi-donut-center">
+                    <span class="pbi-donut-center__value">{{ kpiTotal }}</span>
+                    <span class="pbi-donut-center__label">Total</span>
+                </div>
+                <canvas baseChart [data]="statusChartData" [options]="statusChartOptions"
+                    [type]="statusChartType"></canvas>
+            </div>
+        </div>
+
+        <!-- Type Chart -->
+        <div class="pbi-panel pbi-panel--type">
+            <div class="pbi-panel__header">
+                <div class="pbi-panel__title-group">
+                    <span class="pbi-panel__dot pbi-panel__dot--amber"></span>
+                    <h3 class="pbi-panel__title">Par Type de Congé</h3>
+                </div>
+            </div>
+            <div class="pbi-panel__chart-wrap pbi-panel__chart-wrap--sm">
+                <canvas baseChart [data]="typeChartData" [options]="typeChartOptions"
+                    [type]="typeChartType"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Chauffeurs -->
+        <div class="pbi-panel pbi-panel--ranking">
+            <div class="pbi-panel__header">
+                <div class="pbi-panel__title-group">
+                    <span class="pbi-panel__dot pbi-panel__dot--pink"></span>
+                    <h3 class="pbi-panel__title">Top Chauffeurs — Jours de Congé</h3>
+                </div>
+            </div>
+            <div class="pbi-ranking-list">
+                <div class="pbi-ranking-item" *ngFor="let driver of topDrivers; let i = index">
+                    <div class="pbi-ranking-item__rank">
+                        <span class="pbi-rank-badge" [class.pbi-rank-badge--gold]="i === 0"
+                            [class.pbi-rank-badge--silver]="i === 1" [class.pbi-rank-badge--bronze]="i === 2">
+                            {{ i + 1 }}
+                        </span>
+                    </div>
+                    <div class="pbi-ranking-item__info">
+                        <div class="pbi-ranking-item__top">
+                            <span class="pbi-ranking-item__name">{{ driver.name }}</span>
+                            <span class="pbi-ranking-item__days">{{ driver.totalDays }}j
+                                <small>({{ driver.leaveCount }} demande{{ driver.leaveCount > 1 ? 's' : '' }})</small>
+                            </span>
+                        </div>
+                        <div class="pbi-ranking-item__bar-bg">
+                            <div class="pbi-ranking-item__bar-fill"
+                                [style.width.%]="driver.percentage"
+                                [class.pbi-bar--gold]="i === 0"
+                                [class.pbi-bar--silver]="i === 1"
+                                [class.pbi-bar--bronze]="i === 2"
+                                [class.pbi-bar--default]="i > 2">
+                            </div>
+                        </div>
+                    </div>
+                    <span class="pbi-ranking-item__pct">{{ driver.percentage }}%</span>
+                </div>
+                <div class="pbi-ranking-empty" *ngIf="topDrivers.length === 0">
+                    <mat-icon>groups</mat-icon>
+                    <span>Aucune donnée disponible</span>
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- ── INSIGHT CARDS ─────────────────────────────── -->
+    <section class="pbi-insight-strip">
+        <div class="pbi-insight-card">
+            <div class="pbi-insight-card__icon pbi-insight-card__icon--violet">
+                <mat-icon>show_chart</mat-icon>
+            </div>
+            <div class="pbi-insight-card__body">
+                <span class="pbi-insight-card__label">Pic de l'Année</span>
+                <span class="pbi-insight-card__value">{{ peakMonth }}</span>
+                <span class="pbi-insight-card__sub">{{ peakMonthCount }} demandes</span>
+            </div>
+        </div>
+        <div class="pbi-insight-card">
+            <div class="pbi-insight-card__icon pbi-insight-card__icon--emerald">
+                <mat-icon>timer</mat-icon>
+            </div>
+            <div class="pbi-insight-card__body">
+                <span class="pbi-insight-card__label">Durée Moyenne / Congé</span>
+                <span class="pbi-insight-card__value">{{ kpiAvgDaysPerLeave }} <small>jours</small></span>
+            </div>
+        </div>
+        <div class="pbi-insight-card">
+            <div class="pbi-insight-card__icon pbi-insight-card__icon--amber">
+                <mat-icon>event_note</mat-icon>
+            </div>
+            <div class="pbi-insight-card__body">
+                <span class="pbi-insight-card__label">Total Jours de Congé</span>
+                <span class="pbi-insight-card__value">{{ totalLeaveDays }} <small>jours</small></span>
+            </div>
+        </div>
+        <div class="pbi-insight-card">
+            <div class="pbi-insight-card__icon pbi-insight-card__icon--pink">
+                <mat-icon>speed</mat-icon>
+            </div>
+            <div class="pbi-insight-card__body">
+                <span class="pbi-insight-card__label">Traitement Moyen</span>
+                <span class="pbi-insight-card__value">{{ kpiAvgProcessingDays }} <small>jours</small></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── DATA TABLE ────────────────────────────────── -->
+    <section class="pbi-table-section">
+        <div class="pbi-table-header">
+            <div class="pbi-table-title-group">
+                <mat-icon>table_chart</mat-icon>
+                <h3>Détail des demandes de congés</h3>
+                <span class="pbi-table-count">{{ totalElements }}</span>
+            </div>
+        </div>
+
+        <div class="pbi-table-container">
+            <table mat-table [dataSource]="dataSource" class="pbi-table">
+
+                <ng-container matColumnDef="requesterName">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="pbi-th"><mat-icon>person</mat-icon> Demandeur</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="pbi-cell-requester">{{ element.requesterName }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="pbi-th"><mat-icon>category</mat-icon> Type</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="pbi-cell-type">{{ element.type }}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="dates">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="pbi-th"><mat-icon>date_range</mat-icon> Période</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <div class="pbi-cell-dates">
+                            <span>{{ element.startDate }}</span>
+                            <mat-icon>arrow_forward</mat-icon>
+                            <span>{{ element.endDate }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="duration">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="pbi-th"><mat-icon>hourglass_empty</mat-icon> Durée</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="pbi-cell-duration">{{ element.duration }}
+                            jour<ng-container *ngIf="element.duration > 1">s</ng-container>
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="pbi-th"><mat-icon>flag</mat-icon> Statut</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="pbi-status-pill" [ngClass]="'pbi-status-pill--' + element.statusClass">
+                            {{ element.status }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="approver">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="pbi-th"><mat-icon>how_to_reg</mat-icon> Approuvé par</div>
+                    </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="pbi-cell-approver">{{ element.approver }}</span>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="pbi-table-row"></tr>
+
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell pbi-no-data" [attr.colspan]="displayedColumns.length">
+                        <div class="pbi-empty-state">
+                            <mat-icon>search_off</mat-icon>
+                            <h4>Aucune demande de congé trouvée</h4>
+                            <p>Modifiez vos filtres pour afficher des résultats.</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="pbi-paginator">
+            <mat-paginator [length]="totalElements" [pageIndex]="pageIndex" [pageSize]="pageSize"
+                [pageSizeOptions]="[5, 10, 20, 50]" (page)="onPageChange($event)"
+                aria-label="Pagination des congés">
+            </mat-paginator>
+        </div>
+    </section>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     DRILL-DOWN OVERLAY
+     ══════════════════════════════════════════════════════ -->
+<div class="pbi-dd-overlay" [class.pbi-dd-overlay--open]="drillDownOpen" (click)="closeDrillDown()">
+</div>
+
+<div class="pbi-dd-panel" [class.pbi-dd-panel--open]="drillDownOpen">
+    <ng-container *ngIf="drillDownData">
+        <!-- Panel Header -->
+        <div class="pbi-dd-panel__header">
+            <div class="pbi-dd-panel__title-group">
+                <div class="pbi-dd-panel__icon-wrap">
+                    <mat-icon>calendar_month</mat-icon>
+                </div>
+                <div>
+                    <h2 class="pbi-dd-panel__title">{{ drillDownData.monthLabel }}</h2>
+                    <p class="pbi-dd-panel__subtitle">{{ drillDownData.leaves.length }} demande{{ drillDownData.leaves.length > 1 ? 's' : '' }} — {{ drillDownData.totalDays }} jours au total</p>
+                </div>
+            </div>
+            <button class="pbi-dd-panel__close" (click)="closeDrillDown()">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <!-- Mini KPIs -->
+        <div class="pbi-dd-mini-kpis">
+            <div class="pbi-dd-mini-kpi pbi-dd-mini-kpi--approved">
+                <mat-icon>check_circle</mat-icon>
+                <span class="pbi-dd-mini-kpi__val">{{ drillDownData.approvedCount }}</span>
+                <span class="pbi-dd-mini-kpi__label">Approuvées</span>
+            </div>
+            <div class="pbi-dd-mini-kpi pbi-dd-mini-kpi--pending">
+                <mat-icon>pending</mat-icon>
+                <span class="pbi-dd-mini-kpi__val">{{ drillDownData.pendingCount }}</span>
+                <span class="pbi-dd-mini-kpi__label">En attente</span>
+            </div>
+            <div class="pbi-dd-mini-kpi pbi-dd-mini-kpi--rejected">
+                <mat-icon>cancel</mat-icon>
+                <span class="pbi-dd-mini-kpi__val">{{ drillDownData.rejectedCount }}</span>
+                <span class="pbi-dd-mini-kpi__label">Refusées</span>
+            </div>
+        </div>
+
+        <!-- Leave List -->
+        <div class="pbi-dd-list">
+            <div class="pbi-dd-card" *ngFor="let leave of drillDownData.leaves; trackBy: trackByLeaveId">
+                <div class="pbi-dd-card__left">
+                    <div class="pbi-dd-card__avatar">
+                        <mat-icon>person</mat-icon>
+                    </div>
+                    <div class="pbi-dd-card__info">
+                        <span class="pbi-dd-card__name">{{ leave.requesterName }}</span>
+                        <span class="pbi-dd-card__dates">
+                            <mat-icon>{{ getTypeIcon(leave.typeLabel) }}</mat-icon>
+                            {{ leave.typeLabel }} — {{ leave.startDate }} → {{ leave.endDate }}
+                        </span>
+                        <span class="pbi-dd-card__meta">
+                            {{ leave.duration }} jour{{ leave.duration > 1 ? 's' : '' }}
+                            <ng-container *ngIf="leave.managerName"> · Traité par {{ leave.managerName }}</ng-container>
+                        </span>
+                    </div>
+                </div>
+                <div class="pbi-dd-card__right">
+                    <span class="pbi-dd-status" [ngClass]="getStatusColorClass(leave.status)">
+                        <mat-icon>{{ getStatusIcon(leave.status) }}</mat-icon>
+                        {{ leave.statusLabel }}
+                    </span>
+                </div>
+            </div>
+            <div class="pbi-dd-empty" *ngIf="drillDownData.leaves.length === 0">
+                <mat-icon>event_busy</mat-icon>
+                <span>Aucun congé ce mois-ci</span>
+            </div>
+        </div>
+    </ng-container>
+</div>

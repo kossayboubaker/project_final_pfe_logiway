@@ -1,0 +1,74 @@
+═══════════════════════════════════════════════════════
+  COMMENT OUVRIR LE RAPPORT HTML DE TESTS
+═══════════════════════════════════════════════════════
+
+📌 MÉTHODE RAPIDE (LA PLUS SIMPLE):
+
+1. Double-cliquer sur ce fichier:
+   ➜ OUVRIR_RAPPORT_TESTS.bat
+
+2. Le rapport s'ouvre automatiquement dans votre navigateur
+
+
+📌 MÉTHODE MANUELLE:
+
+1. Aller dans le dossier:
+   ➜ backend\target\site\jacoco\
+
+2. Double-cliquer sur:
+   ➜ index.html
+
+3. Le rapport s'ouvre dans Chrome/Edge/Firefox
+
+
+📌 SI LE RAPPORT N'EXISTE PAS:
+
+1. Ouvrir IntelliJ IDEA
+
+2. Clic droit sur ReclamationServiceTest.java
+
+3. Cliquer: "Run 'ReclamationServiceTest' with Coverage"
+
+4. Attendre la fin des tests
+
+5. Onglet "Coverage" → Clic droit → "Generate Coverage Report"
+
+6. Choisir format HTML → OK
+
+7. Relancer le fichier .bat
+
+
+═══════════════════════════════════════════════════════
+  CE QUE VOUS VERREZ DANS LE NAVIGATEUR
+═══════════════════════════════════════════════════════
+
+✅ Tableau avec les statistiques de couverture:
+   - Package
+   - Class %
+   - Method %
+   - Line %
+   - Branch %
+
+✅ Navigation par package → classe → méthode
+
+✅ Code source avec couleurs:
+   🟢 VERT = Ligne testée
+   🔴 ROUGE = Ligne non testée
+   🟡 JAUNE = Partiellement testée
+
+
+═══════════════════════════════════════════════════════
+  POUR VOTRE PFE
+═══════════════════════════════════════════════════════
+
+📸 Prendre 3 captures d'écran:
+
+1. Page d'accueil avec statistiques globales
+2. Vue d'une classe (ex: ReclamationServiceImpl)
+3. Code source avec lignes vertes/rouges
+
+
+═══════════════════════════════════════════════════════
+
+💡 FICHIER CRÉÉ: 9 août 2026
+📧 Questions? Relire: GUIDE_RAPPORT_COVERAGE_HTML.md

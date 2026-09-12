@@ -1,0 +1,511 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProfileServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">ProfileServiceImpl.java</span></div><h1>ProfileServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.chauffeur.ChauffeurAvailabilityResponse;
+import com.logiway.dto.chauffeur.ChauffeurDashboardResponse;
+import com.logiway.dto.chauffeur.ChauffeurDashboardStatsResponse;
+import com.logiway.dto.chauffeur.ChauffeurVehicleResponse;
+import com.logiway.dto.request.ChangePasswordRequest;
+import com.logiway.dto.request.UpdateProfileRequest;
+import com.logiway.dto.response.ApiMessageResponse;
+import com.logiway.dto.response.UserResponse;
+import com.logiway.dto.trajet.TrajetResponse;
+import com.logiway.entities.Chauffeur;
+import com.logiway.entities.Manager;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Trajet;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.Vehicule;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutChauffeur;
+import com.logiway.entities.enums.StatutTrajet;
+import com.logiway.entities.enums.StatutVehicule;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.mappers.UserMapper;
+import com.logiway.repositories.ChauffeurRepository;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.repositories.TrajetRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.repositories.VehiculeRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.ProfileService;
+import com.logiway.services.KeycloakService;
+import com.logiway.services.MailService;
+import com.logiway.services.NotificationRealtimeService;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+<span class="fc" id="L58">@Slf4j</span>
+<span class="fc" id="L59">@RequiredArgsConstructor</span>
+public class ProfileServiceImpl implements ProfileService {
+
+    private final AuthenticatedUserService authenticatedUserService;
+    private final UtilisateurRepository utilisateurRepository;
+    private final NotificationRepository notificationRepository;
+    private final ChauffeurRepository chauffeurRepository;
+    private final TrajetRepository trajetRepository;
+    private final VehiculeRepository vehiculeRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+    private final KeycloakService keycloakService;
+    private final MailService mailService;
+    private final NotificationRealtimeService notificationRealtimeService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentProfile() {
+<span class="fc" id="L77">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L78">        return userMapper.toResponse(currentUser);</span>
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateCurrentProfile(UpdateProfileRequest request) {
+<span class="fc" id="L84">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (request.prenom() != null) currentUser.setPrenom(request.prenom());</span>
+<span class="fc bfc" id="L87" title="All 2 branches covered.">        if (request.nom() != null) currentUser.setNom(request.nom());</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        if (request.telephone() != null) currentUser.setTelephone(request.telephone());</span>
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        if (request.image() != null) currentUser.setImage(request.image());</span>
+
+<span class="fc" id="L91">        utilisateurRepository.save(currentUser);</span>
+
+<span class="fc" id="L93">        return userMapper.toResponse(currentUser);</span>
+    }
+
+    @Override
+    @Transactional
+    public ApiMessageResponse changeCurrentPassword(ChangePasswordRequest request) {
+<span class="fc" id="L99">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L100" title="All 2 branches covered.">        if (!passwordEncoder.matches(request.oldPassword(), currentUser.getPasswordHash())) {</span>
+<span class="fc" id="L101">            throw new BadRequestException(&quot;Old password is incorrect&quot;);</span>
+        }
+
+<span class="fc" id="L104">        currentUser.setPasswordHash(passwordEncoder.encode(request.newPassword()));</span>
+        
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        boolean wasNotVerified = !currentUser.getEmailVerifie();</span>
+<span class="fc" id="L107">        currentUser.setEmailVerifie(true);</span>
+<span class="fc" id="L108">        utilisateurRepository.save(currentUser);</span>
+        
+<span class="fc" id="L110">        keycloakService.updatePasswordByEmail(currentUser.getEmail(), request.newPassword());</span>
+
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        if (wasNotVerified) {</span>
+            try {
+<span class="fc" id="L114">                mailService.sendAccountActivationConfirmationEmail(currentUser);</span>
+<span class="fc" id="L115">                notifyCreatorOfAccountActivation(currentUser);</span>
+<span class="fc" id="L116">            } catch (Exception ex) {</span>
+<span class="fc" id="L117">                log.warn(&quot;Failed to send activation notification for user {}&quot;, currentUser.getEmail(), ex);</span>
+<span class="fc" id="L118">            }</span>
+        }
+
+<span class="fc" id="L121">        return new ApiMessageResponse(&quot;Password changed successfully&quot;);</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ChauffeurDashboardResponse getCurrentDriverDashboard() {
+<span class="fc" id="L127">        Chauffeur chauffeur = resolveCurrentChauffeur();</span>
+<span class="fc" id="L128">        List&lt;Trajet&gt; trajets = loadDriverTrajets(chauffeur.getId());</span>
+<span class="fc" id="L129">        Trajet currentMission = findLatestActiveTrip(trajets);</span>
+
+<span class="fc" id="L131">        return new ChauffeurDashboardResponse(</span>
+<span class="fc" id="L132">            userMapper.toResponse(chauffeur),</span>
+<span class="fc" id="L133">            toVehicleResponse(chauffeur.getVehiculeActuel()),</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            chauffeur.getManager() != null ? userMapper.toResponse(chauffeur.getManager()) : null,</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">            currentMission != null ? toTrajetResponse(currentMission) : null,</span>
+<span class="fc" id="L136">            trajets.stream()</span>
+<span class="fc" id="L137">                .filter(this::isTodayTrip)</span>
+<span class="fc" id="L138">                .map(this::toTrajetResponse)</span>
+<span class="fc" id="L139">                .toList(),</span>
+<span class="fc" id="L140">            buildStats(chauffeur, trajets),</span>
+<span class="fc" id="L141">            getCurrentDriverAvailability()</span>
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page&lt;TrajetResponse&gt; getCurrentDriverTrips(Pageable pageable, StatutTrajet statut) {
+<span class="fc" id="L148">        Chauffeur chauffeur = resolveCurrentChauffeur();</span>
+<span class="fc" id="L149">        List&lt;Trajet&gt; trajets = loadDriverTrajets(chauffeur.getId());</span>
+
+<span class="fc" id="L151">        List&lt;Trajet&gt; filtered = trajets.stream()</span>
+<span class="fc bfc" id="L152" title="All 4 branches covered.">            .filter(trajet -&gt; statut == null || trajet.getStatut() == statut)</span>
+<span class="fc" id="L153">            .toList();</span>
+
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        Pageable effectivePageable = pageable != null ? pageable : PageRequest.of(0, 20);</span>
+<span class="fc" id="L156">        int start = (int) Math.min(effectivePageable.getOffset(), filtered.size());</span>
+<span class="fc" id="L157">        int end = Math.min(start + effectivePageable.getPageSize(), filtered.size());</span>
+
+<span class="fc" id="L159">        List&lt;TrajetResponse&gt; content = filtered.subList(start, end).stream()</span>
+<span class="fc" id="L160">            .map(this::toTrajetResponse)</span>
+<span class="fc" id="L161">            .toList();</span>
+
+<span class="fc" id="L163">        return new PageImpl&lt;&gt;(content, effectivePageable, filtered.size());</span>
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ChauffeurAvailabilityResponse getCurrentDriverAvailability() {
+<span class="fc" id="L169">        Chauffeur chauffeur = resolveCurrentChauffeur();</span>
+<span class="fc" id="L170">        return computeAvailability(chauffeur);</span>
+    }
+
+    @PostConstruct
+    public void reconcileDriverAndVehicleStatusesOnStartup() {
+<span class="fc" id="L175">        chauffeurRepository.findAll().forEach(this::reconcileChauffeurStatus);</span>
+<span class="fc" id="L176">        vehiculeRepository.findAll().forEach(this::reconcileVehicleStatus);</span>
+<span class="fc" id="L177">    }</span>
+
+    @Scheduled(fixedDelay = 60_000L)
+    @Transactional
+    public void releaseDriversAfterRestPeriod() {
+<span class="fc" id="L182">        chauffeurRepository.findAll().forEach(chauffeur -&gt; {</span>
+<span class="fc" id="L183">            ChauffeurAvailabilityResponse availability = computeAvailability(chauffeur);</span>
+<span class="fc bfc" id="L184" title="All 4 branches covered.">            if (Boolean.TRUE.equals(availability.disponible()) &amp;&amp; chauffeur.getStatutConducteur() != StatutChauffeur.LIBRE) {</span>
+<span class="fc" id="L185">                chauffeur.setStatutConducteur(StatutChauffeur.LIBRE);</span>
+<span class="fc" id="L186">                chauffeurRepository.save(chauffeur);</span>
+<span class="fc" id="L187">                publishStatusChangeNotification(chauffeur, &quot;Chauffeur libéré automatiquement après 12 heures de repos.&quot;);</span>
+            }
+<span class="fc" id="L189">        });</span>
+<span class="fc" id="L190">    }</span>
+
+    private void notifyCreatorOfAccountActivation(Utilisateur activatedUser) {
+<span class="fc" id="L193">        String message = String.format(&quot;Le compte de %s %s (%s) a ete active.&quot;,</span>
+<span class="fc" id="L194">            activatedUser.getPrenom(), activatedUser.getNom(), activatedUser.getEmail());</span>
+
+<span class="fc" id="L196">        List&lt;Utilisateur&gt; recipients = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L198" title="All 4 branches covered.">        if (activatedUser instanceof Chauffeur chauffeur &amp;&amp; chauffeur.getManager() != null) {</span>
+<span class="fc" id="L199">            recipients.add(chauffeur.getManager());</span>
+        }
+
+<span class="fc" id="L202">        recipients.addAll(utilisateurRepository.findByRole(Role.SUPERADMIN));</span>
+
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        for (Utilisateur recipient : recipients.stream().distinct().toList()) {</span>
+<span class="fc" id="L205">            Notification notification = Notification.builder()</span>
+<span class="fc" id="L206">                .type(TypeNotif.NOTIF_COMPTE)</span>
+<span class="fc" id="L207">                .message(message)</span>
+<span class="fc" id="L208">                .utilisateur(recipient)</span>
+<span class="fc" id="L209">                .estLu(false)</span>
+<span class="fc" id="L210">                .build();</span>
+<span class="fc" id="L211">            notificationRepository.save(notification);</span>
+<span class="fc" id="L212">            notificationRealtimeService.publishToUsers(List.of(recipient.getId()), notification);</span>
+<span class="fc" id="L213">        }</span>
+<span class="fc" id="L214">    }</span>
+
+    private Chauffeur resolveCurrentChauffeur() {
+<span class="fc" id="L217">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        if (currentUser instanceof Chauffeur chauffeur) {</span>
+<span class="fc" id="L219">            return chauffeurRepository.findByIdWithDashboardFetch(chauffeur.getId())</span>
+<span class="fc" id="L220">                .orElse(chauffeur);</span>
+        }
+
+<span class="fc" id="L223">        throw new BadRequestException(&quot;Current user is not a chauffeur&quot;);</span>
+    }
+
+    private List&lt;Trajet&gt; loadDriverTrajets(Long chauffeurId) {
+<span class="fc" id="L227">        List&lt;Trajet&gt; trajets = trajetRepository.findByChauffeurIdWithFetch(chauffeurId);</span>
+<span class="fc" id="L228">        trajets.sort(Comparator.comparing(Trajet::getDateDepart, Comparator.nullsLast(Comparator.naturalOrder())).reversed());</span>
+<span class="fc" id="L229">        return trajets;</span>
+    }
+
+    private Trajet findLatestActiveTrip(List&lt;Trajet&gt; trajets) {
+<span class="fc" id="L233">        return trajets.stream()</span>
+<span class="fc" id="L234">            .filter(trajet -&gt; EnumSet.of(StatutTrajet.EN_COURS, StatutTrajet.ACTIF).contains(trajet.getStatut()))</span>
+<span class="fc" id="L235">            .findFirst()</span>
+<span class="fc" id="L236">            .orElse(null);</span>
+    }
+
+    private boolean isTodayTrip(Trajet trajet) {
+<span class="fc bfc" id="L240" title="All 2 branches covered.">        LocalDate referenceDate = trajet.getDateDepart() != null ? trajet.getDateDepart().toLocalDate() : null;</span>
+<span class="fc bfc" id="L241" title="All 4 branches covered.">        return referenceDate != null &amp;&amp; referenceDate.equals(LocalDate.now());</span>
+    }
+
+    private ChauffeurDashboardStatsResponse buildStats(Chauffeur chauffeur, List&lt;Trajet&gt; trajets) {
+<span class="fc" id="L245">        double totalDistance = trajets.stream()</span>
+<span class="fc" id="L246">            .map(Trajet::getDistanceKm)</span>
+<span class="fc bfc" id="L247" title="All 2 branches covered.">            .filter(distance -&gt; distance != null)</span>
+<span class="fc" id="L248">            .mapToDouble(Double::doubleValue)</span>
+<span class="fc" id="L249">            .sum();</span>
+
+<span class="fc" id="L251">        double totalHours = trajets.stream()</span>
+<span class="fc" id="L252">            .mapToDouble(this::estimateTripHours)</span>
+<span class="fc" id="L253">            .sum();</span>
+
+<span class="fc bfc" id="L255" title="All 2 branches covered.">        long completed = trajets.stream().filter(trajet -&gt; trajet.getStatut() == StatutTrajet.COMPLETE).count();</span>
+<span class="fc" id="L256">        Map&lt;String, Long&gt; alertCounts = countDriverAlerts(chauffeur);</span>
+<span class="fc" id="L257">        long onTimeTrips = trajets.stream()</span>
+<span class="fc" id="L258">            .map(this::computeTripTimingMetrics)</span>
+<span class="fc bfc" id="L259" title="All 4 branches covered.">            .filter(metrics -&gt; metrics.statutPerformance() != null &amp;&amp; metrics.statutPerformance().equals(&quot;À l'heure&quot;))</span>
+<span class="fc" id="L260">            .count();</span>
+
+<span class="fc bfc" id="L262" title="All 2 branches covered.">        double averageSpeed = totalHours &gt; 0 ? totalDistance / totalHours : 0.0;</span>
+<span class="fc" id="L263">        double ecoScore = Math.max(0.0, 100.0 - (averageSpeed * 0.35) - (alertCounts.values().stream().mapToLong(Long::longValue).sum() * 2.5));</span>
+<span class="fc bfc" id="L264" title="All 2 branches covered.">        double punctuality = completed &gt; 0 ? (onTimeTrips * 100.0) / completed : 100.0;</span>
+
+<span class="fc" id="L266">        return new ChauffeurDashboardStatsResponse(</span>
+<span class="fc" id="L267">            round(totalDistance),</span>
+<span class="fc" id="L268">            completed,</span>
+<span class="fc" id="L269">            0L,</span>
+<span class="fc" id="L270">            round(totalHours),</span>
+<span class="fc" id="L271">            round(averageSpeed),</span>
+<span class="fc" id="L272">            0.0,</span>
+<span class="fc" id="L273">            round(punctuality),</span>
+<span class="fc" id="L274">            0L,  // Alertes pause désactivées</span>
+<span class="fc" id="L275">            alertCounts.getOrDefault(&quot;carburant&quot;, 0L),</span>
+<span class="fc" id="L276">            alertCounts.getOrDefault(&quot;deviation&quot;, 0L),</span>
+<span class="fc" id="L277">            alertCounts.getOrDefault(&quot;arret&quot;, 0L),</span>
+<span class="fc" id="L278">            round(ecoScore)</span>
+        );
+    }
+
+    private Map&lt;String, Long&gt; countDriverAlerts(Chauffeur chauffeur) {
+<span class="fc" id="L283">        return notificationRepository.findByUtilisateurOrderByDateCreationDesc(chauffeur).stream()</span>
+<span class="fc" id="L284">            .map(Notification::getMessage)</span>
+<span class="fc bfc" id="L285" title="All 4 branches covered.">            .filter(message -&gt; message != null &amp;&amp; !message.isBlank())</span>
+<span class="fc" id="L286">            .map(message -&gt; normalize(message))</span>
+<span class="fc" id="L287">            .collect(Collectors.groupingBy(message -&gt; {</span>
+<span class="fc bfc" id="L288" title="All 4 branches covered.">                if (message.contains(&quot;carburant&quot;) || message.contains(&quot;fuel&quot;)) return &quot;carburant&quot;;</span>
+<span class="pc bpc" id="L289" title="1 of 4 branches missed.">                if (message.contains(&quot;deviation&quot;) || message.contains(&quot;déviation&quot;)) return &quot;deviation&quot;;</span>
+<span class="fc bfc" id="L290" title="All 4 branches covered.">                if (message.contains(&quot;arret&quot;) || message.contains(&quot;stop&quot;)) return &quot;arret&quot;;</span>
+<span class="fc" id="L291">                return &quot;other&quot;;</span>
+<span class="fc" id="L292">            }, Collectors.counting()));</span>
+    }
+
+    private double estimateTripHours(Trajet trajet) {
+<span class="fc bfc" id="L296" title="All 2 branches covered.">        if (trajet.getDateDepart() == null) {</span>
+<span class="fc" id="L297">            return 0.0;</span>
+        }
+
+<span class="fc bfc" id="L300" title="All 2 branches covered.">        LocalDateTime end = trajet.getDateArriveeReelle() != null ? trajet.getDateArriveeReelle() : trajet.getDateArrivee();</span>
+<span class="fc bfc" id="L301" title="All 2 branches covered.">        if (end == null) {</span>
+<span class="fc" id="L302">            end = LocalDateTime.now();</span>
+        }
+
+<span class="fc" id="L305">        long minutes = java.time.Duration.between(trajet.getDateDepart(), end).toMinutes();</span>
+<span class="fc" id="L306">        return Math.max(0L, minutes) / 60.0;</span>
+    }
+
+    private TrajetResponse toTrajetResponse(Trajet trajet) {
+<span class="fc" id="L310">        Chauffeur chauffeur = trajet.getChauffeur();</span>
+<span class="fc" id="L311">        Vehicule vehicule = trajet.getVehicule();</span>
+<span class="fc bfc" id="L312" title="All 4 branches covered.">        Manager manager = trajet.getManager() != null ? trajet.getManager() : chauffeur != null ? chauffeur.getManager() : null;</span>
+<span class="fc" id="L313">        TripTimingMetrics metrics = computeTripTimingMetrics(trajet);</span>
+<span class="fc bfc" id="L314" title="All 2 branches covered.">        Double distanceKm = trajet.getDistanceKm() != null ? trajet.getDistanceKm() : estimateDistanceKm(trajet);</span>
+
+<span class="fc" id="L316">        return new TrajetResponse(</span>
+<span class="fc" id="L317">            trajet.getId(),</span>
+<span class="fc" id="L318">            trajet.getPointDepart(),</span>
+<span class="fc" id="L319">            trajet.getDestination(),</span>
+<span class="fc" id="L320">            trajet.getLatitudeDepart(),</span>
+<span class="fc" id="L321">            trajet.getLongitudeDepart(),</span>
+<span class="fc" id="L322">            trajet.getLatitudeArrivee(),</span>
+<span class="fc" id="L323">            trajet.getLongitudeArrivee(),</span>
+            distanceKm,
+<span class="fc" id="L325">            trajet.getDureeEstimeeMinutes(),</span>
+<span class="fc" id="L326">            trajet.getGeometrieItineraire(),</span>
+<span class="fc" id="L327">            trajet.getChargeKg(),</span>
+<span class="fc" id="L328">            trajet.getPriorite(),</span>
+<span class="fc" id="L329">            trajet.getNotes(),</span>
+<span class="fc" id="L330">            trajet.getDateDepart(),</span>
+<span class="fc" id="L331">            trajet.getDateArrivee(),</span>
+<span class="fc" id="L332">            trajet.getDateArriveeReelle(),</span>
+<span class="fc" id="L333">            metrics.dureeReelleMinutes(),</span>
+<span class="fc" id="L334">            metrics.retardMinutes(),</span>
+<span class="fc" id="L335">            metrics.statutPerformance(),</span>
+<span class="fc" id="L336">            trajet.getStatut(),</span>
+<span class="fc bfc" id="L337" title="All 2 branches covered.">            chauffeur != null ? chauffeur.getId() : null,</span>
+<span class="fc bfc" id="L338" title="All 2 branches covered.">            chauffeur != null ? formatDisplayName(chauffeur) : null,</span>
+<span class="fc bfc" id="L339" title="All 2 branches covered.">            vehicule != null ? vehicule.getId() : null,</span>
+<span class="fc bfc" id="L340" title="All 2 branches covered.">            vehicule != null ? vehicule.getMatricule() : null,</span>
+<span class="fc bfc" id="L341" title="All 2 branches covered.">            vehicule != null ? vehicule.getCouleur() : null,</span>
+<span class="fc bfc" id="L342" title="All 2 branches covered.">            vehicule != null ? vehicule.getLatitudeActuelle() : null,</span>
+<span class="fc bfc" id="L343" title="All 2 branches covered.">            vehicule != null ? vehicule.getLongitudeActuelle() : null,</span>
+<span class="fc bfc" id="L344" title="All 2 branches covered.">            vehicule != null ? vehicule.getVitesseActuelle() : null,</span>
+<span class="fc bfc" id="L345" title="All 2 branches covered.">            manager != null ? manager.getId() : null,</span>
+<span class="fc bfc" id="L346" title="All 2 branches covered.">            manager != null ? formatDisplayName(manager) : null</span>
+        );
+    }
+
+    private TripTimingMetrics computeTripTimingMetrics(Trajet trajet) {
+<span class="fc bfc" id="L351" title="All 2 branches covered.">        if (trajet.getDateDepart() == null) {</span>
+<span class="fc" id="L352">            return new TripTimingMetrics(null, null, null);</span>
+        }
+
+<span class="fc" id="L355">        LocalDateTime referenceEnd = trajet.getDateArriveeReelle();</span>
+<span class="fc bfc" id="L356" title="All 4 branches covered.">        boolean isRunning = trajet.getStatut() == StatutTrajet.EN_COURS || trajet.getStatut() == StatutTrajet.ACTIF;</span>
+<span class="fc bfc" id="L357" title="All 4 branches covered.">        if (referenceEnd == null &amp;&amp; isRunning) {</span>
+<span class="fc" id="L358">            referenceEnd = LocalDateTime.now();</span>
+        }
+
+<span class="fc bfc" id="L361" title="All 2 branches covered.">        if (referenceEnd == null) {</span>
+<span class="fc" id="L362">            return new TripTimingMetrics(null, null, null);</span>
+        }
+
+<span class="fc" id="L365">        long realMinutes = java.time.Duration.between(trajet.getDateDepart(), referenceEnd).toMinutes();</span>
+<span class="fc" id="L366">        int realDuration = (int) Math.max(0, realMinutes);</span>
+<span class="fc bfc" id="L367" title="All 2 branches covered.">        int planned = trajet.getDureeEstimeeMinutes() != null ? trajet.getDureeEstimeeMinutes() : 0;</span>
+<span class="fc" id="L368">        int retard = realDuration - planned;</span>
+
+<span class="fc" id="L370">        return new TripTimingMetrics(realDuration, retard, computePerformanceLabel(retard));</span>
+    }
+
+    private Double estimateDistanceKm(Trajet trajet) {
+<span class="pc bpc" id="L374" title="2 of 8 branches missed.">        if (trajet.getLatitudeDepart() == null || trajet.getLongitudeDepart() == null || trajet.getLatitudeArrivee() == null || trajet.getLongitudeArrivee() == null) {</span>
+<span class="fc" id="L375">            return 0.0;</span>
+        }
+
+<span class="fc" id="L378">        double earthRadiusKm = 6371.0;</span>
+<span class="fc" id="L379">        double lat1 = Math.toRadians(trajet.getLatitudeDepart());</span>
+<span class="fc" id="L380">        double lat2 = Math.toRadians(trajet.getLatitudeArrivee());</span>
+<span class="fc" id="L381">        double deltaLat = Math.toRadians(trajet.getLatitudeArrivee() - trajet.getLatitudeDepart());</span>
+<span class="fc" id="L382">        double deltaLon = Math.toRadians(trajet.getLongitudeArrivee() - trajet.getLongitudeDepart());</span>
+<span class="fc" id="L383">        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)</span>
+<span class="fc" id="L384">            + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);</span>
+<span class="fc" id="L385">        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));</span>
+<span class="fc" id="L386">        return round(c * earthRadiusKm);</span>
+    }
+
+    private String computePerformanceLabel(int retardMinutes) {
+<span class="fc bfc" id="L390" title="All 2 branches covered.">        if (retardMinutes &lt; 0) {</span>
+<span class="fc" id="L391">            return &quot;En avance&quot;;</span>
+        }
+<span class="fc bfc" id="L393" title="All 2 branches covered.">        if (retardMinutes &lt; 5) {</span>
+<span class="fc" id="L394">            return &quot;À l'heure&quot;;</span>
+        }
+<span class="fc bfc" id="L396" title="All 2 branches covered.">        if (retardMinutes &lt;= 30) {</span>
+<span class="fc" id="L397">            return &quot;Léger retard&quot;;</span>
+        }
+<span class="fc" id="L399">        return &quot;Retard important&quot;;</span>
+    }
+
+<span class="fc" id="L402">    private record TripTimingMetrics(Integer dureeReelleMinutes, Integer retardMinutes, String statutPerformance) { }</span>
+
+    private ChauffeurVehicleResponse toVehicleResponse(Vehicule vehicule) {
+<span class="fc bfc" id="L405" title="All 2 branches covered.">        if (vehicule == null) {</span>
+<span class="fc" id="L406">            return null;</span>
+        }
+
+<span class="fc" id="L409">        return new ChauffeurVehicleResponse(</span>
+<span class="fc" id="L410">            vehicule.getId(),</span>
+<span class="fc" id="L411">            vehicule.getMatricule(),</span>
+<span class="fc" id="L412">            vehicule.getMarque(),</span>
+<span class="fc" id="L413">            vehicule.getModele(),</span>
+<span class="fc bfc" id="L414" title="All 4 branches covered.">            vehicule.getMarque() != null &amp;&amp; vehicule.getModele() != null ? vehicule.getMarque() + &quot; &quot; + vehicule.getModele() : vehicule.getMarque(),</span>
+<span class="fc" id="L415">            vehicule.getStatut(),</span>
+<span class="fc" id="L416">            vehicule.getKilometrage(),</span>
+<span class="fc" id="L417">            vehicule.getNiveauCarburant(),</span>
+<span class="fc" id="L418">            vehicule.getCapaciteCharge(),</span>
+<span class="fc bfc" id="L419" title="All 2 branches covered.">            vehicule.getEntreprise() != null ? vehicule.getEntreprise().getId() : null,</span>
+<span class="fc bfc" id="L420" title="All 2 branches covered.">            vehicule.getEntreprise() != null ? vehicule.getEntreprise().getNomEntreprise() : null</span>
+        );
+    }
+
+    private void reconcileChauffeurStatus(Chauffeur chauffeur) {
+<span class="fc" id="L425">        ChauffeurAvailabilityResponse availability = computeAvailability(chauffeur);</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">        StatutChauffeur expectedStatus = Boolean.TRUE.equals(availability.disponible()) ? StatutChauffeur.LIBRE : StatutChauffeur.EN_SERVICE;</span>
+
+<span class="fc bfc" id="L428" title="All 2 branches covered.">        if (chauffeur.getStatutConducteur() != expectedStatus) {</span>
+<span class="fc" id="L429">            chauffeur.setStatutConducteur(expectedStatus);</span>
+<span class="fc" id="L430">            chauffeurRepository.save(chauffeur);</span>
+        }
+<span class="fc" id="L432">    }</span>
+
+    private void reconcileVehicleStatus(Vehicule vehicule) {
+<span class="fc" id="L435">        List&lt;Trajet&gt; trajets = trajetRepository.findByVehiculeIdWithFetch(vehicule.getId());</span>
+<span class="fc" id="L436">        Trajet latestTrip = trajets.stream().findFirst().orElse(null);</span>
+<span class="fc bfc" id="L437" title="All 4 branches covered.">        StatutVehicule expectedStatus = latestTrip != null &amp;&amp; EnumSet.of(StatutTrajet.EN_COURS, StatutTrajet.ACTIF).contains(latestTrip.getStatut())</span>
+<span class="fc" id="L438">            ? StatutVehicule.EN_SERVICE</span>
+<span class="fc bfc" id="L439" title="All 4 branches covered.">            : latestTrip != null &amp;&amp; latestTrip.getStatut() == StatutTrajet.COMPLETE</span>
+<span class="fc" id="L440">                ? StatutVehicule.HORS_SERVICE</span>
+<span class="fc" id="L441">                : vehicule.getStatut();</span>
+
+<span class="fc bfc" id="L443" title="All 2 branches covered.">        if (vehicule.getStatut() != expectedStatus) {</span>
+<span class="fc" id="L444">            vehicule.setStatut(expectedStatus);</span>
+<span class="fc" id="L445">            vehiculeRepository.save(vehicule);</span>
+        }
+<span class="fc" id="L447">    }</span>
+
+    private String formatDisplayName(Utilisateur utilisateur) {
+<span class="fc bfc" id="L450" title="All 2 branches covered.">        String prenom = utilisateur.getPrenom() != null ? utilisateur.getPrenom().trim() : &quot;&quot;;</span>
+<span class="fc bfc" id="L451" title="All 2 branches covered.">        String nom = utilisateur.getNom() != null ? utilisateur.getNom().trim() : &quot;&quot;;</span>
+<span class="fc" id="L452">        String fullName = (prenom + &quot; &quot; + nom).trim();</span>
+<span class="fc bfc" id="L453" title="All 2 branches covered.">        return fullName.isBlank() ? utilisateur.getEmail() : fullName;</span>
+    }
+
+    private ChauffeurAvailabilityResponse computeAvailability(Chauffeur chauffeur) {
+<span class="fc" id="L457">        List&lt;Trajet&gt; trajets = trajetRepository.findByChauffeurIdWithFetch(chauffeur.getId());</span>
+<span class="fc" id="L458">        Trajet latestComplete = trajets.stream()</span>
+<span class="fc bfc" id="L459" title="All 4 branches covered.">            .filter(trajet -&gt; trajet.getStatut() == StatutTrajet.COMPLETE &amp;&amp; trajet.getDateArriveeReelle() != null)</span>
+<span class="fc" id="L460">            .findFirst()</span>
+<span class="fc" id="L461">            .orElse(null);</span>
+
+<span class="fc bfc" id="L463" title="All 2 branches covered.">        LocalDateTime availabilityDate = latestComplete != null ? latestComplete.getDateArriveeReelle().plusHours(12) : null;</span>
+<span class="fc bfc" id="L464" title="All 4 branches covered.">        boolean hasActiveTrip = trajets.stream().anyMatch(trajet -&gt; trajet.getStatut() == StatutTrajet.EN_COURS || trajet.getStatut() == StatutTrajet.ACTIF);</span>
+<span class="fc bfc" id="L465" title="All 6 branches covered.">        boolean available = !hasActiveTrip &amp;&amp; (availabilityDate == null || !LocalDateTime.now().isBefore(availabilityDate));</span>
+<span class="fc" id="L466">        long minutesRemaining = 0L;</span>
+
+<span class="fc bfc" id="L468" title="All 4 branches covered.">        if (!available &amp;&amp; availabilityDate != null) {</span>
+<span class="fc" id="L469">            minutesRemaining = Math.max(0L, java.time.Duration.between(LocalDateTime.now(), availabilityDate).toMinutes());</span>
+        }
+
+<span class="fc" id="L472">        return new ChauffeurAvailabilityResponse(availabilityDate, minutesRemaining, available);</span>
+    }
+
+    private void publishStatusChangeNotification(Chauffeur chauffeur, String message) {
+<span class="fc" id="L476">        List&lt;Long&gt; recipients = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L477" title="All 2 branches covered.">        if (chauffeur.getId() != null) {</span>
+<span class="fc" id="L478">            recipients.add(chauffeur.getId());</span>
+        }
+<span class="fc bfc" id="L480" title="All 4 branches covered.">        if (chauffeur.getManager() != null &amp;&amp; chauffeur.getManager().getId() != null) {</span>
+<span class="fc" id="L481">            recipients.add(chauffeur.getManager().getId());</span>
+        }
+<span class="fc" id="L483">        utilisateurRepository.findByRole(Role.SUPERADMIN).stream()</span>
+<span class="fc" id="L484">            .map(Utilisateur::getId)</span>
+<span class="fc" id="L485">            .forEach(recipients::add);</span>
+
+<span class="fc bfc" id="L487" title="All 2 branches covered.">        for (Long recipientId : recipients.stream().distinct().toList()) {</span>
+<span class="fc" id="L488">            utilisateurRepository.findById(recipientId).ifPresent(user -&gt; {</span>
+<span class="fc" id="L489">                Notification notification = Notification.builder()</span>
+<span class="fc" id="L490">                    .type(TypeNotif.NOTIF_TRAJET)</span>
+<span class="fc" id="L491">                    .message(message)</span>
+<span class="fc" id="L492">                    .utilisateur(user)</span>
+<span class="fc" id="L493">                    .estLu(false)</span>
+<span class="fc" id="L494">                    .build();</span>
+<span class="fc" id="L495">                notificationRepository.save(notification);</span>
+<span class="fc" id="L496">                notificationRealtimeService.publishToUsers(List.of(recipientId), notification);</span>
+<span class="fc" id="L497">            });</span>
+<span class="fc" id="L498">        }</span>
+<span class="fc" id="L499">    }</span>
+
+    private String normalize(String message) {
+<span class="fc" id="L502">        return java.text.Normalizer.normalize(message, java.text.Normalizer.Form.NFD)</span>
+<span class="fc" id="L503">            .replaceAll(&quot;\\p{M}+&quot;, &quot;&quot;)</span>
+<span class="fc" id="L504">            .toLowerCase(Locale.ROOT);</span>
+    }
+
+    private double round(double value) {
+<span class="fc" id="L508">        return Math.round(value * 100.0) / 100.0;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

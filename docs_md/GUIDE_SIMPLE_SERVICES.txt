@@ -1,0 +1,124 @@
+═══════════════════════════════════════════════════════════════════
+   GUIDE ULTRA-SIMPLE : DÉMARRER LES SERVICES IA
+═══════════════════════════════════════════════════════════════════
+
+📍 TU ES ICI : C:\Users\kossa\OneDrive\Desktop\essais\
+
+
+═══════════════════════════════════════════════════════════════════
+   MÉTHODE 1 : DÉMARRAGE AUTOMATIQUE (RECOMMANDÉ)
+═══════════════════════════════════════════════════════════════════
+
+1. Double-clique sur ce fichier :
+   
+   📄 DEMARRER_TOUS_SERVICES.bat
+
+2. Attends 10 secondes
+
+3. Tu verras 3 fenêtres CMD s'ouvrir :
+   ✅ Fenêtre "Pause AI Service (Port 5000)"
+   ✅ Fenêtre "Reclamation AI Service (Port 5001)"
+   ✅ Fenêtre "RAG Chatbot Service (Port 8000)"
+
+4. ✅ C'EST TOUT ! Les services sont démarrés.
+
+
+═══════════════════════════════════════════════════════════════════
+   MÉTHODE 2 : DÉMARRAGE MANUEL (SI AUTOMATIQUE NE MARCHE PAS)
+═══════════════════════════════════════════════════════════════════
+
+ÉTAPE 1 : Ouvre une fenêtre CMD
+   - Appuie sur Windows + R
+   - Tape "cmd"
+   - Appuie sur Entrée
+
+ÉTAPE 2 : Copie-colle ces commandes UNE PAR UNE :
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service
+   start_pause_ai.bat
+
+   [Ouvre une NOUVELLE fenêtre CMD et tape :]
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service
+   start_simple.bat
+
+   [Ouvre une NOUVELLE fenêtre CMD et tape :]
+
+   cd C:\Users\kossa\OneDrive\Desktop\essais\rag-service
+   START_SIMPLE.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   COMMENT SAVOIR SI ÇA MARCHE ?
+═══════════════════════════════════════════════════════════════════
+
+Regarde dans chaque fenêtre CMD :
+
+✅ Pause AI Service :
+   Tu dois voir : "Running on http://127.0.0.1:5000"
+
+✅ Réclamation AI Service :
+   Tu dois voir : "Running on http://127.0.0.1:5001"
+
+✅ RAG Chatbot Service :
+   Tu dois voir : "Uvicorn running on http://127.0.0.1:8000"
+
+
+═══════════════════════════════════════════════════════════════════
+   VÉRIFICATION RAPIDE
+═══════════════════════════════════════════════════════════════════
+
+Ouvre ton navigateur (Chrome, Firefox, etc.) et va sur :
+
+   http://localhost:5000/health
+   http://localhost:5001/health
+   http://localhost:8000/health
+
+Tu dois voir : {"status":"healthy"} ou {"status":"ok"}
+
+
+═══════════════════════════════════════════════════════════════════
+   POUR LES TESTS UNITAIRES (IMPORTANT !)
+═══════════════════════════════════════════════════════════════════
+
+❌ PROBLÈME : Les tests ne peuvent pas s'exécuter si les services 
+             IA ne sont pas démarrés.
+
+✅ SOLUTION : Je vais corriger les tests pour qu'ils n'aient PAS 
+             besoin des services IA (avec des "mocks").
+
+Dis-moi : "corrige les tests" et je m'en occupe !
+
+
+═══════════════════════════════════════════════════════════════════
+   ARRÊTER LES SERVICES
+═══════════════════════════════════════════════════════════════════
+
+Simplement : FERME les 3 fenêtres CMD
+
+OU
+
+Appuie sur Ctrl+C dans chaque fenêtre CMD
+
+
+═══════════════════════════════════════════════════════════════════
+   RÉSUMÉ 1 MINUTE
+═══════════════════════════════════════════════════════════════════
+
+1. Double-clique : DEMARRER_TOUS_SERVICES.bat
+2. Attends que 3 fenêtres CMD s'ouvrent
+3. Vérifie que chaque fenêtre affiche "Running on..."
+4. ✅ C'EST BON ! Tu peux maintenant :
+   - Lancer le backend Java (IntelliJ)
+   - Lancer le frontend Angular
+   - Exécuter les tests (après correction avec mocks)
+
+
+═══════════════════════════════════════════════════════════════════
+   BESOIN D'AIDE ?
+═══════════════════════════════════════════════════════════════════
+
+Lis le fichier détaillé : DEMARRER_TOUS_LES_SERVICES_IA.md
+
+
+═══════════════════════════════════════════════════════════════════

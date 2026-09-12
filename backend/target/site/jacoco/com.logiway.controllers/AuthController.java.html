@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">AuthController.java</span></div><h1>AuthController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.request.ForgotPasswordRequest;
+import com.logiway.dto.request.LoginRequest;
+import com.logiway.dto.request.ResetPasswordRequest;
+import com.logiway.dto.response.ApiMessageResponse;
+import com.logiway.dto.response.AuthSessionResponse;
+import com.logiway.dto.response.LoginResult;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.services.AuthService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/auth&quot;)
+<span class="fc" id="L26">@RequiredArgsConstructor</span>
+public class AuthController {
+
+    private final AuthService authService;
+
+    @Value(&quot;${app.cookie.name:kc_token}&quot;)
+    private String accessCookieName;
+
+    @Value(&quot;${app.cookie.refresh-name:kc_refresh}&quot;)
+    private String refreshCookieName;
+
+    @Value(&quot;${app.cookie.secure:false}&quot;)
+    private boolean secureCookies;
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;AuthSessionResponse&gt; login(@Valid @RequestBody LoginRequest request) {
+<span class="fc" id="L42">        LoginResult result = authService.login(request);</span>
+
+<span class="fc" id="L44">        ResponseCookie accessCookie = ResponseCookie.from(accessCookieName, result.accessToken())</span>
+<span class="fc" id="L45">            .httpOnly(true)</span>
+<span class="fc" id="L46">            .secure(secureCookies)</span>
+<span class="fc" id="L47">            .sameSite(&quot;Strict&quot;)</span>
+<span class="fc" id="L48">            .path(&quot;/&quot;)</span>
+<span class="fc" id="L49">            .maxAge(cookieMaxAge(result.accessTokenExpiresIn()))</span>
+<span class="fc" id="L50">            .build();</span>
+
+<span class="fc" id="L52">        ResponseCookie refreshCookie = ResponseCookie.from(refreshCookieName, result.refreshToken())</span>
+<span class="fc" id="L53">            .httpOnly(true)</span>
+<span class="fc" id="L54">            .secure(secureCookies)</span>
+<span class="fc" id="L55">            .sameSite(&quot;Strict&quot;)</span>
+<span class="fc" id="L56">            .path(&quot;/&quot;)</span>
+<span class="fc" id="L57">            .maxAge(cookieMaxAge(result.refreshTokenExpiresIn()))</span>
+<span class="fc" id="L58">            .build();</span>
+
+<span class="fc" id="L60">        AuthSessionResponse body = new AuthSessionResponse(</span>
+<span class="fc" id="L61">            result.user().role().name(),</span>
+<span class="fc" id="L62">            result.user().prenom(),</span>
+<span class="fc" id="L63">            result.user().nom(),</span>
+<span class="fc" id="L64">            result.firstLogin(),</span>
+<span class="fc" id="L65">            result.hasCompany()</span>
+        );
+
+<span class="fc" id="L68">        return ResponseEntity.ok()</span>
+<span class="fc" id="L69">            .header(HttpHeaders.SET_COOKIE, accessCookie.toString())</span>
+<span class="fc" id="L70">            .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())</span>
+<span class="fc" id="L71">            .body(body);</span>
+    }
+
+    @GetMapping(&quot;/me&quot;)
+    public ResponseEntity&lt;AuthSessionResponse&gt; me() {
+<span class="fc" id="L76">        return ResponseEntity.ok(authService.me());</span>
+    }
+
+    @PostMapping(&quot;/refresh&quot;)
+    public ResponseEntity&lt;Void&gt; refresh(HttpServletRequest request) {
+<span class="fc" id="L81">        String refreshToken = null;</span>
+<span class="fc" id="L82">        Cookie[] cookies = request.getCookies();</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (cookies != null) {</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">            for (Cookie cookie : cookies) {</span>
+<span class="fc bfc" id="L85" title="All 2 branches covered.">                if (refreshCookieName.equals(cookie.getName())) {</span>
+<span class="fc" id="L86">                    refreshToken = cookie.getValue();</span>
+<span class="fc" id="L87">                    break;</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L92" title="All 4 branches covered.">        if (refreshToken == null || refreshToken.isBlank()) {</span>
+<span class="fc" id="L93">            throw new BadRequestException(&quot;Refresh token is missing&quot;);</span>
+        }
+
+        try {
+<span class="fc" id="L97">            Map&lt;String, Object&gt; newTokenPayload = authService.refreshTokenFromKeycloak(refreshToken);</span>
+
+<span class="fc" id="L99">            String newAccessToken = (String) newTokenPayload.get(&quot;access_token&quot;);</span>
+<span class="fc" id="L100">            String newRefreshToken = (String) newTokenPayload.getOrDefault(&quot;refresh_token&quot;, refreshToken);</span>
+<span class="fc" id="L101">            Number expiresIn = (Number) newTokenPayload.get(&quot;expires_in&quot;);</span>
+<span class="fc" id="L102">            Number refreshExpiresIn = (Number) newTokenPayload.getOrDefault(&quot;refresh_expires_in&quot;, expiresIn);</span>
+
+<span class="fc" id="L104">            ResponseCookie newAccessCookie = ResponseCookie.from(accessCookieName, newAccessToken)</span>
+<span class="fc" id="L105">                .httpOnly(true)</span>
+<span class="fc" id="L106">                .secure(secureCookies)</span>
+<span class="fc" id="L107">                .sameSite(&quot;Strict&quot;)</span>
+<span class="fc" id="L108">                .path(&quot;/&quot;)</span>
+<span class="fc" id="L109">                .maxAge(cookieMaxAge(expiresIn.longValue()))</span>
+<span class="fc" id="L110">                .build();</span>
+
+<span class="fc" id="L112">            ResponseCookie newRefreshCookie = ResponseCookie.from(refreshCookieName, newRefreshToken)</span>
+<span class="fc" id="L113">                .httpOnly(true)</span>
+<span class="fc" id="L114">                .secure(secureCookies)</span>
+<span class="fc" id="L115">                .sameSite(&quot;Strict&quot;)</span>
+<span class="fc" id="L116">                .path(&quot;/&quot;)</span>
+<span class="fc" id="L117">                .maxAge(cookieMaxAge(refreshExpiresIn.longValue()))</span>
+<span class="fc" id="L118">                .build();</span>
+
+<span class="fc" id="L120">            return ResponseEntity.ok()</span>
+<span class="fc" id="L121">                .header(HttpHeaders.SET_COOKIE, newAccessCookie.toString())</span>
+<span class="fc" id="L122">                .header(HttpHeaders.SET_COOKIE, newRefreshCookie.toString())</span>
+<span class="fc" id="L123">                .build();</span>
+<span class="fc" id="L124">        } catch (Exception ex) {</span>
+<span class="fc" id="L125">            throw new BadRequestException(&quot;Token refresh failed. Please login again.&quot;);</span>
+        }
+    }
+
+    @PostMapping(&quot;/logout&quot;)
+    public ResponseEntity&lt;ApiMessageResponse&gt; logout(HttpServletRequest request) {
+<span class="fc" id="L131">        String refreshToken = null;</span>
+<span class="fc" id="L132">        Cookie[] cookies = request.getCookies();</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        if (cookies != null) {</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            for (Cookie cookie : cookies) {</span>
+<span class="fc bfc" id="L135" title="All 2 branches covered.">                if (refreshCookieName.equals(cookie.getName())) {</span>
+<span class="fc" id="L136">                    refreshToken = cookie.getValue();</span>
+<span class="fc" id="L137">                    break;</span>
+                }
+            }
+        }
+
+<span class="fc" id="L142">        ApiMessageResponse response = authService.logout(refreshToken);</span>
+
+<span class="fc" id="L144">        ResponseCookie clearAccessCookie = ResponseCookie.from(accessCookieName, &quot;&quot;)</span>
+<span class="fc" id="L145">            .httpOnly(true)</span>
+<span class="fc" id="L146">            .secure(secureCookies)</span>
+<span class="fc" id="L147">            .sameSite(&quot;Strict&quot;)</span>
+<span class="fc" id="L148">            .path(&quot;/&quot;)</span>
+<span class="fc" id="L149">            .maxAge(0)</span>
+<span class="fc" id="L150">            .build();</span>
+
+<span class="fc" id="L152">        ResponseCookie clearRefreshCookie = ResponseCookie.from(refreshCookieName, &quot;&quot;)</span>
+<span class="fc" id="L153">            .httpOnly(true)</span>
+<span class="fc" id="L154">            .secure(secureCookies)</span>
+<span class="fc" id="L155">            .sameSite(&quot;Strict&quot;)</span>
+<span class="fc" id="L156">            .path(&quot;/&quot;)</span>
+<span class="fc" id="L157">            .maxAge(0)</span>
+<span class="fc" id="L158">            .build();</span>
+
+<span class="fc" id="L160">        return ResponseEntity.ok()</span>
+<span class="fc" id="L161">            .header(HttpHeaders.SET_COOKIE, clearAccessCookie.toString())</span>
+<span class="fc" id="L162">            .header(HttpHeaders.SET_COOKIE, clearRefreshCookie.toString())</span>
+<span class="fc" id="L163">            .body(response);</span>
+    }
+
+    private Duration cookieMaxAge(long tokenExpiresInSeconds) {
+<span class="fc" id="L167">        long effectiveSeconds = Math.max(tokenExpiresInSeconds, 0);</span>
+<span class="fc" id="L168">        return Duration.ofSeconds(effectiveSeconds);</span>
+    }
+
+    @PostMapping(&quot;/forgot-password&quot;)
+    public ResponseEntity&lt;ApiMessageResponse&gt; forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+<span class="fc" id="L173">        return ResponseEntity.ok(authService.forgotPassword(request));</span>
+    }
+
+    @PostMapping(&quot;/reset-password&quot;)
+    public ResponseEntity&lt;ApiMessageResponse&gt; resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+<span class="fc" id="L178">        return ResponseEntity.ok(authService.resetPassword(request));</span>
+    }
+
+    @PostMapping(&quot;/rejection-reason&quot;)
+    public ResponseEntity&lt;ApiMessageResponse&gt; rejectionReason(@Valid @RequestBody ForgotPasswordRequest request) {
+<span class="fc" id="L183">        return ResponseEntity.ok(authService.getRejectionReason(request));</span>
+    }
+
+    @GetMapping(&quot;/verify-email&quot;)
+    public ResponseEntity&lt;ApiMessageResponse&gt; verifyEmail(@RequestParam(&quot;token&quot;) String token) {
+<span class="fc" id="L188">        return ResponseEntity.ok(authService.verifyEmail(token));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

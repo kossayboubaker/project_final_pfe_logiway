@@ -1,0 +1,36 @@
+.dialog-container {
+    padding: 8px;
+    border-radius: 20px;
+}
+
+.dialog-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 16px;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    width: 100%;
+}
+
+.form-row mat-form-field {
+    flex: 1;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.text-gradient {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 700;
+}
+
+mat-dialog-actions {
+    padding: 16px 0 8px 0;
+}

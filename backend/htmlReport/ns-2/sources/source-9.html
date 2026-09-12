@@ -1,0 +1,887 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MessengerServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: MessengerServiceImpl (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">MessengerServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/37)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/176)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/400)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">MessengerServiceImpl$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">MessengerServiceImpl$PresenceSnapshot</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/39)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/176)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/402)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services.impl;
+&nbsp;
+&nbsp;import com.logiway.dto.request.MessengerTextRequest;
+&nbsp;import com.logiway.dto.request.MessengerMessageUpdateRequest;
+&nbsp;import com.logiway.dto.response.*;
+&nbsp;import com.logiway.entities.MessengerMessage;
+&nbsp;import com.logiway.entities.Notification;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.enums.MessengerMessageStatus;
+&nbsp;import com.logiway.entities.enums.MessengerMessageType;
+&nbsp;import com.logiway.entities.enums.TypeNotif;
+&nbsp;import com.logiway.exceptions.BadRequestException;
+&nbsp;import com.logiway.exceptions.ForbiddenException;
+&nbsp;import com.logiway.exceptions.ResourceNotFoundException;
+&nbsp;import com.logiway.repositories.MessengerMessageRepository;
+&nbsp;import com.logiway.repositories.NotificationRepository;
+&nbsp;import com.logiway.repositories.UtilisateurRepository;
+&nbsp;import com.logiway.security.AuthenticatedUserService;
+&nbsp;import com.logiway.services.MessengerRealtimeService;
+&nbsp;import com.logiway.services.MessengerService;
+&nbsp;import com.logiway.services.NotificationRealtimeService;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.core.io.Resource;
+&nbsp;import org.springframework.core.io.UrlResource;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.data.domain.PageRequest;
+&nbsp;import org.springframework.data.domain.Pageable;
+&nbsp;import org.springframework.data.domain.Sort;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.transaction.annotation.Transactional;
+&nbsp;import org.springframework.util.StringUtils;
+&nbsp;import org.springframework.web.multipart.MultipartFile;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.net.MalformedURLException;
+&nbsp;import java.nio.file.Files;
+&nbsp;import java.nio.file.Path;
+&nbsp;import java.nio.file.Paths;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.time.format.DateTimeFormatter;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.Comparator;
+&nbsp;import java.util.LinkedHashMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Locale;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Objects;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.Set;
+&nbsp;import java.util.UUID;
+&nbsp;import java.util.function.Function;
+&nbsp;import java.util.stream.Collectors;
+&nbsp;import java.util.concurrent.ConcurrentHashMap;
+&nbsp;import java.util.concurrent.ConcurrentMap;
+&nbsp;
+&nbsp;@Service
+<b class="nc">&nbsp;@RequiredArgsConstructor</b>
+&nbsp;@Transactional
+&nbsp;public class MessengerServiceImpl implements MessengerService {
+&nbsp;
+&nbsp;    private static final int DEFAULT_PAGE_SIZE = 30;
+&nbsp;    private static final long MAX_IMAGE_SIZE = 5L * 1024L * 1024L;
+&nbsp;    private static final long MAX_PDF_SIZE = 10L * 1024L * 1024L;
+&nbsp;    private static final long MAX_VOCAL_SIZE = 20L * 1024L * 1024L;
+<b class="nc">&nbsp;    private static final DateTimeFormatter FILE_MONTH_FORMAT = DateTimeFormatter.ofPattern(&quot;yyyy/MM&quot;);</b>
+<b class="nc">&nbsp;    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern(&quot;HH:mm&quot;, Locale.FRANCE);</b>
+&nbsp;
+&nbsp;    private final AuthenticatedUserService authenticatedUserService;
+&nbsp;    private final UtilisateurRepository utilisateurRepository;
+&nbsp;    private final MessengerMessageRepository messengerMessageRepository;
+&nbsp;    private final NotificationRepository notificationRepository;
+&nbsp;    private final NotificationRealtimeService notificationRealtimeService;
+&nbsp;    private final MessengerRealtimeService messengerRealtimeService;
+&nbsp;
+<b class="nc">&nbsp;    private final ConcurrentMap&lt;Long, PresenceSnapshot&gt; presenceCache = new ConcurrentHashMap&lt;&gt;();</b>
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;MessengerConversationResponse&gt; getConversations(String search) {
+&nbsp;        try {
+<b class="nc">&nbsp;            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;            List&lt;MessengerMessage&gt; messages = messengerMessageRepository.findConversationSeed(currentUser.getId());</b>
+<b class="nc">&nbsp;            Map&lt;Long, List&lt;MessengerMessage&gt;&gt; grouped = groupByCounterpart(currentUser.getId(), messages);</b>
+<b class="nc">&nbsp;            Map&lt;Long, Utilisateur&gt; participantsById = loadParticipants(grouped.keySet());</b>
+&nbsp;
+<b class="nc">&nbsp;            String normalizedSearch = normalize(search);</b>
+&nbsp;
+<b class="nc">&nbsp;            return grouped.entrySet().stream()</b>
+<b class="nc">&nbsp;                .map(entry -&gt; {</b>
+&nbsp;                    try {
+<b class="nc">&nbsp;                        return toConversationResponse(currentUser.getId(), participantsById.get(entry.getKey()), entry.getValue());</b>
+&nbsp;                    } catch (RuntimeException ex) {
+<b class="nc">&nbsp;                        return null;</b>
+&nbsp;                    }
+&nbsp;                })
+<b class="nc">&nbsp;                .filter(Objects::nonNull)</b>
+<b class="nc">&nbsp;                .filter(conversation -&gt; matchesSearch(conversation.prenom(), conversation.nom(), normalizedSearch))</b>
+<b class="nc">&nbsp;                .sorted(Comparator</b>
+<b class="nc">&nbsp;                    .comparing(MessengerConversationResponse::dateDernierMessage, Comparator.nullsLast(Comparator.naturalOrder()))</b>
+<b class="nc">&nbsp;                    .reversed())</b>
+<b class="nc">&nbsp;                .toList();</b>
+&nbsp;        } catch (Exception ex) {
+<b class="nc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public MessengerMessagePageResponse getConversationMessages(Long destinataireId, int page, int size) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        getRequiredUser(destinataireId);</b>
+&nbsp;
+<b class="nc">&nbsp;        int safeSize = size &gt; 0 ? Math.min(size, 100) : DEFAULT_PAGE_SIZE;</b>
+<b class="nc">&nbsp;        int safePage = Math.max(page, 0);</b>
+<b class="nc">&nbsp;        Pageable pageable = PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, &quot;dateEnvoi&quot;));</b>
+<b class="nc">&nbsp;        Page&lt;MessengerMessage&gt; result = messengerMessageRepository.findConversationMessages(currentUser.getId(), destinataireId, pageable);</b>
+<b class="nc">&nbsp;        List&lt;MessengerMessageResponse&gt; messages = result.getContent().stream()</b>
+<b class="nc">&nbsp;            .map(message -&gt; toMessageResponse(message, currentUser.getId()))</b>
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;
+<b class="nc">&nbsp;        return new MessengerMessagePageResponse(messages, safePage, safeSize, result.getTotalElements(), result.hasNext());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public MessengerMessageResponse sendTextMessage(MessengerTextRequest request) {
+<b class="nc">&nbsp;        if (request == null || request.destinataireId() == null) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Le destinataire est obligatoire&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String contenu = request.contenu() == null ? &quot;&quot; : request.contenu().trim();</b>
+<b class="nc">&nbsp;        if (contenu.isBlank()) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Le message texte ne peut pas etre vide&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        Utilisateur destinataire = getRequiredUser(request.destinataireId());</b>
+&nbsp;
+<b class="nc">&nbsp;        MessengerMessage message = MessengerMessage.builder()</b>
+<b class="nc">&nbsp;            .expediteurId(currentUser.getId())</b>
+<b class="nc">&nbsp;            .destinataireId(destinataire.getId())</b>
+<b class="nc">&nbsp;            .contenu(contenu)</b>
+<b class="nc">&nbsp;            .type(MessengerMessageType.TEXTE)</b>
+<b class="nc">&nbsp;            .statut(MessengerMessageStatus.NON_LU)</b>
+<b class="nc">&nbsp;            .connecte(Boolean.TRUE)</b>
+<b class="nc">&nbsp;            .derniereActivite(LocalDateTime.now())</b>
+<b class="nc">&nbsp;            .build();</b>
+&nbsp;
+<b class="nc">&nbsp;        MessengerMessage saved = messengerMessageRepository.save(message);</b>
+<b class="nc">&nbsp;        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</b>
+<b class="nc">&nbsp;        emitMessageSideEffects(currentUser, destinataire, saved);</b>
+<b class="nc">&nbsp;        return toMessageResponse(saved, currentUser.getId());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public MessengerMessageResponse sendFileMessage(Long destinataireId, MultipartFile file) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        Utilisateur destinataire = getRequiredUser(destinataireId);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (file == null || file.isEmpty()) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Le fichier est obligatoire&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String contentType = Optional.ofNullable(file.getContentType()).orElse(&quot;&quot;).toLowerCase(Locale.ROOT);</b>
+&nbsp;        MessengerMessageType type;
+&nbsp;        long maxSize;
+<b class="nc">&nbsp;        if (contentType.contains(&quot;pdf&quot;)) {</b>
+<b class="nc">&nbsp;            type = MessengerMessageType.PDF;</b>
+<b class="nc">&nbsp;            maxSize = MAX_PDF_SIZE;</b>
+<b class="nc">&nbsp;        } else if (contentType.startsWith(&quot;image/&quot;)) {</b>
+<b class="nc">&nbsp;            type = MessengerMessageType.IMAGE;</b>
+<b class="nc">&nbsp;            maxSize = MAX_IMAGE_SIZE;</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Seuls les fichiers image JPG, PNG, GIF ou PDF sont autorises&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (file.getSize() &gt; maxSize) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(type == MessengerMessageType.PDF</b>
+<b class="nc">&nbsp;                ? &quot;Le document PDF ne doit pas depasser 10 Mo&quot;</b>
+<b class="nc">&nbsp;                : &quot;L&#39;image ne doit pas depasser 5 Mo&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Path storedPath = storeMessengerFile(file);</b>
+<b class="nc">&nbsp;        MessengerMessage saved = messengerMessageRepository.save(MessengerMessage.builder()</b>
+<b class="nc">&nbsp;            .expediteurId(currentUser.getId())</b>
+<b class="nc">&nbsp;            .destinataireId(destinataire.getId())</b>
+<b class="nc">&nbsp;            .type(type)</b>
+<b class="nc">&nbsp;            .contenu(null)</b>
+<b class="nc">&nbsp;            .cheminFichier(storedPath.toString().replace(&#39;\\&#39;, &#39;/&#39;))</b>
+<b class="nc">&nbsp;            .nomFichierOriginal(StringUtils.cleanPath(Optional.ofNullable(file.getOriginalFilename()).orElse(&quot;fichier&quot;)))</b>
+<b class="nc">&nbsp;            .tailleFichier(file.getSize())</b>
+<b class="nc">&nbsp;            .statut(MessengerMessageStatus.NON_LU)</b>
+<b class="nc">&nbsp;            .connecte(Boolean.TRUE)</b>
+<b class="nc">&nbsp;            .derniereActivite(LocalDateTime.now())</b>
+<b class="nc">&nbsp;            .build());</b>
+&nbsp;
+<b class="nc">&nbsp;        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</b>
+<b class="nc">&nbsp;        emitMessageSideEffects(currentUser, destinataire, saved);</b>
+<b class="nc">&nbsp;        return toMessageResponse(saved, currentUser.getId());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public MessengerMessageResponse sendVocalMessage(Long destinataireId, MultipartFile file, Integer dureeVocale) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        Utilisateur destinataire = getRequiredUser(destinataireId);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (file == null || file.isEmpty()) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Le message vocal est obligatoire&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String contentType = Optional.ofNullable(file.getContentType()).orElse(&quot;&quot;).toLowerCase(Locale.ROOT);</b>
+<b class="nc">&nbsp;        boolean validType = contentType.contains(&quot;webm&quot;) || contentType.contains(&quot;mpeg&quot;) || contentType.contains(&quot;mp3&quot;);</b>
+<b class="nc">&nbsp;        if (!validType) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Le vocal doit etre au format WebM ou MP3&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (file.getSize() &gt; MAX_VOCAL_SIZE) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Le message vocal est trop volumineux&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (dureeVocale != null &amp;&amp; dureeVocale &gt; 120) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;La duree du message vocal ne doit pas depasser 2 minutes&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Path storedPath = storeMessengerFile(file);</b>
+<b class="nc">&nbsp;        MessengerMessage saved = messengerMessageRepository.save(MessengerMessage.builder()</b>
+<b class="nc">&nbsp;            .expediteurId(currentUser.getId())</b>
+<b class="nc">&nbsp;            .destinataireId(destinataire.getId())</b>
+<b class="nc">&nbsp;            .type(MessengerMessageType.VOCAL)</b>
+<b class="nc">&nbsp;            .contenu(null)</b>
+<b class="nc">&nbsp;            .cheminFichier(storedPath.toString().replace(&#39;\\&#39;, &#39;/&#39;))</b>
+<b class="nc">&nbsp;            .nomFichierOriginal(StringUtils.cleanPath(Optional.ofNullable(file.getOriginalFilename()).orElse(&quot;vocal.webm&quot;)))</b>
+<b class="nc">&nbsp;            .tailleFichier(file.getSize())</b>
+<b class="nc">&nbsp;            .dureeVocale(dureeVocale)</b>
+<b class="nc">&nbsp;            .statut(MessengerMessageStatus.NON_LU)</b>
+<b class="nc">&nbsp;            .connecte(Boolean.TRUE)</b>
+<b class="nc">&nbsp;            .derniereActivite(LocalDateTime.now())</b>
+<b class="nc">&nbsp;            .build());</b>
+&nbsp;
+<b class="nc">&nbsp;        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</b>
+<b class="nc">&nbsp;        emitMessageSideEffects(currentUser, destinataire, saved);</b>
+<b class="nc">&nbsp;        return toMessageResponse(saved, currentUser.getId());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Resource loadFile(String filename) {
+<b class="nc">&nbsp;        if (filename == null || filename.isBlank()) {</b>
+<b class="nc">&nbsp;            throw new ResourceNotFoundException(&quot;Fichier introuvable&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        MessengerMessage message = messengerMessageRepository.findFirstByCheminFichierEndingWith(filename)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Fichier introuvable&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        if (!Objects.equals(currentUser.getId(), message.getExpediteurId())</b>
+<b class="nc">&nbsp;            &amp;&amp; !Objects.equals(currentUser.getId(), message.getDestinataireId())) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Vous n&#39;etes pas autorise a acceder a ce fichier&quot;);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            Path path = Paths.get(message.getCheminFichier());</b>
+<b class="nc">&nbsp;            Resource resource = new UrlResource(path.toUri());</b>
+<b class="nc">&nbsp;            if (!resource.exists() || !resource.isReadable()) {</b>
+<b class="nc">&nbsp;                throw new ResourceNotFoundException(&quot;Fichier introuvable&quot;);</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return resource;</b>
+&nbsp;        } catch (MalformedURLException ex) {
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Chemin de fichier invalide&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public MessengerReadResponse markConversationAsRead(Long destinataireId) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        Utilisateur destinataire = getRequiredUser(destinataireId);</b>
+&nbsp;
+<b class="nc">&nbsp;        LocalDateTime now = LocalDateTime.now();</b>
+<b class="nc">&nbsp;        List&lt;MessengerMessageResponse&gt; updatedMessages = messengerMessageRepository</b>
+<b class="nc">&nbsp;            .findUnreadMessagesFromSender(currentUser.getId(), destinataire.getId(), MessengerMessageStatus.NON_LU)</b>
+<b class="nc">&nbsp;            .stream()</b>
+<b class="nc">&nbsp;            .map(message -&gt; {</b>
+<b class="nc">&nbsp;                message.setStatut(MessengerMessageStatus.LU);</b>
+<b class="nc">&nbsp;                message.setDateLecture(now);</b>
+<b class="nc">&nbsp;                return toMessageResponse(message, currentUser.getId());</b>
+&nbsp;            })
+<b class="nc">&nbsp;            .toList();</b>
+<b class="nc">&nbsp;        int updated = messengerMessageRepository.markConversationAsRead(destinataire.getId(), currentUser.getId(), MessengerMessageStatus.LU, now);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (!updatedMessages.isEmpty()) {</b>
+<b class="nc">&nbsp;            messengerRealtimeService.publishStatusToUsers(List.of(destinataire.getId()), updatedMessages);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        messengerRealtimeService.publishConversationToUsers(List.of(destinataire.getId(), currentUser.getId()),</b>
+<b class="nc">&nbsp;            new MessengerConversationResponse(destinataire.getId(), destinataire.getPrenom(), destinataire.getNom(), destinataire.getEmail(), destinataire.getImage(), destinataire.getRole(), resolvePresence(destinataire.getId(), destinataire.getId(), currentUser.getId(), destinataire).connecte(), now, null, null, now, 0L));</b>
+<b class="nc">&nbsp;        return new MessengerReadResponse(destinataire.getId(), (long) updated, now);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;MessengerUserResponse&gt; getAuthorizedUsers(String search) {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        String normalizedSearch = normalize(search);</b>
+&nbsp;
+&nbsp;        // Return ALL users (online or offline), excluding self
+<b class="nc">&nbsp;        List&lt;Utilisateur&gt; candidates = utilisateurRepository.findAll().stream()</b>
+<b class="nc">&nbsp;            .filter(candidate -&gt; !Objects.equals(candidate.getId(), currentUser.getId()))</b>
+<b class="nc">&nbsp;            .filter(candidate -&gt; matchesSearch(candidate.getPrenom(), candidate.getNom(), normalizedSearch))</b>
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;Long, MessengerConversationResponse&gt; conversationMap = getConversations(null).stream()</b>
+<b class="nc">&nbsp;            .collect(Collectors.toMap(MessengerConversationResponse::destinataireId, Function.identity(), (left, right) -&gt; left, LinkedHashMap::new));</b>
+&nbsp;
+<b class="nc">&nbsp;        return candidates.stream()</b>
+<b class="nc">&nbsp;            .sorted((user1, user2) -&gt; {</b>
+<b class="nc">&nbsp;                String user1Name = (user1.getPrenom() == null ? &quot;&quot; : user1.getPrenom()) + &quot; &quot; + (user1.getNom() == null ? &quot;&quot; : user1.getNom());</b>
+<b class="nc">&nbsp;                String user2Name = (user2.getPrenom() == null ? &quot;&quot; : user2.getPrenom()) + &quot; &quot; + (user2.getNom() == null ? &quot;&quot; : user2.getNom());</b>
+<b class="nc">&nbsp;                return user1Name.trim().compareToIgnoreCase(user2Name.trim());</b>
+&nbsp;            })
+<b class="nc">&nbsp;            .map(candidate -&gt; {</b>
+<b class="nc">&nbsp;                MessengerConversationResponse conversation = conversationMap.get(candidate.getId());</b>
+&nbsp;                PresenceSnapshot presence;
+&nbsp;                try {
+<b class="nc">&nbsp;                    presence = resolvePresence(candidate.getId(), candidate.getId(), currentUser.getId(), candidate);</b>
+&nbsp;                } catch (RuntimeException ex) {
+<b class="nc">&nbsp;                    presence = new PresenceSnapshot(false, null);</b>
+&nbsp;                }
+<b class="nc">&nbsp;                return new MessengerUserResponse(</b>
+<b class="nc">&nbsp;                    candidate.getId(),</b>
+<b class="nc">&nbsp;                    candidate.getPrenom(),</b>
+<b class="nc">&nbsp;                    candidate.getNom(),</b>
+<b class="nc">&nbsp;                    candidate.getEmail(),</b>
+<b class="nc">&nbsp;                    candidate.getImage(),</b>
+<b class="nc">&nbsp;                    candidate.getRole(),</b>
+<b class="nc">&nbsp;                    presence.connecte(),</b>
+<b class="nc">&nbsp;                    presence.derniereActivite(),</b>
+<b class="nc">&nbsp;                    conversation != null ? conversation.dernierMessage() : null,</b>
+<b class="nc">&nbsp;                    conversation != null ? conversation.dateDernierMessage() : null,</b>
+<b class="nc">&nbsp;                    conversation != null ? conversation.messagesNonLus() : 0L</b>
+&nbsp;                );
+&nbsp;            })
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public MessengerPresenceResponse heartbeat() {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        LocalDateTime now = LocalDateTime.now();</b>
+<b class="nc">&nbsp;        touchPresence(currentUser.getId(), true, now);</b>
+<b class="nc">&nbsp;        messengerMessageRepository.updatePresenceForSender(currentUser.getId(), true, now);</b>
+<b class="nc">&nbsp;        messengerRealtimeService.publishPresenceToAll(new MessengerPresenceResponse(currentUser.getId(), true, now));</b>
+<b class="nc">&nbsp;        return new MessengerPresenceResponse(currentUser.getId(), true, now);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void disconnectPresence() {
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        LocalDateTime now = LocalDateTime.now();</b>
+<b class="nc">&nbsp;        touchPresence(currentUser.getId(), false, now.minusSeconds(91));</b>
+<b class="nc">&nbsp;        messengerMessageRepository.updatePresenceForSender(currentUser.getId(), false, now);</b>
+<b class="nc">&nbsp;        messengerRealtimeService.publishPresenceToAll(new MessengerPresenceResponse(currentUser.getId(), false, now));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public MessengerMessageResponse updateMessage(Long messageId, MessengerMessageUpdateRequest request) {
+<b class="nc">&nbsp;        if (messageId == null) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Message introuvable&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        MessengerMessage message = messengerMessageRepository.findById(messageId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Message introuvable&quot;));</b>
+&nbsp;
+&nbsp;        // Allow any user to modify messages regardless of sender role/ownership
+<b class="nc">&nbsp;        ensureMessageEditable(message);</b>
+&nbsp;
+<b class="nc">&nbsp;        String newContent = request.contenu().trim();</b>
+<b class="nc">&nbsp;        if (newContent.isBlank()) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Le message texte ne peut pas etre vide&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (message.getContenuOriginal() == null) {</b>
+<b class="nc">&nbsp;            message.setContenuOriginal(message.getContenu());</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        message.setContenu(newContent);</b>
+<b class="nc">&nbsp;        message.setModifie(Boolean.TRUE);</b>
+<b class="nc">&nbsp;        message.setDateModification(LocalDateTime.now());</b>
+&nbsp;
+<b class="nc">&nbsp;        MessengerMessage saved = messengerMessageRepository.save(message);</b>
+<b class="nc">&nbsp;        MessengerMessageResponse response = toMessageResponse(saved, currentUser.getId());</b>
+<b class="nc">&nbsp;        messengerRealtimeService.publishNamedEventToUsers(List.of(message.getDestinataireId()), &quot;MESSAGE_MODIFIE&quot;, Map.of(</b>
+<b class="nc">&nbsp;            &quot;messageId&quot;, saved.getId(),</b>
+<b class="nc">&nbsp;            &quot;contenu&quot;, saved.getContenu(),</b>
+<b class="nc">&nbsp;            &quot;dateModification&quot;, saved.getDateModification()</b>
+&nbsp;        ));
+<b class="nc">&nbsp;        messengerRealtimeService.publishMessageToUsers(List.of(saved.getExpediteurId(), saved.getDestinataireId()), response);</b>
+<b class="nc">&nbsp;        publishConversationSnapshot(currentUser.getId(), saved.getDestinataireId());</b>
+<b class="nc">&nbsp;        return response;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void deleteMessage(Long messageId) {
+<b class="nc">&nbsp;        if (messageId == null) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Message introuvable&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;        MessengerMessage message = messengerMessageRepository.findById(messageId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Message introuvable&quot;));</b>
+&nbsp;
+&nbsp;        // Allow any user to delete messages regardless of sender role/ownership
+<b class="nc">&nbsp;        if (Boolean.TRUE.equals(message.getSupprime())) {</b>
+<b class="nc">&nbsp;            throw new ForbiddenException(&quot;Ce message a deja ete supprime&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        deleteMessageFileIfPresent(message);</b>
+<b class="nc">&nbsp;        message.setSupprime(Boolean.TRUE);</b>
+<b class="nc">&nbsp;        message.setDateSuppression(LocalDateTime.now());</b>
+<b class="nc">&nbsp;        message.setContenu(&quot;Message supprimé&quot;);</b>
+<b class="nc">&nbsp;        MessengerMessage saved = messengerMessageRepository.save(message);</b>
+&nbsp;
+<b class="nc">&nbsp;        MessengerMessageResponse response = toMessageResponse(saved, currentUser.getId());</b>
+<b class="nc">&nbsp;        messengerRealtimeService.publishNamedEventToUsers(List.of(message.getDestinataireId()), &quot;MESSAGE_SUPPRIME&quot;, Map.of(</b>
+<b class="nc">&nbsp;            &quot;messageId&quot;, saved.getId(),</b>
+<b class="nc">&nbsp;            &quot;dateSuppression&quot;, saved.getDateSuppression()</b>
+&nbsp;        ));
+<b class="nc">&nbsp;        messengerRealtimeService.publishMessageToUsers(List.of(saved.getExpediteurId(), saved.getDestinataireId()), response);</b>
+<b class="nc">&nbsp;        publishConversationSnapshot(currentUser.getId(), saved.getDestinataireId());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void emitMessageSideEffects(Utilisateur currentUser, Utilisateur destinataire, MessengerMessage saved) {
+<b class="nc">&nbsp;        MessengerMessageResponse response = toMessageResponse(saved, currentUser.getId());</b>
+<b class="nc">&nbsp;        messengerRealtimeService.publishMessageToUsers(List.of(currentUser.getId(), destinataire.getId()), response);</b>
+<b class="nc">&nbsp;        messengerRealtimeService.publishConversationToUsers(List.of(currentUser.getId(), destinataire.getId()),</b>
+<b class="nc">&nbsp;            toConversationResponse(currentUser.getId(), destinataire, List.of(saved)));</b>
+&nbsp;
+<b class="nc">&nbsp;        messengerMessageRepository.updatePresenceForSender(currentUser.getId(), true, saved.getDerniereActivite());</b>
+<b class="nc">&nbsp;        touchPresence(currentUser.getId(), true, saved.getDerniereActivite());</b>
+&nbsp;
+<b class="nc">&nbsp;        if (!messengerRealtimeService.hasActiveConnection(destinataire.getId())) {</b>
+<b class="nc">&nbsp;            Notification notification = Notification.builder()</b>
+<b class="nc">&nbsp;                .type(TypeNotif.NOTIF_MESSAGE)</b>
+<b class="nc">&nbsp;                .message(buildMessageNotification(currentUser, saved))</b>
+<b class="nc">&nbsp;                .utilisateur(destinataire)</b>
+<b class="nc">&nbsp;                .estLu(false)</b>
+<b class="nc">&nbsp;                .build();</b>
+<b class="nc">&nbsp;            notificationRepository.save(notification);</b>
+<b class="nc">&nbsp;            notificationRealtimeService.publishToUsers(List.of(destinataire.getId()), notification);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildMessageNotification(Utilisateur sender, MessengerMessage message) {
+<b class="nc">&nbsp;        String fullName = buildFullName(sender);</b>
+<b class="nc">&nbsp;        return switch (message.getType()) {</b>
+<b class="nc">&nbsp;            case IMAGE -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a envoye une photo.&quot;;</b>
+<b class="nc">&nbsp;            case PDF -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a envoye un document.&quot;;</b>
+<b class="nc">&nbsp;            case VOCAL -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a envoye un message vocal.&quot;;</b>
+<b class="nc">&nbsp;            case APPEL -&gt; &quot;Nouveau message de &quot; + fullName + &quot; - a partage un appel.&quot;;</b>
+<b class="nc">&nbsp;            case TEXTE -&gt; &quot;Nouveau message de &quot; + fullName + &quot;.&quot;;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private void publishConversationSnapshot(Long currentUserId, Long participantId) {
+<b class="nc">&nbsp;        Utilisateur participant = getRequiredUser(participantId);</b>
+<b class="nc">&nbsp;        List&lt;MessengerMessage&gt; messages = messengerMessageRepository.findConversationSeed(currentUserId).stream()</b>
+<b class="nc">&nbsp;            .filter(message -&gt; Objects.equals(message.getExpediteurId(), participantId)</b>
+<b class="nc">&nbsp;                || Objects.equals(message.getDestinataireId(), participantId))</b>
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;
+<b class="nc">&nbsp;        messengerRealtimeService.publishConversationToUsers(List.of(currentUserId, participantId),</b>
+<b class="nc">&nbsp;            toConversationResponse(currentUserId, participant, messages));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void touchPresence(Long userId, boolean connected, LocalDateTime lastActivity) {
+<b class="nc">&nbsp;        if (userId != null) {</b>
+<b class="nc">&nbsp;            presenceCache.put(userId, new PresenceSnapshot(connected, lastActivity));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private PresenceSnapshot resolvePresence(Long userId, Long fallbackUserId, Long currentUserId, Utilisateur user) {
+<b class="nc">&nbsp;        if (userId == null) {</b>
+<b class="nc">&nbsp;            return new PresenceSnapshot(false, null);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        PresenceSnapshot snapshot = presenceCache.get(userId);</b>
+<b class="nc">&nbsp;        if (snapshot != null) {</b>
+<b class="nc">&nbsp;            if (snapshot.connecte() &amp;&amp; snapshot.derniereActivite() != null</b>
+<b class="nc">&nbsp;                &amp;&amp; snapshot.derniereActivite().isBefore(LocalDateTime.now().minusSeconds(90))) {</b>
+<b class="nc">&nbsp;                PresenceSnapshot inactive = new PresenceSnapshot(false, snapshot.derniereActivite());</b>
+<b class="nc">&nbsp;                presenceCache.put(userId, inactive);</b>
+<b class="nc">&nbsp;                return inactive;</b>
+&nbsp;            }
+<b class="nc">&nbsp;            return snapshot;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        MessengerMessage latest = messengerMessageRepository.findConversationSeed(userId).stream()</b>
+<b class="nc">&nbsp;            .filter(message -&gt; Objects.equals(message.getExpediteurId(), userId))</b>
+<b class="nc">&nbsp;            .findFirst()</b>
+<b class="nc">&nbsp;            .orElse(null);</b>
+&nbsp;
+<b class="nc">&nbsp;        if (latest != null &amp;&amp; latest.getDerniereActivite() != null) {</b>
+<b class="nc">&nbsp;            boolean connecte = latest.getConnecte() != null &amp;&amp; latest.getConnecte()</b>
+<b class="nc">&nbsp;                &amp;&amp; latest.getDerniereActivite().isAfter(LocalDateTime.now().minusSeconds(90));</b>
+<b class="nc">&nbsp;            PresenceSnapshot resolved = new PresenceSnapshot(connecte, latest.getDerniereActivite());</b>
+<b class="nc">&nbsp;            presenceCache.put(userId, resolved);</b>
+<b class="nc">&nbsp;            return resolved;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return new PresenceSnapshot(false, null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private MessengerMessageResponse toMessageResponse(MessengerMessage message, Long currentUserId) {
+<b class="nc">&nbsp;        Utilisateur expediteur = getRequiredUser(message.getExpediteurId());</b>
+<b class="nc">&nbsp;        Utilisateur destinataire = getRequiredUser(message.getDestinataireId());</b>
+<b class="nc">&nbsp;        String fichierUrl = message.getCheminFichier() == null ? null : &quot;/api/messenger/fichiers/&quot; + Paths.get(message.getCheminFichier()).getFileName();</b>
+<b class="nc">&nbsp;        return new MessengerMessageResponse(</b>
+<b class="nc">&nbsp;            message.getId(),</b>
+<b class="nc">&nbsp;            expediteur.getId(),</b>
+<b class="nc">&nbsp;            expediteur.getPrenom(),</b>
+<b class="nc">&nbsp;            expediteur.getNom(),</b>
+<b class="nc">&nbsp;            expediteur.getEmail(),</b>
+<b class="nc">&nbsp;            expediteur.getImage(),</b>
+<b class="nc">&nbsp;            expediteur.getRole(),</b>
+<b class="nc">&nbsp;            destinataire.getId(),</b>
+<b class="nc">&nbsp;            destinataire.getPrenom(),</b>
+<b class="nc">&nbsp;            destinataire.getNom(),</b>
+<b class="nc">&nbsp;            destinataire.getEmail(),</b>
+<b class="nc">&nbsp;            destinataire.getImage(),</b>
+<b class="nc">&nbsp;            destinataire.getRole(),</b>
+<b class="nc">&nbsp;            message.getType(),</b>
+<b class="nc">&nbsp;            message.getContenu(),</b>
+<b class="nc">&nbsp;            message.getCheminFichier(),</b>
+<b class="nc">&nbsp;            message.getNomFichierOriginal(),</b>
+<b class="nc">&nbsp;            message.getTailleFichier(),</b>
+<b class="nc">&nbsp;            message.getDureeVocale(),</b>
+<b class="nc">&nbsp;            message.getStatut(),</b>
+<b class="nc">&nbsp;            message.getDateEnvoi(),</b>
+<b class="nc">&nbsp;            message.getDateLecture(),</b>
+<b class="nc">&nbsp;            message.getModifie(),</b>
+<b class="nc">&nbsp;            message.getDateModification(),</b>
+<b class="nc">&nbsp;            message.getContenuOriginal(),</b>
+<b class="nc">&nbsp;            message.getSupprime(),</b>
+<b class="nc">&nbsp;            message.getDateSuppression(),</b>
+<b class="nc">&nbsp;            message.getConnecte(),</b>
+<b class="nc">&nbsp;            message.getDerniereActivite(),</b>
+&nbsp;            fichierUrl,
+<b class="nc">&nbsp;            message.getDateEnvoi() != null ? message.getDateEnvoi().format(TIME_FORMAT) : &quot;&quot;</b>
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    private MessengerConversationResponse toConversationResponse(Long currentUserId, Utilisateur participant, List&lt;MessengerMessage&gt; messages) {
+<b class="nc">&nbsp;        if (participant == null || messages == null || messages.isEmpty()) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        MessengerMessage latest = messages.stream()</b>
+<b class="nc">&nbsp;            .max(Comparator.comparing(MessengerMessage::getDateEnvoi, Comparator.nullsLast(Comparator.naturalOrder())))</b>
+<b class="nc">&nbsp;            .orElse(messages.get(0));</b>
+<b class="nc">&nbsp;        MessengerMessage visibleLatest = messages.stream()</b>
+<b class="nc">&nbsp;            .filter(message -&gt; !Boolean.TRUE.equals(message.getSupprime()))</b>
+<b class="nc">&nbsp;            .max(Comparator.comparing(MessengerMessage::getDateEnvoi, Comparator.nullsLast(Comparator.naturalOrder())))</b>
+<b class="nc">&nbsp;            .orElse(latest);</b>
+&nbsp;
+<b class="nc">&nbsp;        long unreadCount = messages.stream()</b>
+<b class="nc">&nbsp;            .filter(message -&gt; Objects.equals(message.getDestinataireId(), currentUserId))</b>
+<b class="nc">&nbsp;            .filter(message -&gt; !Boolean.TRUE.equals(message.getSupprime()))</b>
+<b class="nc">&nbsp;            .filter(message -&gt; message.getStatut() == MessengerMessageStatus.NON_LU)</b>
+<b class="nc">&nbsp;            .count();</b>
+&nbsp;
+<b class="nc">&nbsp;        PresenceSnapshot presence = resolvePresence(participant.getId(), participant.getId(), currentUserId, participant);</b>
+&nbsp;
+<b class="nc">&nbsp;        return new MessengerConversationResponse(</b>
+<b class="nc">&nbsp;            participant.getId(),</b>
+<b class="nc">&nbsp;            participant.getPrenom(),</b>
+<b class="nc">&nbsp;            participant.getNom(),</b>
+<b class="nc">&nbsp;            participant.getEmail(),</b>
+<b class="nc">&nbsp;            participant.getImage(),</b>
+<b class="nc">&nbsp;            participant.getRole(),</b>
+<b class="nc">&nbsp;            presence.connecte(),</b>
+<b class="nc">&nbsp;            presence.derniereActivite(),</b>
+<b class="nc">&nbsp;            visibleLatest.getType(),</b>
+<b class="nc">&nbsp;            resolvePreview(visibleLatest),</b>
+<b class="nc">&nbsp;            visibleLatest.getDateEnvoi(),</b>
+<b class="nc">&nbsp;            unreadCount</b>
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    private String resolvePreview(MessengerMessage message) {
+<b class="nc">&nbsp;        if (message == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (Boolean.TRUE.equals(message.getSupprime())) {</b>
+<b class="nc">&nbsp;            return &quot;Message supprimé&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (message.getType() == MessengerMessageType.TEXTE) {</b>
+<b class="nc">&nbsp;            return message.getContenu();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return switch (message.getType()) {</b>
+<b class="nc">&nbsp;            case IMAGE -&gt; &quot;Photo envoyee&quot;;</b>
+<b class="nc">&nbsp;            case PDF -&gt; &quot;Document PDF envoye&quot;;</b>
+<b class="nc">&nbsp;            case VOCAL -&gt; &quot;Message vocal envoye&quot;;</b>
+<b class="nc">&nbsp;            case APPEL -&gt; message.getContenu();</b>
+<b class="nc">&nbsp;            case TEXTE -&gt; message.getContenu();</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;Long, List&lt;MessengerMessage&gt;&gt; groupByCounterpart(Long currentUserId, List&lt;MessengerMessage&gt; messages) {
+<b class="nc">&nbsp;        Map&lt;Long, List&lt;MessengerMessage&gt;&gt; grouped = new LinkedHashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        for (MessengerMessage message : messages) {</b>
+<b class="nc">&nbsp;            Long counterpartId = Objects.equals(message.getExpediteurId(), currentUserId)</b>
+<b class="nc">&nbsp;                ? message.getDestinataireId()</b>
+<b class="nc">&nbsp;                : message.getExpediteurId();</b>
+<b class="nc">&nbsp;            if (counterpartId != null) {</b>
+<b class="nc">&nbsp;                grouped.computeIfAbsent(counterpartId, key -&gt; new ArrayList&lt;&gt;()).add(message);</b>
+&nbsp;            }
+&nbsp;        }
+<b class="nc">&nbsp;        return grouped;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;Long, Utilisateur&gt; loadParticipants(Set&lt;Long&gt; participantIds) {
+<b class="nc">&nbsp;        if (participantIds == null || participantIds.isEmpty()) {</b>
+<b class="nc">&nbsp;            return Map.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Set&lt;Long&gt; safeIds = participantIds.stream().filter(Objects::nonNull).collect(Collectors.toSet());</b>
+<b class="nc">&nbsp;        if (safeIds.isEmpty()) {</b>
+<b class="nc">&nbsp;            return Map.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return utilisateurRepository.findAllById(safeIds).stream()</b>
+<b class="nc">&nbsp;            .collect(Collectors.toMap(Utilisateur::getId, Function.identity(), (existing, replacement) -&gt; existing));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void ensureMessageEditable(MessengerMessage message) {
+<b class="nc">&nbsp;        if (Boolean.TRUE.equals(message.getSupprime())) {</b>
+<b class="nc">&nbsp;            throw new ForbiddenException(&quot;Ce message a deja ete supprime&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (message.getType() != MessengerMessageType.TEXTE) {</b>
+<b class="nc">&nbsp;            throw new ForbiddenException(&quot;Seuls les messages texte peuvent etre modifies&quot;);</b>
+&nbsp;        }
+&nbsp;        // No time-based restriction: allow modification regardless of send time
+&nbsp;    }
+&nbsp;
+&nbsp;    private void deleteMessageFileIfPresent(MessengerMessage message) {
+<b class="nc">&nbsp;        if (message.getCheminFichier() == null || message.getCheminFichier().isBlank()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            Files.deleteIfExists(Paths.get(message.getCheminFichier()));</b>
+&nbsp;        } catch (IOException ex) {
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Impossible de supprimer le fichier associe&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private Utilisateur getRequiredUser(Long userId) {
+<b class="nc">&nbsp;        if (userId == null) {</b>
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Utilisateur introuvable&quot;);</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return utilisateurRepository.findById(userId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Utilisateur introuvable&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Path storeMessengerFile(MultipartFile file) {
+<b class="nc">&nbsp;        String monthFolder = FILE_MONTH_FORMAT.format(LocalDateTime.now());</b>
+<b class="nc">&nbsp;        String extension = getExtension(file.getOriginalFilename());</b>
+<b class="nc">&nbsp;        String safeName = UUID.randomUUID().toString().replace(&quot;-&quot;, &quot;&quot;) + extension;</b>
+<b class="nc">&nbsp;        Path baseDir = Paths.get(&quot;uploads&quot;, &quot;messenger&quot;, monthFolder);</b>
+<b class="nc">&nbsp;        Path targetPath = baseDir.resolve(safeName);</b>
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            Files.createDirectories(baseDir);</b>
+<b class="nc">&nbsp;            Files.copy(file.getInputStream(), targetPath);</b>
+<b class="nc">&nbsp;            return targetPath;</b>
+&nbsp;        } catch (IOException ex) {
+<b class="nc">&nbsp;            throw new BadRequestException(&quot;Impossible de stocker le fichier envoye&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String getExtension(String originalFilename) {
+<b class="nc">&nbsp;        if (originalFilename == null || !originalFilename.contains(&quot;.&quot;)) {</b>
+<b class="nc">&nbsp;            return &quot;&quot;;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return originalFilename.substring(originalFilename.lastIndexOf(&#39;.&#39;)).toLowerCase(Locale.ROOT);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildFullName(Utilisateur user) {
+<b class="nc">&nbsp;        String fullName = ((user.getPrenom() != null ? user.getPrenom() : &quot;&quot;) + &quot; &quot; + (user.getNom() != null ? user.getNom() : &quot;&quot;)).trim();</b>
+<b class="nc">&nbsp;        return fullName.isEmpty() ? (user.getEmail() != null ? user.getEmail() : &quot;#&quot; + user.getId()) : fullName;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean matchesSearch(String prenom, String nom, String search) {
+<b class="nc">&nbsp;        if (search == null || search.isBlank()) {</b>
+<b class="nc">&nbsp;            return true;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String normalizedPrenom = normalize(prenom);</b>
+<b class="nc">&nbsp;        String normalizedNom = normalize(nom);</b>
+<b class="nc">&nbsp;        return (normalizedPrenom != null &amp;&amp; normalizedPrenom.contains(search))</b>
+<b class="nc">&nbsp;            || (normalizedNom != null &amp;&amp; normalizedNom.contains(search))</b>
+<b class="nc">&nbsp;            || ((normalizedPrenom + &quot; &quot; + normalizedNom).trim().contains(search));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String normalize(String value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return value.trim().toLowerCase(Locale.ROOT);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;
+<b class="nc">&nbsp;    private record PresenceSnapshot(boolean connecte, LocalDateTime derniereActivite) {</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-10 02:59</div>
+</div>
+</body>
+</html>

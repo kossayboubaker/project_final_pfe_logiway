@@ -1,0 +1,92 @@
+<div class="glass-card dialog-container animate-fade-up">
+    <h2 mat-dialog-title class="text-gradient">
+        {{ action === 'resolve' ? 'Résoudre' : 'Rejeter' }} la Réclamation
+    </h2>
+
+    <mat-dialog-content class="mat-typography">
+        <!-- Read-only details -->
+        <mat-card class="detail-card">
+            <mat-card-content class="details">
+                <div class="detail-row">
+                    <label>Sujet</label>
+                    <span>{{ data.reclamation.sujet }}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Description</label>
+                    <div class="description-text">{{ data.reclamation.description }}</div>
+                </div>
+                <div class="detail-row">
+                    <label>Auteur</label>
+                    <span>{{ data.reclamation.utilisateurNom || data.reclamation.utilisateurEmail || '-' }}</span>
+                </div>
+                <div class="detail-row">
+                    <label>Priorité</label>
+                    <span class="badge" [ngClass]="priorityBadgeClass">
+                        {{ data.reclamation.priorite === 'URGENT' ? 'Urgent' : 'Normal' }}
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <label>Date de création</label>
+                    <span>{{ formattedDate }}</span>
+                </div>
+            </mat-card-content>
+        </mat-card>
+
+        <!-- Decision form -->
+        <form [formGroup]="decisionForm" class="decision-form">
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Commentaire de résolution</mat-label>
+                <textarea matInput formControlName="commentaire" rows="4"
+                    placeholder="Ce commentaire sera visible par l'utilisateur. Soyez précis et professionnel.">
+                </textarea>
+                <mat-icon matSuffix>comment</mat-icon>
+                <mat-error *ngIf="decisionForm.get('commentaire')?.hasError('required')">
+                    Le commentaire est obligatoire
+                </mat-error>
+                <mat-error *ngIf="decisionForm.get('commentaire')?.hasError('minlength')">
+                    Minimum 10 caractères requis
+                </mat-error>
+                <mat-error *ngIf="decisionForm.get('commentaire')?.hasError('maxlength')">
+                    Maximum 500 caractères autorisés
+                </mat-error>
+            </mat-form-field>
+        </form>
+
+        <!-- Confirmation banner -->
+        <div class="confirmation-banner" *ngIf="showConfirmation">
+            <mat-icon class="confirm-icon" [style.color]="action === 'resolve' ? '#10b981' : '#ef4444'">
+                {{ action === 'resolve' ? 'help_outline' : 'warning_amber' }}
+            </mat-icon>
+            <span>
+                Êtes-vous sûr de vouloir <strong>{{ action === 'resolve' ? 'résoudre' : 'rejeter' }}</strong> cette
+                réclamation ?
+                Cette action est irréversible.
+            </span>
+        </div>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="showConfirmation ? cancelConfirmation() : onCancel()" [disabled]="isSubmitting"
+            class="px-4">
+            {{ showConfirmation ? 'RETOUR' : 'ANNULER' }}
+        </button>
+
+        <!-- Resolve button (green) -->
+        <button *ngIf="action === 'resolve'" mat-raised-button class="glow-on-hover px-4 resolve-btn"
+            [disabled]="!decisionForm.valid || isSubmitting" (click)="onConfirm()">
+            <mat-icon *ngIf="isSubmitting" class="spinner">loop</mat-icon>
+            <span *ngIf="!isSubmitting && !showConfirmation">RÉSOUDRE</span>
+            <span *ngIf="!isSubmitting && showConfirmation">CONFIRMER LA RÉSOLUTION</span>
+            <span *ngIf="isSubmitting">RÉSOLUTION...</span>
+        </button>
+
+        <!-- Reject button (red) -->
+        <button *ngIf="action === 'reject'" mat-raised-button color="warn" class="glow-on-hover px-4"
+            [disabled]="!decisionForm.valid || isSubmitting" (click)="onConfirm()">
+            <mat-icon *ngIf="isSubmitting" class="spinner">loop</mat-icon>
+            <span *ngIf="!isSubmitting && !showConfirmation">REJETER</span>
+            <span *ngIf="!isSubmitting && showConfirmation">CONFIRMER LE REJET</span>
+            <span *ngIf="isSubmitting">REJET...</span>
+        </button>
+    </mat-dialog-actions>
+</div>

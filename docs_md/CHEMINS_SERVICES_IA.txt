@@ -1,0 +1,174 @@
+═══════════════════════════════════════════════════════════════════
+   CHEMINS COMPLETS - TOUS LES SERVICES IA
+═══════════════════════════════════════════════════════════════════
+
+📂 RACINE DU PROJET
+   C:\Users\kossa\OneDrive\Desktop\essais\
+
+
+═══════════════════════════════════════════════════════════════════
+   SERVICE 1 : PAUSE AI (Port 5000)
+═══════════════════════════════════════════════════════════════════
+
+📁 Dossier :
+   C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service\
+
+🚀 Fichier de démarrage :
+   C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service\start_pause_ai.bat
+
+📄 Fichier principal Python :
+   C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service\app.py
+
+🌐 URL du service :
+   http://localhost:5000
+
+🩺 URL de santé :
+   http://localhost:5000/health
+
+📋 Commande CMD :
+   cd C:\Users\kossa\OneDrive\Desktop\essais\pause-ai-service
+   start_pause_ai.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   SERVICE 2 : RÉCLAMATION AI (Port 5001)
+═══════════════════════════════════════════════════════════════════
+
+📁 Dossier :
+   C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service\
+
+🚀 Fichier de démarrage :
+   C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service\start_simple.bat
+
+📄 Fichier principal Python :
+   C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service\app_simple.py
+
+🌐 URL du service :
+   http://localhost:5001
+
+🩺 URL de santé :
+   http://localhost:5001/health
+
+📋 Commande CMD :
+   cd C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service
+   start_simple.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   SERVICE 3 : RAG CHATBOT (Port 8000)
+═══════════════════════════════════════════════════════════════════
+
+📁 Dossier :
+   C:\Users\kossa\OneDrive\Desktop\essais\rag-service\
+
+🚀 Fichier de démarrage :
+   C:\Users\kossa\OneDrive\Desktop\essais\rag-service\START_SIMPLE.bat
+
+📄 Fichier principal Python :
+   C:\Users\kossa\OneDrive\Desktop\essais\rag-service\app\main.py
+
+🌐 URL du service :
+   http://localhost:8000
+
+🩺 URL de santé :
+   http://localhost:8000/health
+
+📄 Documentation API :
+   http://localhost:8000/docs
+
+📋 Commande CMD :
+   cd C:\Users\kossa\OneDrive\Desktop\essais\rag-service
+   START_SIMPLE.bat
+
+
+═══════════════════════════════════════════════════════════════════
+   BACKEND JAVA (Spring Boot)
+═══════════════════════════════════════════════════════════════════
+
+📁 Dossier :
+   C:\Users\kossa\OneDrive\Desktop\essais\backend\
+
+🚀 Démarrage :
+   - Ouvrir dans IntelliJ IDEA
+   - Clic droit sur LogiwayApplication.java
+   - Run 'LogiwayApplication'
+
+🌐 URL du backend :
+   http://localhost:8080
+
+📄 API Swagger :
+   http://localhost:8080/swagger-ui.html
+
+
+═══════════════════════════════════════════════════════════════════
+   FRONTEND ANGULAR
+═══════════════════════════════════════════════════════════════════
+
+📁 Dossier :
+   C:\Users\kossa\OneDrive\Desktop\essais\frontend\
+
+🚀 Démarrage :
+   cd C:\Users\kossa\OneDrive\Desktop\essais\frontend
+   npm start
+   OU
+   ng serve
+
+🌐 URL du frontend :
+   http://localhost:4200
+
+
+═══════════════════════════════════════════════════════════════════
+   DÉMARRAGE AUTOMATIQUE DE TOUS LES SERVICES IA
+═══════════════════════════════════════════════════════════════════
+
+🎯 Double-clique sur ce fichier :
+   C:\Users\kossa\OneDrive\Desktop\essais\DEMARRER_TOUS_SERVICES.bat
+
+   Cela ouvrira 3 fenêtres CMD avec les 3 services IA
+
+
+═══════════════════════════════════════════════════════════════════
+   TESTS UNITAIRES JAVA
+═══════════════════════════════════════════════════════════════════
+
+📁 Dossier des tests :
+   C:\Users\kossa\OneDrive\Desktop\essais\backend\src\test\java\com\logiway\services\
+
+🚀 Exécution dans IntelliJ :
+   1. Clic droit sur le dossier "services"
+   2. Run 'Tests in services'
+
+⚠️ IMPORTANT : Les tests n'ont PAS besoin des services IA 
+              (après correction avec mocks)
+
+
+═══════════════════════════════════════════════════════════════════
+   FICHIERS UTILES
+═══════════════════════════════════════════════════════════════════
+
+📘 Guide complet services IA :
+   C:\Users\kossa\OneDrive\Desktop\essais\DEMARRER_TOUS_LES_SERVICES_IA.md
+
+📗 Guide simple services :
+   C:\Users\kossa\OneDrive\Desktop\essais\GUIDE_SIMPLE_SERVICES.txt
+
+📕 Guide tests unitaires :
+   C:\Users\kossa\OneDrive\Desktop\essais\TESTS_CORRIGES_EXECUTER.md
+
+📙 Architecture RAG Chatbot :
+   C:\Users\kossa\OneDrive\Desktop\essais\RAG_CHATBOT_ARCHITECTURE.md
+
+
+═══════════════════════════════════════════════════════════════════
+   RÉSUMÉ PORTS
+═══════════════════════════════════════════════════════════════════
+
+Port 4200  → Frontend Angular
+Port 5000  → Pause AI Service (Python/Flask)
+Port 5001  → Réclamation AI Service (Python/Flask)
+Port 8000  → RAG Chatbot Service (Python/FastAPI)
+Port 8080  → Backend Java (Spring Boot)
+Port 3306  → MySQL Database
+
+
+═══════════════════════════════════════════════════════════════════

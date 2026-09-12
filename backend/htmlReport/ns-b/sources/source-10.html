@@ -1,0 +1,238 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Vehicule</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.entities</a>
+</div>
+
+<h1>Coverage Summary for Class: Vehicule (com.logiway.entities)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">Vehicule</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (22/22)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (23/23)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">Vehicule$VehiculeBuilder</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (4/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (23/23)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (24/24)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.entities;
+&nbsp;
+&nbsp;import com.logiway.entities.enums.StatutVehicule;
+&nbsp;import jakarta.persistence.*;
+&nbsp;import lombok.*;
+&nbsp;
+&nbsp;import java.util.HashSet;
+&nbsp;import java.util.Set;
+&nbsp;
+&nbsp;@Entity
+&nbsp;@Table(name = &quot;vehicules&quot;)
+&nbsp;@Getter
+<b class="fc">&nbsp;@Setter</b>
+<b class="fc">&nbsp;@NoArgsConstructor</b>
+<b class="fc">&nbsp;@AllArgsConstructor</b>
+<b class="fc">&nbsp;@Builder</b>
+&nbsp;public class Vehicule {
+&nbsp;
+&nbsp;    @Id
+&nbsp;    @GeneratedValue(strategy = GenerationType.IDENTITY)
+<b class="fc">&nbsp;    private Long id;</b>
+&nbsp;
+&nbsp;    @Column(length = 30, unique = true)
+<b class="fc">&nbsp;    private String matricule;</b>
+&nbsp;
+&nbsp;    @Column(length = 100)
+<b class="fc">&nbsp;    private String marque;</b>
+&nbsp;
+&nbsp;    @Column(length = 100)
+<b class="fc">&nbsp;    private String modele;</b>
+&nbsp;
+<b class="fc">&nbsp;    private Double capacite;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;latitude_actuelle&quot;)
+<b class="fc">&nbsp;    private Double latitudeActuelle;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;longitude_actuelle&quot;)
+<b class="fc">&nbsp;    private Double longitudeActuelle;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;derniere_position_maj&quot;)
+<b class="fc">&nbsp;    private java.time.LocalDateTime dernierePositionMaj;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;vitesse_actuelle&quot;)
+<b class="fc">&nbsp;    private Double vitesseActuelle;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;niveau_carburant&quot;)
+<b class="fc">&nbsp;    private Double niveauCarburant;</b>
+&nbsp;
+&nbsp;    @Column(name = &quot;capacite_charge&quot;)
+<b class="fc">&nbsp;    private Double capaciteCharge;</b>
+&nbsp;
+&nbsp;    @Column(length = 40)
+<b class="fc">&nbsp;    private String couleur;</b>
+&nbsp;
+<b class="fc">&nbsp;    private Integer kilometrage;</b>
+&nbsp;
+&nbsp;    @Enumerated(EnumType.STRING)
+&nbsp;    @Column(nullable = false, length = 30)
+&nbsp;    @Builder.Default
+<b class="fc">&nbsp;    private StatutVehicule statut = StatutVehicule.EN_SERVICE;</b>
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;entreprise_id&quot;)
+<b class="fc">&nbsp;    private Entreprise entreprise;</b>
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;chauffeur_actuel_id&quot;)
+<b class="fc">&nbsp;    private Chauffeur chauffeurActuel;</b>
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;vehicule&quot;)
+&nbsp;    @Builder.Default
+<b class="fc">&nbsp;    private Set&lt;Trajet&gt; trajets = new HashSet&lt;&gt;();</b>
+&nbsp;
+&nbsp;    @PrePersist
+&nbsp;    void onCreate() {
+<b class="fc">&nbsp;        if (statut == null) {</b>
+<b class="fc">&nbsp;            statut = StatutVehicule.EN_SERVICE;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<div class="map-container-wrapper animate-fade-in">
+    <!-- Main Map -->
+    <div id="map"></div>
+
+    <!-- Top Floating Controls -->
+    <div class="top-overlay-controls">
+        <!-- Search Bar -->
+        <div class="floating-search-bar animate-fade-down">
+            <div class="search-box">
+                <button mat-icon-button (click)="showMenu = true">
+                    <mat-icon>menu</mat-icon>
+                </button>
+                <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+                    placeholder="Rechercher un camion ou un lieu..." class="f-search-input">
+                <button mat-icon-button class="search-btn">
+                    <mat-icon>search</mat-icon>
+                </button>
+                <div class="divider"></div>
+                <button mat-icon-button color="primary" (click)="activePanel = 'settings'">
+                    <mat-icon>directions</mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Side Icons -->
+        <app-advanced-map-controls [alertCount]="totalAlerts" (home)="goHome()" (notifications)="activePanel = 'alerts'"
+            (settings)="activePanel = 'settings'">
+        </app-advanced-map-controls>
+    </div>
+
+    <!-- Google-style Side Menu -->
+    <app-map-menu *ngIf="showMenu" [showSidebar]="showSidebar" (close)="showMenu = false"
+        (toggleSidebar)="showSidebar = $event" (action)="activePanel = $event">
+    </app-map-menu>
+
+    <!-- Left Sidebar: Truck List -->
+    <div class="sidebar-container" *ngIf="showSidebar">
+        <app-delivery-list [trucks]="allTrucks" [activeTruckId]="activeTruck" [searchQuery]="searchQuery"
+            (selectTruck)="selectTruck($event)" (close)="showSidebar = false">
+        </app-delivery-list>
+    </div>
+
+    <!-- Map Interaction Controls (Bottom Right) -->
+    <div class="map-interaction-controls">
+        <div class="btn-group">
+            <button mat-mini-fab class="glass-btn" (click)="zoomIn()" title="Zoom Avant">
+                <mat-icon>add</mat-icon>
+            </button>
+            <button mat-mini-fab class="glass-btn" (click)="zoomOut()" title="Zoom Arri??re">
+                <mat-icon>remove</mat-icon>
+            </button>
+        </div>
+
+        <button mat-mini-fab class="glass-btn compass" (click)="resetCompass()" title="Centrer la carte">
+            <mat-icon>my_location</mat-icon>
+        </button>
+
+        <button mat-mini-fab class="glass-btn layers-toggle" (click)="activePanel = 'settings'"
+            [class.active]="activePanel === 'settings'" title="Couches & Styles">
+            <mat-icon>layers</mat-icon>
+        </button>
+    </div>
+
+    <!-- Overlays -->
+    <div class="overlay-container-right" *ngIf="activePanel === 'settings'" animate-fade-in>
+        <app-map-control-panel [mapStyle]="mapStyle" [activeTruck]="activeTruckData" [followTruck]="followTruck"
+            (styleChange)="mapStyle = $event; updateStyle()" (poiToggle)="handlePoiToggle($event)"
+            (followToggle)="handleFollowToggle($event)" (share)="handleShare()" (print)="handlePrint()"
+            (close)="activePanel = null">
+        </app-map-control-panel>
+    </div>
+
+    <div class="overlay-container-right" *ngIf="activePanel === 'alerts'" animate-fade-in>
+        <app-alert-notifications (close)="activePanel = null">
+        </app-alert-notifications>
+    </div>
+
+    <!-- Pause / Activity Notification Overlay -->
+    <div class="notification-overlay-container" *ngIf="showPause" animate-slide-in>
+        <app-break-notification [truckId]="activeTruck" [remainingTime]="breakTimeRemaining"
+            [severity]="breakAlertSeverity || 'critical'" [message]="breakAlertMessage" (close)="dismissAlert()"
+            (action)="dismissAlert()">
+        </app-break-notification>
+    </div>
+</div>

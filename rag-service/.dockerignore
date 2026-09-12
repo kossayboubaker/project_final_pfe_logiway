@@ -1,0 +1,73 @@
+# ========================================
+# RAG SERVICE - .dockerignore
+# ========================================
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Reports générés (volume Docker)
+reports/
+
+# Vectorstore (volume Docker)
+vectorstore/
+
+# Tests
+tests/
+*_test.py
+test_*.py
+check_database.py
+list_models.py
+test_all_prompts.py
+test_domaines.py
+test_reclamations.py
+test_reports.py
+test_simple_gemini.py
+test_simple_prompts.py
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+*.md
+CHANGELOG.md
+CONTRIBUTING.md
+QUICKSTART.md
+STATUS.txt
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Scripts batch Windows
+*.bat
+
+# Config local
+.env
+setup.bat
+setup_simple.bat

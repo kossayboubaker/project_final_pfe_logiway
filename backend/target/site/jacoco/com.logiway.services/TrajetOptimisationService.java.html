@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrajetOptimisationService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services</a> &gt; <span class="el_source">TrajetOptimisationService.java</span></div><h1>TrajetOptimisationService.java</h1><pre class="source lang-java linenums">package com.logiway.services;
+
+import com.logiway.dto.trajet.TrajetRequest;
+import com.logiway.entities.Vehicule;
+import com.logiway.entities.enums.StatutVehicule;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="fc" id="L16">@RequiredArgsConstructor</span>
+public class TrajetOptimisationService {
+
+    private final OsrmService osrmService;
+
+    public List&lt;OptimizationAssignment&gt; optimiser(List&lt;TrajetRequest&gt; trajets, List&lt;Vehicule&gt; vehiculesDisponibles) {
+<span class="fc bfc" id="L22" title="All 2 branches covered.">        List&lt;TrajetRequest&gt; orderedTrajets = new ArrayList&lt;&gt;(trajets == null ? List.of() : trajets);</span>
+<span class="fc" id="L23">        orderedTrajets.sort(Comparator.comparing(TrajetRequest::priorite, Comparator.nullsLast(Comparator.naturalOrder())).reversed());</span>
+
+<span class="fc bfc" id="L25" title="All 2 branches covered.">        List&lt;Vehicule&gt; fleet = vehiculesDisponibles == null ? List.of() : vehiculesDisponibles.stream()</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">            .filter(v -&gt; v.getStatut() == StatutVehicule.EN_SERVICE)</span>
+<span class="fc" id="L27">            .sorted(Comparator.comparing(Vehicule::getId))</span>
+<span class="fc" id="L28">            .toList();</span>
+
+<span class="fc" id="L30">        List&lt;OptimizationAssignment&gt; assignments = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L31" title="All 4 branches covered.">        if (orderedTrajets.isEmpty() || fleet.isEmpty()) {</span>
+<span class="fc" id="L32">            return assignments;</span>
+        }
+
+<span class="fc" id="L35">        Map&lt;Long, Double&gt; loadByVehicle = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L36" title="All 2 branches covered.">        for (Vehicule vehicule : fleet) {</span>
+<span class="fc" id="L37">            loadByVehicle.put(vehicule.getId(), 0d);</span>
+<span class="fc" id="L38">        }</span>
+
+<span class="fc bfc" id="L40" title="All 2 branches covered.">        for (TrajetRequest trajet : orderedTrajets) {</span>
+<span class="fc" id="L41">            Vehicule selected = selectVehicle(fleet, loadByVehicle);</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">            String opt = trajet.typeOptimisation() != null ? trajet.typeOptimisation() : &quot;shortest&quot;;</span>
+<span class="fc" id="L43">            OsrmService.RouteEstimation route = osrmService.calculerItineraire(</span>
+<span class="fc" id="L44">                trajet.latitudeDepart(), trajet.longitudeDepart(), trajet.latitudeArrivee(), trajet.longitudeArrivee(), opt);</span>
+
+<span class="pc bpc" id="L46" title="1 of 2 branches missed.">            if (selected != null) {</span>
+<span class="fc bfc" id="L47" title="All 2 branches covered.">                loadByVehicle.computeIfPresent(selected.getId(), (key, value) -&gt; value + (route != null ? route.distanceKm() : 1d));</span>
+<span class="fc" id="L48">                assignments.add(new OptimizationAssignment(trajet, selected, route));</span>
+            }
+<span class="fc" id="L50">        }</span>
+
+<span class="fc" id="L52">        return assignments;</span>
+    }
+
+    private Vehicule selectVehicle(List&lt;Vehicule&gt; fleet, Map&lt;Long, Double&gt; loadByVehicle) {
+<span class="fc" id="L56">        return fleet.stream()</span>
+<span class="fc" id="L57">            .min(Comparator.comparing(v -&gt; loadByVehicle.getOrDefault(v.getId(), 0d)))</span>
+<span class="fc" id="L58">            .orElse(null);</span>
+    }
+
+<span class="fc" id="L61">    public record OptimizationAssignment(TrajetRequest trajet, Vehicule vehicule, OsrmService.RouteEstimation route) {</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

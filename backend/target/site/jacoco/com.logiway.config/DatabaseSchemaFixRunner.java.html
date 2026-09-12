@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseSchemaFixRunner.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.config</a> &gt; <span class="el_source">DatabaseSchemaFixRunner.java</span></div><h1>DatabaseSchemaFixRunner.java</h1><pre class="source lang-java linenums">package com.logiway.config;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
+
+@Component
+<span class="fc" id="L10">@RequiredArgsConstructor</span>
+<span class="fc" id="L11">@Slf4j</span>
+public class DatabaseSchemaFixRunner implements CommandLineRunner {
+
+    private final JdbcTemplate jdbcTemplate;
+
+    @Override
+    public void run(String... args) {
+        try {
+<span class="fc" id="L19">            jdbcTemplate.execute(&quot;ALTER TABLE utilisateurs MODIFY COLUMN est_actif VARCHAR(20) NOT NULL&quot;);</span>
+<span class="fc" id="L20">            jdbcTemplate.execute(&quot;ALTER TABLE utilisateurs MODIFY COLUMN rejection_reason VARCHAR(500) NULL&quot;);</span>
+
+<span class="fc" id="L22">            Integer createdByColumnCount = jdbcTemplate.queryForObject(</span>
+                &quot;SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'utilisateurs' AND column_name = 'created_by_id'&quot;,
+                Integer.class
+            );
+
+<span class="fc bfc" id="L27" title="All 4 branches covered.">            if (createdByColumnCount == null || createdByColumnCount == 0) {</span>
+<span class="fc" id="L28">                jdbcTemplate.execute(&quot;ALTER TABLE utilisateurs ADD COLUMN created_by_id BIGINT NULL&quot;);</span>
+            }
+
+<span class="fc" id="L31">            log.info(&quot;Database schema check applied for utilisateurs.est_actif, utilisateurs.rejection_reason and utilisateurs.created_by_id&quot;);</span>
+<span class="fc" id="L32">        } catch (Exception ex) {</span>
+<span class="fc" id="L33">            log.warn(&quot;Database schema fix could not be applied automatically: {}&quot;, ex.getMessage());</span>
+<span class="fc" id="L34">        }</span>
+<span class="fc" id="L35">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

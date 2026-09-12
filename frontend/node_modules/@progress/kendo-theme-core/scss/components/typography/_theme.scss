@@ -1,0 +1,24 @@
+@use "../../mixins/index.scss" as *;
+@use "../../color-system/_functions.scss" as *;
+@use "./_variables.scss" as *;
+
+@mixin kendo-typography--theme-base() {
+
+    .k-body {
+        @include fill(
+            k-color(on-app-surface),
+            k-color(app-surface)
+        );
+    }
+
+    // Code snippet
+    .k-pre,
+    .k-code {
+        @include fill(
+            $kendo-code-text,
+            $kendo-code-bg,
+            $kendo-code-border
+        );
+    }
+
+}

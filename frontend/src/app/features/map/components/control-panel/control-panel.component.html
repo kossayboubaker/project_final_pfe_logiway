@@ -1,0 +1,217 @@
+<div class="control-panel">
+
+    <!-- ══ HEADER ══ -->
+    <div class="panel-header">
+        <div class="header-title">
+            <span class="header-icon">
+                <mat-icon>local_shipping</mat-icon>
+            </span>
+            <span>Contrôles Carte</span>
+        </div>
+        <button mat-icon-button class="close-btn" (click)="onClose()">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- ══ CONTENT ══ -->
+    <div class="panel-content">
+
+        <!-- Style de carte -->
+        <div class="section">
+            <label class="section-label">
+                <mat-icon class="label-icon">map</mat-icon>
+                Style de carte
+            </label>
+            <div class="style-grid">
+                <div class="style-item" [class.active]="mapStyle === 'standard'" (click)="onStyleChange('standard')">
+                    <div class="style-thumb standard">
+                        <span class="style-overlay">Standard</span>
+                    </div>
+                </div>
+                <div class="style-item" [class.active]="mapStyle === 'satellite'" (click)="onStyleChange('satellite')">
+                    <div class="style-thumb satellite">
+                        <span class="style-overlay">Satellite</span>
+                    </div>
+                </div>
+                <div class="style-item" [class.active]="mapStyle === 'terrain'" (click)="onStyleChange('terrain')">
+                    <div class="style-thumb terrain">
+                        <span class="style-overlay">Terrain</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+
+
+        <!-- Couches de carte -->
+        <div class="section">
+            <label class="section-label">
+                <mat-icon class="label-icon">layers</mat-icon>
+                Couches de carte
+            </label>
+            <div class="layer-list">
+
+                <label class="layer-toggle">
+                    <span class="layer-toggle-left">
+                        <mat-icon>route</mat-icon>
+                        Afficher les routes
+                    </span>
+                    <mat-checkbox color="primary" [checked]="showRoads" (change)="onPoiToggle('roads', $event)">
+                    </mat-checkbox>
+                </label>
+
+                <label class="layer-toggle">
+                    <span class="layer-toggle-left">
+                        <mat-icon>free_breakfast</mat-icon>
+                        Afficher les points d'arrêt
+                    </span>
+                    <mat-checkbox color="primary" [checked]="showBreaks" (change)="onPoiToggle('breaks', $event)">
+                    </mat-checkbox>
+                </label>
+
+                <label class="layer-toggle">
+                    <span class="layer-toggle-left">
+                        <mat-icon>gps_fixed</mat-icon>
+                        Suivre le camion
+                    </span>
+                    <mat-checkbox color="primary" [ngModel]="followTruck" (change)="onFollowToggle($event)">
+                    </mat-checkbox>
+                </label>
+
+            </div>
+        </div>
+
+        <!-- Truck Info -->
+        <ng-container *ngIf="activeTruck">
+            <div class="divider"></div>
+
+            <div class="section">
+                <label class="section-label">
+                    <mat-icon class="label-icon">local_shipping</mat-icon>
+                    Informations du camion
+                </label>
+
+                <div class="truck-card">
+
+                    <!-- ID + Status -->
+                    <div class="info-header">
+                        <div class="truck-id-wrap">
+                            <mat-icon class="truck-id-icon">local_shipping</mat-icon>
+                            <span class="truck-id">{{ activeTruck.id }}</span>
+                        </div>
+                        <span class="status-badge en-route">
+                            <span class="status-dot"></span>
+                            En Route
+                        </span>
+                    </div>
+
+                    <!-- Route -->
+                    <div class="route-summary">
+                        <div class="route-chip start">
+                            <mat-icon>trip_origin</mat-icon>
+                            <span>{{ activeTruck.from }}</span>
+                        </div>
+                        <div class="route-connector">
+                            <span class="connector-line"></span>
+                        </div>
+                        <div class="route-chip end">
+                            <mat-icon>location_on</mat-icon>
+                            <span>{{ activeTruck.to }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Data Grid -->
+                    <div class="info-grid">
+
+                        <div class="info-item">
+                            <span class="label"><mat-icon>person</mat-icon>Conducteur</span>
+                            <span class="value">{{ activeTruck.driver }}</span>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="label"><mat-icon>phone</mat-icon>Téléphone</span>
+                            <span class="value">{{ activeTruck.phone }}</span>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="label"><mat-icon>room</mat-icon>Destination</span>
+                            <span class="value">{{ activeTruck.to }}</span>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="label"><mat-icon>speed</mat-icon>Vitesse</span>
+                            <span class="value highlight">{{ activeTruck.speed }} km/h</span>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="label"><mat-icon>local_gas_station</mat-icon>Carburant</span>
+                            <div class="fuel-bar-wrap">
+                                <div class="fuel-bar">
+                                    <div class="fuel-fill" [style.width.%]="activeTruck.fuelLevel ?? 0">
+                                    </div>
+                                </div>
+                                <span class="value">
+                                    {{ activeTruck.fuelLevel != null ? activeTruck.fuelLevel : 'N/A' }}%
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <span class="label"><mat-icon>trending_up</mat-icon>Progression</span>
+                            <div class="fuel-bar-wrap">
+                                <div class="fuel-bar progress-bar">
+                                    <div class="fuel-fill progress-fill" [style.width.%]="activeTruck.progress">
+                                    </div>
+                                </div>
+                                <span class="value">{{ activeTruck.progress }}%</span>
+                            </div>
+                        </div>
+
+                    </div><!-- /info-grid -->
+                </div><!-- /truck-card -->
+            </div><!-- /section -->
+        </ng-container>
+
+        <div class="divider"></div>
+
+        <div class="section">
+            <label class="section-label">
+                <mat-icon class="label-icon">cloud</mat-icon>
+                Météo locale
+            </label>
+
+            <div class="weather-card" [attr.data-risk]="localWeather?.risqueConduite || 'ORANGE'">
+                <div class="weather-header">
+                    <img *ngIf="localWeather?.iconUrl" [src]="localWeather?.iconUrl" alt="Météo" class="weather-icon">
+                    <div class="weather-temp-wrap">
+                        <div class="weather-temp">
+                            {{ localWeather?.temperatureCelsius != null ? (localWeather?.temperatureCelsius | number:'1.0-0') + '°C' : '—' }}
+                        </div>
+                        <div class="weather-desc">{{ localWeather?.descriptionFr || 'Météo indisponible' }}</div>
+                    </div>
+                    <span class="weather-risk-badge">
+                        {{ localWeather?.risqueConduite || 'ORANGE' }}
+                    </span>
+                </div>
+
+                <div class="weather-meta">
+                    <div class="weather-meta-item">
+                        <mat-icon>air</mat-icon>
+                        <span>{{ localWeather?.windKmH != null ? (localWeather?.windKmH | number:'1.0-0') + ' km/h' : 'N/A' }}</span>
+                    </div>
+                    <div class="weather-meta-item">
+                        <mat-icon>opacity</mat-icon>
+                        <span>{{ localWeather?.humidity != null ? (localWeather?.humidity | number:'1.0-0') + '%' : 'N/A' }}</span>
+                    </div>
+                    <div class="weather-meta-item">
+                        <mat-icon>visibility</mat-icon>
+                        <span>{{ localWeather?.visibilityKm != null ? (localWeather?.visibilityKm | number:'1.0-1') + ' km' : 'N/A' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /panel-content -->
+</div><!-- /control-panel -->

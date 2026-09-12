@@ -1,0 +1,118 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > ChauffeurRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: ChauffeurRepository (com.logiway.repositories)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">ChauffeurRepository$MockitoMock$GL1BRRhz</td>
+  </tr>
+  <tr>
+    <td class="name">ChauffeurRepository$MockitoMock$GL1BRRhz$auxiliary$dSBtaRwG</td>
+  </tr>
+  <tr>
+    <td class="name">ChauffeurRepository$MockitoMock$GL1BRRhz$auxiliary$Zs9ov4kt</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.repositories;
+&nbsp;
+&nbsp;import com.logiway.entities.Chauffeur;
+&nbsp;import com.logiway.entities.enums.StatutChauffeur;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;import org.springframework.data.jpa.repository.Query;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public interface ChauffeurRepository extends JpaRepository&lt;Chauffeur, Long&gt; {
+&nbsp;
+&nbsp;    List&lt;Chauffeur&gt; findByManagerId(Long managerId);
+&nbsp;
+&nbsp;    List&lt;Chauffeur&gt; findByManagerIdIn(List&lt;Long&gt; managerIds);
+&nbsp;
+&nbsp;    List&lt;Chauffeur&gt; findByEntreprise_Id(Long entrepriseId);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        SELECT DISTINCT c FROM Chauffeur c
+&nbsp;        LEFT JOIN FETCH c.manager m
+&nbsp;        LEFT JOIN FETCH m.secteur
+&nbsp;        LEFT JOIN FETCH c.secteur
+&nbsp;        LEFT JOIN FETCH c.vehiculeActuel v
+&nbsp;        LEFT JOIN FETCH v.entreprise
+&nbsp;        WHERE c.id = :id
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    Optional&lt;Chauffeur&gt; findByIdWithDashboardFetch(@Param(&quot;id&quot;) Long id);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère les chauffeurs disponibles (LIBRE) pour une entreprise donnée
+&nbsp;     * (exclut les chauffeurs déjà assignés à un véhicule)
+&nbsp;     */
+&nbsp;    @Query(&quot;SELECT c FROM Chauffeur c WHERE COALESCE(c.entreprise.id, c.manager.entreprise.id) = :entrepriseId AND c.statutConducteur = :statut AND c.vehiculeActuel IS NULL&quot;)
+&nbsp;    List&lt;Chauffeur&gt; findAvailableDriversByEntreprise(
+&nbsp;        @Param(&quot;entrepriseId&quot;) Long entrepriseId,
+&nbsp;        @Param(&quot;statut&quot;) StatutChauffeur statut
+&nbsp;    );
+&nbsp;}
+&nbsp;
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

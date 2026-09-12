@@ -1,0 +1,151 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MessengerMessageRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: MessengerMessageRepository (com.logiway.repositories)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">MessengerMessageRepository$MockitoMock$7RgnA9hG</td>
+  </tr>
+  <tr>
+    <td class="name">MessengerMessageRepository$MockitoMock$7RgnA9hG$auxiliary$A8BEZ8G2</td>
+  </tr>
+  <tr>
+    <td class="name">MessengerMessageRepository$MockitoMock$7RgnA9hG$auxiliary$lSPLERNu</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.repositories;
+&nbsp;
+&nbsp;import com.logiway.entities.MessengerMessage;
+&nbsp;import com.logiway.entities.enums.MessengerMessageStatus;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.data.domain.Pageable;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;import org.springframework.data.jpa.repository.Modifying;
+&nbsp;import org.springframework.data.jpa.repository.Query;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;public interface MessengerMessageRepository extends JpaRepository&lt;MessengerMessage, Long&gt; {
+&nbsp;
+&nbsp;    List&lt;MessengerMessage&gt; findByExpediteurIdOrDestinataireIdOrderByDateEnvoiDesc(Long expediteurId, Long destinataireId);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        select m from MessengerMessage m
+&nbsp;        where (m.expediteurId = :currentUserId and m.destinataireId = :destinataireId)
+&nbsp;           or (m.expediteurId = :destinataireId and m.destinataireId = :currentUserId)
+&nbsp;        order by m.dateEnvoi desc
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    Page&lt;MessengerMessage&gt; findConversationMessages(@Param(&quot;currentUserId&quot;) Long currentUserId,
+&nbsp;                                                    @Param(&quot;destinataireId&quot;) Long destinataireId,
+&nbsp;                                                    Pageable pageable);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        select m from MessengerMessage m
+&nbsp;        where (m.expediteurId = :currentUserId or m.destinataireId = :currentUserId)
+&nbsp;        order by m.dateEnvoi desc
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;MessengerMessage&gt; findConversationSeed(@Param(&quot;currentUserId&quot;) Long currentUserId);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        select m from MessengerMessage m
+&nbsp;        where m.destinataireId = :currentUserId
+&nbsp;          and m.expediteurId = :expediteurId
+&nbsp;          and m.statut = :statut
+&nbsp;        order by m.dateEnvoi desc
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    List&lt;MessengerMessage&gt; findUnreadMessagesFromSender(@Param(&quot;currentUserId&quot;) Long currentUserId,
+&nbsp;                                                        @Param(&quot;expediteurId&quot;) Long expediteurId,
+&nbsp;                                                        @Param(&quot;statut&quot;) MessengerMessageStatus statut);
+&nbsp;
+&nbsp;    Optional&lt;MessengerMessage&gt; findFirstByCheminFichierEndingWith(String filename);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        update MessengerMessage m
+&nbsp;        set m.connecte = :connecte,
+&nbsp;            m.derniereActivite = :lastActivity
+&nbsp;        where m.expediteurId = :userId
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    @Modifying
+&nbsp;    int updatePresenceForSender(@Param(&quot;userId&quot;) Long userId,
+&nbsp;                                @Param(&quot;connecte&quot;) Boolean connecte,
+&nbsp;                                @Param(&quot;lastActivity&quot;) LocalDateTime lastActivity);
+&nbsp;
+&nbsp;    @Query(&quot;&quot;&quot;
+&nbsp;        update MessengerMessage m
+&nbsp;        set m.statut = :statut,
+&nbsp;            m.dateLecture = :dateLecture
+&nbsp;        where m.expediteurId = :expediteurId
+&nbsp;          and m.destinataireId = :destinataireId
+&nbsp;          and m.statut = com.logiway.entities.enums.MessengerMessageStatus.NON_LU
+&nbsp;        &quot;&quot;&quot;)
+&nbsp;    @Modifying
+&nbsp;    int markConversationAsRead(@Param(&quot;expediteurId&quot;) Long expediteurId,
+&nbsp;                               @Param(&quot;destinataireId&quot;) Long destinataireId,
+&nbsp;                               @Param(&quot;statut&quot;) MessengerMessageStatus statut,
+&nbsp;                               @Param(&quot;dateLecture&quot;) LocalDateTime dateLecture);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

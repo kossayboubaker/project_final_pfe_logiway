@@ -1,0 +1,117 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MessengerService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: MessengerService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">MessengerService$MockitoMock$qx0x4OhL</td>
+  </tr>
+  <tr>
+    <td class="name">MessengerService$MockitoMock$qx0x4OhL$auxiliary$cPNbRT3g</td>
+  </tr>
+  <tr>
+    <td class="name">MessengerService$MockitoMock$qx0x4OhL$auxiliary$hUvMupBH</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services;
+&nbsp;
+&nbsp;import com.logiway.dto.request.MessengerTextRequest;
+&nbsp;import com.logiway.dto.request.MessengerMessageUpdateRequest;
+&nbsp;import com.logiway.dto.response.MessengerConversationResponse;
+&nbsp;import com.logiway.dto.response.MessengerMessagePageResponse;
+&nbsp;import com.logiway.dto.response.MessengerMessageResponse;
+&nbsp;import com.logiway.dto.response.MessengerPresenceResponse;
+&nbsp;import com.logiway.dto.response.MessengerReadResponse;
+&nbsp;import com.logiway.dto.response.MessengerUserResponse;
+&nbsp;import org.springframework.core.io.Resource;
+&nbsp;import org.springframework.web.multipart.MultipartFile;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public interface MessengerService {
+&nbsp;    List&lt;MessengerConversationResponse&gt; getConversations(String search);
+&nbsp;
+&nbsp;    MessengerMessagePageResponse getConversationMessages(Long destinataireId, int page, int size);
+&nbsp;
+&nbsp;    MessengerMessageResponse sendTextMessage(MessengerTextRequest request);
+&nbsp;
+&nbsp;    MessengerMessageResponse sendFileMessage(Long destinataireId, MultipartFile file);
+&nbsp;
+&nbsp;    MessengerMessageResponse sendVocalMessage(Long destinataireId, MultipartFile file, Integer dureeVocale);
+&nbsp;
+&nbsp;    MessengerMessageResponse updateMessage(Long messageId, MessengerMessageUpdateRequest request);
+&nbsp;
+&nbsp;    void deleteMessage(Long messageId);
+&nbsp;
+&nbsp;    Resource loadFile(String filename);
+&nbsp;
+&nbsp;    MessengerReadResponse markConversationAsRead(Long destinataireId);
+&nbsp;
+&nbsp;    List&lt;MessengerUserResponse&gt; getAuthorizedUsers(String search);
+&nbsp;
+&nbsp;    MessengerPresenceResponse heartbeat();
+&nbsp;
+&nbsp;    void disconnectPresence();
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

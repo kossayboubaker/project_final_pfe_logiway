@@ -1,0 +1,293 @@
+.truck-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(30, 41, 59, 0.78));
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    color: #f8fafc;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22);
+}
+
+:host-context(.theme-light) .truck-card {
+    background: rgba(255, 255, 255, 0.82) !important;
+    border-color: rgba(30, 58, 138, 0.15) !important;
+    color: #0f172a !important;
+}
+
+.truck-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(37, 99, 235, 0.22);
+}
+
+.truck-card.active,
+.truck-card:focus-visible {
+    border-color: var(--accent, #3b82f6) !important;
+    outline: 2px solid var(--accent, #3b82f6);
+    outline-offset: 1px;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+:host-context(.theme-light) .truck-card.active {
+    background: rgba(59, 130, 246, 0.05) !important;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.tag-eco {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(16, 185, 129, 0.1));
+    color: #34d399;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tag-normal {
+    background: rgba(148, 163, 184, 0.14);
+    color: #cbd5e1;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+}
+
+.truck-id {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.8));
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+:host-context(.theme-light) .truck-id {
+    color: #64748b;
+}
+
+.dot-icon {
+    font-size: 8px;
+    width: 8px;
+    height: 8px;
+    color: #10b981;
+}
+
+.truck-name {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.truck-emoji {
+    font-size: 24px;
+    margin-right: 8px;
+}
+
+.truck-name mat-icon {
+
+    width: 18px;
+    height: 18px;
+    color: var(--accent, #3b82f6);
+}
+
+.truck-subinfo {
+    font-size: 0.7rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+:host-context(.theme-light) .truck-subinfo {
+    color: #334155 !important;
+}
+
+.truck-subinfo mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+.speed {
+    color: #f59e0b;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.speed mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    margin-right: 2px;
+}
+
+.progress-section {
+    margin-bottom: 12px;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+}
+
+.progress-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #60a5fa;
+}
+
+.progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+:host-context(.theme-light) .progress-bar {
+    background: rgba(30, 58, 138, 0.1);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 10px;
+}
+
+.route-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: rgba(2, 6, 23, 0.35);
+    border-radius: 12px;
+}
+
+:host-context(.theme-light) .route-info {
+    background: rgba(30, 58, 138, 0.05);
+}
+
+.route-point {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.point-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 4px;
+}
+
+.point-dot.start {
+    background: #10b981;
+}
+
+.point-dot.end {
+    background: #ef4444;
+}
+
+.point-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.point-text .label {
+    font-size: 0.65rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+:host-context(.theme-light) .point-text .label {
+    color: #64748b;
+}
+
+.point-text .value {
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.05));
+}
+
+:host-context(.theme-light) .card-footer {
+    border-top-color: rgba(30, 58, 138, 0.1);
+}
+
+.driver-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.driver-info mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+:host-context(.theme-light) .driver-info mat-icon {
+    color: #334155;
+}
+
+.driver-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.driver-text .name {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.driver-text .phone {
+    font-size: 0.7rem;
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+}
+
+:host-context(.theme-light) .driver-text .phone {
+    color: #64748b;
+}
+
+.badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.badge.en-cours {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.badge.other {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}

@@ -1,0 +1,6450 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] --------------------< com.logiway:logiway-backend >---------------------
+[INFO] Building logiway-backend 0.0.1-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.2.2:run (default-cli) > test-compile @ logiway-backend >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ logiway-backend ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 6 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ logiway-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ logiway-backend ---
+[INFO] skip non existing resourceDirectory C:\Users\kossa\OneDrive\Desktop\essais\backend\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ logiway-backend ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] <<< spring-boot:3.2.2:run (default-cli) < test-compile @ logiway-backend <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.2.2:run (default-cli) @ logiway-backend ---
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.2)
+
+2026-07-10 03:33:41 - Starting LogiwayApplication using Java 17.0.12 with PID 40544 (C:\Users\kossa\OneDrive\Desktop\essais\backend\target\classes started by kossa in C:\Users\kossa\OneDrive\Desktop\essais\backend)
+2026-07-10 03:33:41 - No active profile set, falling back to 1 default profile: "default"
+2026-07-10 03:33:42 - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-07-10 03:33:42 - Finished Spring Data repository scanning in 77 ms. Found 16 JPA repository interfaces.
+2026-07-10 03:33:42 - Tomcat initialized with port 8080 (http)
+2026-07-10 03:33:42 - Starting service [Tomcat]
+2026-07-10 03:33:42 - Starting Servlet engine: [Apache Tomcat/10.1.18]
+2026-07-10 03:33:42 - Initializing Spring embedded WebApplicationContext
+2026-07-10 03:33:42 - Root WebApplicationContext: initialization completed in 1295 ms
+2026-07-10 03:33:43 - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-07-10 03:33:43 - HHH000412: Hibernate ORM core version 6.4.1.Final
+2026-07-10 03:33:43 - HHH000026: Second-level cache disabled
+2026-07-10 03:33:43 - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-07-10 03:33:43 - HikariPool-1 - Starting...
+2026-07-10 03:33:43 - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@5b490d5e
+2026-07-10 03:33:43 - HikariPool-1 - Start completed.
+2026-07-10 03:33:43 - HHH000511: The 5.5.0 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2026-07-10 03:33:43 - HHH90000025: MySQLDialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-07-10 03:33:43 - HHH000491: 'com.logiway.entities.Notification.utilisateur' uses both @NotFound and FetchType.LAZY. @ManyToOne and @OneToOne associations mapped with @NotFound are forced to EAGER fetching.
+2026-07-10 03:33:44 - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: 
+    alter table utilisateurs 
+       modify column est_actif enum ('ACTIF','INACTIF','REJETE') not null
+2026-07-10 03:33:45 - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-07-10 03:33:45 - Secteur schema check: ensured default value on secteurs.created_at
+2026-07-10 03:33:45 - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-07-10 03:33:46 - Keycloak is reachable — realm [logiway] is configured correctly
+Hibernate: 
+    SELECT
+        COUNT(*) 
+    FROM
+        utilisateurs
+2026-07-10 03:33:46 - ChatbotToolsService : connexion MySQL validée, 7 utilisateurs trouvés.
+2026-07-10 03:33:47 - [PAUSE-AI] API Flask Pause AI accessible — modèle prêt (http://localhost:5000/api/health)
+Hibernate: 
+    select
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        c1_0.manager_id,
+        c1_0.secteur_id,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id 
+    from
+        chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        vehicules v1_0
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        v1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        v1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        v1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        v1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        v1_0.id=? 
+    order by
+        t1_0.date_depart desc
+2026-07-10 03:33:47 - [RECLAMATION-AI] Token Hugging Face configuré — validation IA active
+2026-07-10 03:33:48 - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@6bdffa25, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@19c2c3a6, org.springframework.security.web.context.SecurityContextHolderFilter@67b9b79c, org.springframework.security.web.header.HeaderWriterFilter@7c5f244c, org.springframework.web.filter.CorsFilter@3718f26a, org.springframework.security.web.authentication.logout.LogoutFilter@5eb20abb, org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter@c5c622, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@1bd051c4, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@11483b6f, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@24d84d1e, org.springframework.security.web.access.ExceptionTranslationFilter@686aa9c9, org.springframework.security.web.access.intercept.AuthorizationFilter@7590b28f]
+2026-07-10 03:33:48 - Tomcat started on port 8080 (http) with context path ''
+2026-07-10 03:33:48 - Started LogiwayApplication in 7.68 seconds (process running for 7.976)
+Hibernate: 
+    select
+        t1_0.id,
+        t1_0.charge_kg,
+        t1_0.chauffeur_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        t1_0.manager_id,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        t1_0.vehicule_id 
+    from
+        trajets t1_0 
+    where
+        t1_0.statut=?
+2026-07-10 03:33:48 - [SCHEDULER] 1 trajet(s) EN_COURS à évaluer
+Hibernate: 
+    select
+        t1_0.id,
+        t1_0.charge_kg,
+        t1_0.chauffeur_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        t1_0.manager_id,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        t1_0.vehicule_id 
+    from
+        trajets t1_0 
+    where
+        t1_0.id=?
+Hibernate: 
+    select
+        pr1_0.id,
+        pr1_0.accessibility_score,
+        pr1_0.ai_score,
+        pr1_0.confidence,
+        pr1_0.context_score,
+        pr1_0.distance_along_route_m,
+        pr1_0.duration_seconds,
+        pr1_0.fatigue_score,
+        pr1_0.heure_arrivee_planifiee,
+        pr1_0.heure_reprise_estimee,
+        pr1_0.latitude,
+        pr1_0.longitude,
+        pr1_0.nom_lieu,
+        pr1_0.reasoning,
+        pr1_0.statut,
+        pr1_0.trajet_id,
+        pr1_0.type 
+    from
+        pauses_reglementaires pr1_0 
+    where
+        pr1_0.trajet_id=? 
+    order by
+        pr1_0.distance_along_route_m
+2026-07-10 03:33:48 - [PAUSE-AI] Évaluation déclenchée — TrajetId=78 | hours_driving=25.05h | dist_along_ratio=0.00 | position=(36.82, 10.22)
+Hibernate: 
+    select
+        pa1_0.id,
+        pa1_0.alerte_declenchee,
+        pa1_0.dist_along_ratio,
+        pa1_0.distance_poi_m,
+        pa1_0.hours_driving,
+        pa1_0.latitude_poi,
+        pa1_0.longitude_poi,
+        pa1_0.nom_poi,
+        pa1_0.poi_type,
+        pa1_0.score,
+        pa1_0.timestamp,
+        pa1_0.trajet_id,
+        pa1_0.type_alerte 
+    from
+        pause_ai_predictions pa1_0 
+    where
+        pa1_0.trajet_id=? 
+    order by
+        pa1_0.timestamp desc 
+    limit
+        1
+2026-07-10 03:33:48 - [PAUSE-AI] Dernière évaluation il y a 1 min, skip (intervalle: 2 min)
+Hibernate: 
+    select
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        c1_0.manager_id,
+        c1_0.secteur_id,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id 
+    from
+        chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id
+2026-07-10 03:33:49 - Database schema check applied for utilisateurs.est_actif, utilisateurs.rejection_reason and utilisateurs.created_by_id
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+2026-07-10 03:33:50 - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-07-10 03:33:50 - Initializing Servlet 'dispatcherServlet'
+2026-07-10 03:33:50 - Completed initialization in 2 ms
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    update
+        messenger_messages 
+    set
+        connecte=?,
+        derniere_activite=? 
+    where
+        expediteur_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    update
+        messenger_messages 
+    set
+        connecte=?,
+        derniere_activite=? 
+    where
+        expediteur_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        c1_0.manager_id,
+        c1_0.secteur_id,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id 
+    from
+        chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    update
+        messenger_messages 
+    set
+        connecte=?,
+        derniere_activite=? 
+    where
+        expediteur_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    update
+        messenger_messages 
+    set
+        connecte=?,
+        derniere_activite=? 
+    where
+        expediteur_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        t1_0.id,
+        t1_0.charge_kg,
+        t1_0.chauffeur_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        t1_0.manager_id,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        t1_0.vehicule_id 
+    from
+        trajets t1_0 
+    where
+        t1_0.statut=?
+2026-07-10 03:35:48 - [SCHEDULER] 1 trajet(s) EN_COURS à évaluer
+Hibernate: 
+    select
+        t1_0.id,
+        t1_0.charge_kg,
+        t1_0.chauffeur_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        t1_0.manager_id,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        t1_0.vehicule_id 
+    from
+        trajets t1_0 
+    where
+        t1_0.id=?
+Hibernate: 
+    select
+        pr1_0.id,
+        pr1_0.accessibility_score,
+        pr1_0.ai_score,
+        pr1_0.confidence,
+        pr1_0.context_score,
+        pr1_0.distance_along_route_m,
+        pr1_0.duration_seconds,
+        pr1_0.fatigue_score,
+        pr1_0.heure_arrivee_planifiee,
+        pr1_0.heure_reprise_estimee,
+        pr1_0.latitude,
+        pr1_0.longitude,
+        pr1_0.nom_lieu,
+        pr1_0.reasoning,
+        pr1_0.statut,
+        pr1_0.trajet_id,
+        pr1_0.type 
+    from
+        pauses_reglementaires pr1_0 
+    where
+        pr1_0.trajet_id=? 
+    order by
+        pr1_0.distance_along_route_m
+2026-07-10 03:35:48 - [PAUSE-AI] Évaluation déclenchée — TrajetId=78 | hours_driving=25.08h | dist_along_ratio=0.00 | position=(36.82, 10.22)
+Hibernate: 
+    select
+        pa1_0.id,
+        pa1_0.alerte_declenchee,
+        pa1_0.dist_along_ratio,
+        pa1_0.distance_poi_m,
+        pa1_0.hours_driving,
+        pa1_0.latitude_poi,
+        pa1_0.longitude_poi,
+        pa1_0.nom_poi,
+        pa1_0.poi_type,
+        pa1_0.score,
+        pa1_0.timestamp,
+        pa1_0.trajet_id,
+        pa1_0.type_alerte 
+    from
+        pause_ai_predictions pa1_0 
+    where
+        pa1_0.trajet_id=? 
+    order by
+        pa1_0.timestamp desc 
+    limit
+        1
+2026-07-10 03:35:48 - [PAUSE-AI] POI trouvé — type=BAS_COTE | nom=Arrêt bas-côté | distance=800.00m | hgv=non | toilets=non | score_potentiel estimé
+2026-07-10 03:35:48 - [PAUSE-AI] Appel au modèle IA: POST http://localhost:5000/api/predict/batch
+2026-07-10 03:35:49 - [PAUSE-AI] Score IA reçu = 40/100
+Hibernate: 
+    select
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        c1_0.manager_id,
+        c1_0.secteur_id,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id 
+    from
+        chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id 
+    where
+        c1_0.id=?
+2026-07-10 03:35:49 - [PAUSE-AI] ?? ALERTE URGENTE — TrajetId=78 | Chauffeur=med foued | Score=40/100 | hours_driving=25.08h | POI recommandé=Arrêt bas-côté
+Hibernate: 
+    insert 
+    into
+        pause_ai_predictions
+        (alerte_declenchee, dist_along_ratio, distance_poi_m, hours_driving, latitude_poi, longitude_poi, nom_poi, poi_type, score, timestamp, trajet_id, type_alerte) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-07-10 03:35:49 - [PAUSE-AI] Prédiction persistée avec ID: 359
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            u1_0.role=?
+2026-07-10 03:35:49 - [PAUSE-AI] Envoi SSE PAUSE_AI_ALERT pour trajet 78 à 2 utilisateurs
+Hibernate: 
+    select
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        c1_0.manager_id,
+        c1_0.secteur_id,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id 
+    from
+        chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    update
+        messenger_messages 
+    set
+        connecte=?,
+        derniere_activite=? 
+    where
+        expediteur_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    update
+        messenger_messages 
+    set
+        connecte=?,
+        derniere_activite=? 
+    where
+        expediteur_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        c1_0.manager_id,
+        c1_0.secteur_id,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id 
+    from
+        chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        distinct t1_0.id,
+        t1_0.charge_kg,
+        c1_0.id,
+        c1_1.created_by_id,
+        c1_1.date_creation,
+        c1_1.email,
+        c1_1.email_verifie,
+        c1_1.entreprise_id,
+        c1_1.est_actif,
+        c1_1.image,
+        c1_1.keycloak_id,
+        c1_1.nom,
+        c1_1.id,
+        c1_1.password_hash,
+        c1_1.pays,
+        c1_1.prenom,
+        c1_1.rejection_reason,
+        c1_1.role,
+        c1_1.telephone,
+        c1_1.verification_token,
+        m1_0.id,
+        m1_1.created_by_id,
+        m1_1.date_creation,
+        m1_1.email,
+        m1_1.email_verifie,
+        m1_1.entreprise_id,
+        m1_1.est_actif,
+        m1_1.image,
+        m1_1.keycloak_id,
+        m1_1.nom,
+        m1_1.id,
+        m1_1.password_hash,
+        m1_1.pays,
+        m1_1.prenom,
+        m1_1.rejection_reason,
+        m1_1.role,
+        m1_1.telephone,
+        m1_1.verification_token,
+        m1_0.secteur_id,
+        s1_0.id,
+        s1_0.codes_postaux,
+        s1_0.description,
+        s1_0.entreprise_id,
+        s1_0.nom,
+        s1_0.zone_geographique,
+        c1_0.statut_conducteur,
+        c1_0.vehicule_actuel_id,
+        t1_0.date_arrivee,
+        t1_0.date_arrivee_reelle,
+        t1_0.date_depart,
+        t1_0.destination,
+        t1_0.distance_km,
+        t1_0.duree_estimee_minutes,
+        t1_0.geometrie_itineraire,
+        t1_0.latitude_arrivee,
+        t1_0.latitude_depart,
+        t1_0.longitude_arrivee,
+        t1_0.longitude_depart,
+        m2_0.id,
+        m2_1.created_by_id,
+        m2_1.date_creation,
+        m2_1.email,
+        m2_1.email_verifie,
+        m2_1.entreprise_id,
+        m2_1.est_actif,
+        m2_1.image,
+        m2_1.keycloak_id,
+        m2_1.nom,
+        m2_1.id,
+        m2_1.password_hash,
+        m2_1.pays,
+        m2_1.prenom,
+        m2_1.rejection_reason,
+        m2_1.role,
+        m2_1.telephone,
+        m2_1.verification_token,
+        s2_0.id,
+        s2_0.codes_postaux,
+        s2_0.description,
+        s2_0.entreprise_id,
+        s2_0.nom,
+        s2_0.zone_geographique,
+        t1_0.notes,
+        t1_0.point_depart,
+        t1_0.priorite,
+        t1_0.statut,
+        t1_0.type_optimisation,
+        v1_0.id,
+        v1_0.capacite,
+        v1_0.capacite_charge,
+        v1_0.chauffeur_actuel_id,
+        v1_0.couleur,
+        v1_0.derniere_position_maj,
+        v1_0.entreprise_id,
+        v1_0.kilometrage,
+        v1_0.latitude_actuelle,
+        v1_0.longitude_actuelle,
+        v1_0.marque,
+        v1_0.matricule,
+        v1_0.modele,
+        v1_0.niveau_carburant,
+        v1_0.statut,
+        v1_0.vitesse_actuelle 
+    from
+        trajets t1_0 
+    left join
+        (chauffeurs c1_0 
+    join
+        utilisateurs c1_1 
+            on c1_0.id=c1_1.id) 
+        on c1_0.id=t1_0.chauffeur_id 
+    left join
+        (managers m1_0 
+    join
+        utilisateurs m1_1 
+            on m1_0.id=m1_1.id) 
+        on m1_0.id=c1_0.manager_id 
+    left join
+        secteurs s1_0 
+            on s1_0.id=c1_0.secteur_id 
+    left join
+        (managers m2_0 
+    join
+        utilisateurs m2_1 
+            on m2_0.id=m2_1.id) 
+        on m2_0.id=t1_0.manager_id 
+    left join
+        secteurs s2_0 
+            on s2_0.id=m2_0.secteur_id 
+    left join
+        vehicules v1_0 
+            on v1_0.id=t1_0.vehicule_id 
+    where
+        c1_0.id=? 
+    order by
+        t1_0.date_depart desc
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    update
+        messenger_messages 
+    set
+        connecte=?,
+        derniere_activite=? 
+    where
+        expediteur_id=?
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id
+Hibernate: 
+    select
+        u1_0.id,
+        case 
+            when u1_1.id is not null 
+                then 1 
+            when u1_2.id is not null 
+                then 2 
+            when u1_3.id is not null 
+                then 3 
+            when u1_0.id is not null 
+                then 0 
+            end,
+            u1_0.created_by_id,
+            u1_0.date_creation,
+            u1_0.email,
+            u1_0.email_verifie,
+            u1_0.entreprise_id,
+            u1_0.est_actif,
+            u1_0.image,
+            u1_0.keycloak_id,
+            u1_0.nom,
+            u1_0.password_hash,
+            u1_0.pays,
+            u1_0.prenom,
+            u1_0.rejection_reason,
+            u1_0.role,
+            u1_0.telephone,
+            u1_0.verification_token,
+            u1_1.id,
+            u1_1.manager_id,
+            u1_1.secteur_id,
+            u1_1.statut_conducteur,
+            u1_1.vehicule_actuel_id,
+            u1_2.id,
+            u1_2.secteur_id 
+        from
+            utilisateurs u1_0 
+        left join
+            chauffeurs u1_1 
+                on u1_0.id=u1_1.id 
+        left join
+            managers u1_2 
+                on u1_0.id=u1_2.id 
+        left join
+            super_administrateurs u1_3 
+                on u1_0.id=u1_3.id 
+        where
+            upper(u1_0.email)=upper(?)
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+Hibernate: 
+    select
+        mm1_0.id,
+        mm1_0.chemin_fichier,
+        mm1_0.connecte,
+        mm1_0.contenu,
+        mm1_0.contenu_original,
+        mm1_0.date_envoi,
+        mm1_0.date_lecture,
+        mm1_0.date_modification,
+        mm1_0.date_suppression,
+        mm1_0.derniere_activite,
+        mm1_0.destinataire_id,
+        mm1_0.duree_vocale,
+        mm1_0.expediteur_id,
+        mm1_0.modifie,
+        mm1_0.nom_fichier_original,
+        mm1_0.statut,
+        mm1_0.supprime,
+        mm1_0.taille_fichier,
+        mm1_0.type 
+    from
+        messenger_messages mm1_0 
+    where
+        (
+            mm1_0.expediteur_id=? 
+            or mm1_0.destinataire_id=?
+        ) 
+    order by
+        mm1_0.date_envoi desc
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  03:27 min
+[INFO] Finished at: 2026-07-10T03:37:06+01:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.2.2:run (default-cli) on project logiway-backend: Process terminated with exit code: -1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

@@ -1,0 +1,341 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > MeteoService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: MeteoService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">MeteoService</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/13)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/87)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/96)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">MeteoService$CacheEntry</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/14)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/87)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/97)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.databind.JsonNode;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import com.logiway.dto.meteo.MeteoResponse;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Value;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.web.client.RestTemplate;
+&nbsp;import org.springframework.web.util.UriComponentsBuilder;
+&nbsp;
+&nbsp;import java.time.Duration;
+&nbsp;import java.time.Instant;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.concurrent.ConcurrentHashMap;
+&nbsp;
+&nbsp;@Service
+<b class="nc">&nbsp;@RequiredArgsConstructor</b>
+<b class="nc">&nbsp;@Slf4j</b>
+&nbsp;public class MeteoService {
+&nbsp;
+&nbsp;    private static final double CACHE_DISTANCE_KM = 10.0;
+<b class="nc">&nbsp;    private static final Duration CACHE_TTL = Duration.ofMinutes(5);</b>
+&nbsp;
+&nbsp;    private final ObjectMapper objectMapper;
+<b class="nc">&nbsp;    private final RestTemplate restTemplate = new RestTemplate();</b>
+<b class="nc">&nbsp;    private final Map&lt;String, CacheEntry&gt; cache = new ConcurrentHashMap&lt;&gt;();</b>
+&nbsp;
+&nbsp;    @Value(&quot;${openweather.api-key:}&quot;)
+&nbsp;    private String apiKey;
+&nbsp;
+&nbsp;    @Value(&quot;${openweather.base-url:https://api.openweathermap.org/data/2.5/weather}&quot;)
+&nbsp;    private String baseUrl;
+&nbsp;
+&nbsp;    public MeteoResponse getMeteo(double lat, double lon) {
+<b class="nc">&nbsp;        CacheEntry reusable = findReusableEntry(lat, lon);</b>
+<b class="nc">&nbsp;        if (reusable != null) {</b>
+<b class="nc">&nbsp;            return reusable.response();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        MeteoResponse weather = fetchWeather(lat, lon);</b>
+<b class="nc">&nbsp;        cache.put(cacheKey(lat, lon), new CacheEntry(lat, lon, weather, Instant.now().plus(CACHE_TTL)));</b>
+<b class="nc">&nbsp;        return weather;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private MeteoResponse fetchWeather(double lat, double lon) {
+&nbsp;        try {
+<b class="nc">&nbsp;            String url = UriComponentsBuilder.fromHttpUrl(baseUrl)</b>
+<b class="nc">&nbsp;                .queryParam(&quot;lat&quot;, lat)</b>
+<b class="nc">&nbsp;                .queryParam(&quot;lon&quot;, lon)</b>
+<b class="nc">&nbsp;                .queryParam(&quot;appid&quot;, apiKey)</b>
+<b class="nc">&nbsp;                .queryParam(&quot;units&quot;, &quot;metric&quot;)</b>
+<b class="nc">&nbsp;                .queryParam(&quot;lang&quot;, &quot;fr&quot;)</b>
+<b class="nc">&nbsp;                .toUriString();</b>
+&nbsp;
+<b class="nc">&nbsp;            String payload = restTemplate.getForObject(url, String.class);</b>
+<b class="nc">&nbsp;            if (payload == null || payload.isBlank()) {</b>
+<b class="nc">&nbsp;                return fallbackWeather();</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            JsonNode root = objectMapper.readTree(payload);</b>
+<b class="nc">&nbsp;            JsonNode weatherNode = root.path(&quot;weather&quot;).isArray() &amp;&amp; root.path(&quot;weather&quot;).size() &gt; 0 ? root.path(&quot;weather&quot;).get(0) : null;</b>
+<b class="nc">&nbsp;            String weatherMain = weatherNode != null ? weatherNode.path(&quot;main&quot;).asText(&quot;&quot;) : &quot;&quot;;</b>
+<b class="nc">&nbsp;            String weatherDescription = weatherNode != null ? weatherNode.path(&quot;description&quot;).asText(&quot;&quot;) : &quot;&quot;;</b>
+<b class="nc">&nbsp;            String iconCode = weatherNode != null ? weatherNode.path(&quot;icon&quot;).asText(&quot;01d&quot;) : &quot;01d&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;            double temperature = root.path(&quot;main&quot;).path(&quot;temp&quot;).asDouble(Double.NaN);</b>
+<b class="nc">&nbsp;            double windKmH = root.path(&quot;wind&quot;).path(&quot;speed&quot;).asDouble(0.0) * 3.6;</b>
+<b class="nc">&nbsp;            int humidity = root.path(&quot;main&quot;).path(&quot;humidity&quot;).asInt(0);</b>
+<b class="nc">&nbsp;            double visibilityKm = root.path(&quot;visibility&quot;).asDouble(0.0) / 1000.0;</b>
+&nbsp;
+<b class="nc">&nbsp;            String etatGeneral = resolveState(weatherMain, weatherDescription, visibilityKm);</b>
+<b class="nc">&nbsp;            String risk = resolveRisk(etatGeneral, visibilityKm, windKmH);</b>
+<b class="nc">&nbsp;            boolean dangerous = &quot;ROUGE&quot;.equals(risk);</b>
+&nbsp;
+<b class="nc">&nbsp;            return new MeteoResponse(</b>
+<b class="nc">&nbsp;                Double.isNaN(temperature) ? null : round1(temperature),</b>
+<b class="nc">&nbsp;                normalizeDescription(weatherDescription, weatherMain),</b>
+&nbsp;                iconCode,
+<b class="nc">&nbsp;                round1(windKmH),</b>
+<b class="nc">&nbsp;                humidity &gt; 0 ? humidity : null,</b>
+<b class="nc">&nbsp;                visibilityKm &gt; 0 ? round1(visibilityKm) : null,</b>
+&nbsp;                etatGeneral,
+&nbsp;                risk,
+<b class="nc">&nbsp;                dangerous</b>
+&nbsp;            );
+&nbsp;        } catch (Exception ex) {
+<b class="nc">&nbsp;            log.warn(&quot;OpenWeather fetch failed for {}, {}: {}&quot;, lat, lon, ex.getMessage());</b>
+<b class="nc">&nbsp;            CacheEntry recent = findAnyCachedEntry(lat, lon).orElse(null);</b>
+<b class="nc">&nbsp;            return recent != null ? recent.response() : fallbackWeather();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private CacheEntry findReusableEntry(double lat, double lon) {
+<b class="nc">&nbsp;        Instant now = Instant.now();</b>
+<b class="nc">&nbsp;        return cache.values().stream()</b>
+<b class="nc">&nbsp;            .filter(entry -&gt; entry.expiresAt().isAfter(now))</b>
+<b class="nc">&nbsp;            .filter(entry -&gt; distanceKm(entry.lat(), entry.lon(), lat, lon) &lt;= CACHE_DISTANCE_KM)</b>
+<b class="nc">&nbsp;            .findFirst()</b>
+<b class="nc">&nbsp;            .orElse(null);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Optional&lt;CacheEntry&gt; findAnyCachedEntry(double lat, double lon) {
+<b class="nc">&nbsp;        return cache.values().stream()</b>
+<b class="nc">&nbsp;            .min((left, right) -&gt; Double.compare(distanceKm(left.lat(), left.lon(), lat, lon), distanceKm(right.lat(), right.lon(), lat, lon)));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String cacheKey(double lat, double lon) {
+<b class="nc">&nbsp;        return String.format(&quot;%.5f:%.5f&quot;, lat, lon);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private double distanceKm(double lat1, double lon1, double lat2, double lon2) {
+<b class="nc">&nbsp;        double radius = 6371.0;</b>
+<b class="nc">&nbsp;        double dLat = Math.toRadians(lat2 - lat1);</b>
+<b class="nc">&nbsp;        double dLon = Math.toRadians(lon2 - lon1);</b>
+<b class="nc">&nbsp;        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)</b>
+<b class="nc">&nbsp;            + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))</b>
+<b class="nc">&nbsp;            * Math.sin(dLon / 2) * Math.sin(dLon / 2);</b>
+<b class="nc">&nbsp;        return 2 * radius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String resolveState(String weatherMain, String description, double visibilityKm) {
+<b class="nc">&nbsp;        String normalizedMain = weatherMain == null ? &quot;&quot; : weatherMain.trim().toUpperCase();</b>
+<b class="nc">&nbsp;        if (visibilityKm &gt; 0 &amp;&amp; visibilityKm &lt; 0.2) {</b>
+<b class="nc">&nbsp;            return &quot;BROUILLARD&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return switch (normalizedMain) {</b>
+<b class="nc">&nbsp;            case &quot;CLEAR&quot; -&gt; &quot;CLAIR&quot;;</b>
+<b class="nc">&nbsp;            case &quot;CLOUDS&quot; -&gt; &quot;NUAGEUX&quot;;</b>
+<b class="nc">&nbsp;            case &quot;RAIN&quot;, &quot;DRIZZLE&quot; -&gt; &quot;PLUIE&quot;;</b>
+<b class="nc">&nbsp;            case &quot;THUNDERSTORM&quot; -&gt; &quot;ORAGE&quot;;</b>
+<b class="nc">&nbsp;            case &quot;SNOW&quot; -&gt; &quot;NEIGE&quot;;</b>
+<b class="nc">&nbsp;            case &quot;MIST&quot;, &quot;FOG&quot;, &quot;HAZE&quot;, &quot;SMOKE&quot;, &quot;DUST&quot;, &quot;SAND&quot;, &quot;ASH&quot;, &quot;SQUALL&quot;, &quot;TORNADO&quot; -&gt; &quot;BROUILLARD&quot;;</b>
+&nbsp;            default -&gt; {
+<b class="nc">&nbsp;                String normalizedDescription = description == null ? &quot;&quot; : description.toLowerCase();</b>
+<b class="nc">&nbsp;                if (normalizedDescription.contains(&quot;orage&quot;)) {</b>
+<b class="nc">&nbsp;                    yield &quot;ORAGE&quot;;</b>
+&nbsp;                }
+<b class="nc">&nbsp;                if (normalizedDescription.contains(&quot;neige&quot;)) {</b>
+<b class="nc">&nbsp;                    yield &quot;NEIGE&quot;;</b>
+&nbsp;                }
+<b class="nc">&nbsp;                if (normalizedDescription.contains(&quot;brouillard&quot;) || normalizedDescription.contains(&quot;brume&quot;) || normalizedDescription.contains(&quot;fog&quot;)) {</b>
+<b class="nc">&nbsp;                    yield &quot;BROUILLARD&quot;;</b>
+&nbsp;                }
+<b class="nc">&nbsp;                if (normalizedDescription.contains(&quot;pluie&quot;) || normalizedDescription.contains(&quot;rain&quot;)) {</b>
+<b class="nc">&nbsp;                    yield &quot;PLUIE&quot;;</b>
+&nbsp;                }
+<b class="nc">&nbsp;                yield &quot;NUAGEUX&quot;;</b>
+&nbsp;            }
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private String resolveRisk(String etatGeneral, double visibilityKm, double windKmH) {
+<b class="nc">&nbsp;        return switch (etatGeneral) {</b>
+<b class="nc">&nbsp;            case &quot;ORAGE&quot;, &quot;NEIGE&quot;, &quot;BROUILLARD&quot; -&gt; &quot;ROUGE&quot;;</b>
+<b class="nc">&nbsp;            case &quot;PLUIE&quot; -&gt; &quot;ORANGE&quot;;</b>
+<b class="nc">&nbsp;            case &quot;CLAIR&quot;, &quot;NUAGEUX&quot; -&gt; (visibilityKm &gt; 0 &amp;&amp; visibilityKm &lt; 2.0) || windKmH &gt; 35.0 ? &quot;ORANGE&quot; : &quot;VERT&quot;;</b>
+<b class="nc">&nbsp;            default -&gt; &quot;ORANGE&quot;;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private String normalizeDescription(String description, String weatherMain) {
+<b class="nc">&nbsp;        if (description != null &amp;&amp; !description.isBlank()) {</b>
+<b class="nc">&nbsp;            return description;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return switch ((weatherMain == null ? &quot;&quot; : weatherMain).trim().toUpperCase()) {</b>
+<b class="nc">&nbsp;            case &quot;CLEAR&quot; -&gt; &quot;Ciel dégagé&quot;;</b>
+<b class="nc">&nbsp;            case &quot;CLOUDS&quot; -&gt; &quot;Nuageux&quot;;</b>
+<b class="nc">&nbsp;            case &quot;RAIN&quot; -&gt; &quot;Pluie&quot;;</b>
+<b class="nc">&nbsp;            case &quot;DRIZZLE&quot; -&gt; &quot;Bruine&quot;;</b>
+<b class="nc">&nbsp;            case &quot;THUNDERSTORM&quot; -&gt; &quot;Orage&quot;;</b>
+<b class="nc">&nbsp;            case &quot;SNOW&quot; -&gt; &quot;Neige&quot;;</b>
+<b class="nc">&nbsp;            default -&gt; &quot;Conditions météo&quot;;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private MeteoResponse fallbackWeather() {
+<b class="nc">&nbsp;        return new MeteoResponse(null, &quot;Données météo indisponibles&quot;, &quot;01d&quot;, null, null, null, &quot;NUAGEUX&quot;, &quot;ORANGE&quot;, false);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private double round1(double value) {
+<b class="nc">&nbsp;        return Math.round(value * 10.0) / 10.0;</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    private record CacheEntry(double lat, double lon, MeteoResponse response, Instant expiresAt) {</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-10 02:59</div>
+</div>
+</body>
+</html>

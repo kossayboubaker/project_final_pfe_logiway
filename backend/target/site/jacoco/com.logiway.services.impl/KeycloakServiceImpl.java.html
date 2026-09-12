@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KeycloakServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">KeycloakServiceImpl.java</span></div><h1>KeycloakServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.exceptions.AuthProviderUnavailableException;
+import com.logiway.exceptions.UnauthorizedException;
+import com.logiway.services.KeycloakService;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="fc" id="L29">@RequiredArgsConstructor</span>
+<span class="fc" id="L30">@Slf4j</span>
+public class KeycloakServiceImpl implements KeycloakService {
+
+    private final RestTemplate restTemplate;
+
+    @Value(&quot;${app.keycloak.server-url}&quot;)
+    private String serverUrl;
+
+    @Value(&quot;${app.keycloak.realm}&quot;)
+    private String realm;
+
+    @Value(&quot;${app.keycloak.client-id}&quot;)
+    private String clientId;
+
+    @Value(&quot;${app.keycloak.client-secret:}&quot;)
+    private String clientSecret;
+
+    @Value(&quot;${app.keycloak.admin-client-id:${app.keycloak.client-id}}&quot;)
+    private String adminClientId;
+
+    @Value(&quot;${app.keycloak.admin-client-secret:${app.keycloak.client-secret:}}&quot;)
+    private String adminClientSecret;
+
+    @Value(&quot;${KEYCLOAK_ADMIN_USERNAME:admin}&quot;)
+    private String keycloakAdminUsername;
+
+    @Value(&quot;${KEYCLOAK_ADMIN_PASSWORD:admin}&quot;)
+    private String keycloakAdminPassword;
+
+    @Value(&quot;${KEYCLOAK_ADMIN_REALM:master}&quot;)
+    private String keycloakAdminRealm;
+
+    @PostConstruct
+    public void checkKeycloakConnectivity() {
+<span class="fc" id="L64">        String configUrl = String.format(&quot;%s/realms/%s/.well-known/openid-configuration&quot;, serverUrl, realm);</span>
+        try {
+<span class="fc" id="L66">            restTemplate.getForEntity(configUrl, String.class);</span>
+<span class="fc" id="L67">            log.info(&quot;Keycloak is reachable — realm [{}] is configured correctly&quot;, realm);</span>
+<span class="fc" id="L68">        } catch (Exception e) {</span>
+<span class="fc" id="L69">            log.warn(&quot;Keycloak is NOT reachable at startup — all authentication requests will fail until Keycloak is available at [{}]&quot;, configUrl);</span>
+<span class="fc" id="L70">        }</span>
+<span class="fc" id="L71">    }</span>
+
+    @Override
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public Map&lt;String, Object&gt; fetchTokenByPassword(String username, String password) {
+<span class="fc" id="L76">        String tokenUrl = String.format(&quot;%s/realms/%s/protocol/openid-connect/token&quot;, serverUrl, realm);</span>
+
+<span class="fc" id="L78">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L79">        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);</span>
+
+<span class="fc" id="L81">        MultiValueMap&lt;String, String&gt; body = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="fc" id="L82">        body.add(&quot;grant_type&quot;, &quot;password&quot;);</span>
+<span class="fc" id="L83">        body.add(&quot;client_id&quot;, clientId);</span>
+<span class="fc bfc" id="L84" title="All 4 branches covered.">        if (clientSecret != null &amp;&amp; !clientSecret.isBlank()) {</span>
+<span class="fc" id="L85">            body.add(&quot;client_secret&quot;, clientSecret);</span>
+        }
+<span class="fc" id="L87">        body.add(&quot;username&quot;, username);</span>
+<span class="fc" id="L88">        body.add(&quot;password&quot;, password);</span>
+
+        try {
+            @SuppressWarnings(&quot;rawtypes&quot;)
+<span class="fc" id="L92">            ResponseEntity&lt;Map&gt; response = restTemplate.postForEntity(tokenUrl, new HttpEntity&lt;&gt;(body, headers), Map.class);</span>
+<span class="fc" id="L93">            return response.getBody();</span>
+<span class="fc" id="L94">        } catch (RestClientResponseException ex) {</span>
+<span class="fc" id="L95">            String responseBody = ex.getResponseBodyAsString();</span>
+<span class="fc bfc" id="L96" title="All 2 branches covered.">            if (ex.getStatusCode().value() == 401) {</span>
+<span class="fc" id="L97">                throw new UnauthorizedException(&quot;Invalid credentials&quot;);</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">            } else if (ex.getStatusCode().value() == 400) {</span>
+<span class="fc" id="L99">                log.error(&quot;Keycloak rejected selection (400 Bad Request). Body: {}&quot;, responseBody);</span>
+<span class="fc" id="L100">                throw new AuthProviderUnavailableException(&quot;Authentication service configuration error: &quot; + responseBody);</span>
+            }
+<span class="fc" id="L102">            log.error(&quot;Keycloak error ({}): {}&quot;, ex.getStatusCode(), responseBody);</span>
+<span class="fc" id="L103">            throw new AuthProviderUnavailableException(&quot;Authentication service is temporarily unavailable&quot;);</span>
+<span class="fc" id="L104">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L105">            log.error(&quot;Keycloak unreachable at [{}]: {}&quot;, tokenUrl, ex.getMessage());</span>
+<span class="fc" id="L106">            throw new AuthProviderUnavailableException(&quot;Authentication service is unreachable&quot;);</span>
+<span class="fc" id="L107">        } catch (Exception ex) {</span>
+<span class="fc" id="L108">            log.error(&quot;Unexpected authentication error: {}&quot;, ex.getMessage());</span>
+<span class="fc" id="L109">            throw new AuthProviderUnavailableException(&quot;Authentication service is temporarily unavailable&quot;);</span>
+        }
+    }
+
+    @Override
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public Map&lt;String, Object&gt; refreshAccessToken(String refreshToken) {
+<span class="fc bfc" id="L116" title="All 4 branches covered.">        if (refreshToken == null || refreshToken.isBlank()) {</span>
+<span class="fc" id="L117">            throw new BadRequestException(&quot;Refresh token is required&quot;);</span>
+        }
+
+<span class="fc" id="L120">        String tokenUrl = String.format(&quot;%s/realms/%s/protocol/openid-connect/token&quot;, serverUrl, realm);</span>
+
+<span class="fc" id="L122">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L123">        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);</span>
+
+<span class="fc" id="L125">        MultiValueMap&lt;String, String&gt; body = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="fc" id="L126">        body.add(&quot;grant_type&quot;, &quot;refresh_token&quot;);</span>
+<span class="fc" id="L127">        body.add(&quot;client_id&quot;, clientId);</span>
+<span class="fc bfc" id="L128" title="All 4 branches covered.">        if (clientSecret != null &amp;&amp; !clientSecret.isBlank()) {</span>
+<span class="fc" id="L129">            body.add(&quot;client_secret&quot;, clientSecret);</span>
+        }
+<span class="fc" id="L131">        body.add(&quot;refresh_token&quot;, refreshToken);</span>
+
+        try {
+            @SuppressWarnings(&quot;rawtypes&quot;)
+<span class="fc" id="L135">            ResponseEntity&lt;Map&gt; response = restTemplate.postForEntity(tokenUrl, new HttpEntity&lt;&gt;(body, headers), Map.class);</span>
+<span class="fc" id="L136">            return response.getBody();</span>
+<span class="fc" id="L137">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc" id="L138">            throw new BadRequestException(&quot;Token refresh failed: Invalid or expired refresh token&quot;);</span>
+<span class="fc" id="L139">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L140">            throw new AuthProviderUnavailableException(&quot;Authentication service is temporarily unavailable&quot;);</span>
+<span class="fc" id="L141">        } catch (Exception ex) {</span>
+<span class="fc" id="L142">            throw new AuthProviderUnavailableException(&quot;Authentication service is temporarily unavailable&quot;);</span>
+        }
+    }
+
+    @Override
+    public String createUserAccount(String email, String password, String firstName, String lastName, String roleName,
+            boolean enabled) {
+<span class="fc" id="L149">        String adminToken = fetchAdminToken();</span>
+<span class="fc" id="L150">        String createUserUrl = String.format(&quot;%s/admin/realms/%s/users&quot;, serverUrl, realm);</span>
+
+<span class="fc" id="L152">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L153">        headers.setBearerAuth(adminToken);</span>
+<span class="fc" id="L154">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+
+<span class="fc" id="L156">        Map&lt;String, Object&gt; payload = Map.of(</span>
+                &quot;username&quot;, email,
+                &quot;email&quot;, email,
+<span class="fc bfc" id="L159" title="All 2 branches covered.">                &quot;firstName&quot;, firstName == null ? &quot;&quot; : firstName,</span>
+<span class="fc bfc" id="L160" title="All 2 branches covered.">                &quot;lastName&quot;, lastName == null ? &quot;&quot; : lastName,</span>
+<span class="fc" id="L161">                &quot;enabled&quot;, enabled,</span>
+                &quot;emailVerified&quot;, Boolean.TRUE,
+<span class="fc" id="L163">                &quot;credentials&quot;, List.of(Map.of(</span>
+                        &quot;type&quot;, &quot;password&quot;,
+                        &quot;value&quot;, password,
+                        &quot;temporary&quot;, Boolean.FALSE)));
+
+        try {
+<span class="fc" id="L169">            ResponseEntity&lt;Void&gt; response = restTemplate.postForEntity(createUserUrl,</span>
+                    new HttpEntity&lt;&gt;(payload, headers), Void.class);
+<span class="fc" id="L171">            String userId = extractUserId(response, adminToken, email);</span>
+<span class="fc bfc" id="L172" title="All 4 branches covered.">            if (userId == null || userId.isBlank()) {</span>
+<span class="fc" id="L173">                throw new BadRequestException(&quot;Unable to create Keycloak user for email: &quot; + email);</span>
+            }
+
+<span class="fc" id="L176">            assignRealmRole(adminToken, userId, roleName);</span>
+<span class="fc" id="L177">            return userId;</span>
+<span class="fc" id="L178">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">            if (ex.getStatusCode().value() == 409) {</span>
+<span class="fc" id="L180">                String existingUserId = findUserIdByEmail(adminToken, email);</span>
+<span class="pc bpc" id="L181" title="1 of 4 branches missed.">                if (existingUserId == null || existingUserId.isBlank()) {</span>
+<span class="fc" id="L182">                    throw new BadRequestException(&quot;Keycloak reports duplicate email but user was not found: &quot; + email);</span>
+                }
+
+<span class="fc" id="L185">                ensureUserEnabled(adminToken, existingUserId, email, firstName, lastName);</span>
+<span class="fc" id="L186">                resetPasswordByUserId(adminToken, existingUserId, password);</span>
+<span class="fc" id="L187">                assignRealmRole(adminToken, existingUserId, roleName);</span>
+<span class="fc" id="L188">                return existingUserId;</span>
+            }
+<span class="fc" id="L190">            throw new BadRequestException(&quot;Unexpected Keycloak user creation error: &quot; + ex.getResponseBodyAsString());</span>
+<span class="fc" id="L191">        } catch (BadRequestException ex) {</span>
+<span class="fc" id="L192">            throw ex;</span>
+<span class="fc" id="L193">        } catch (Exception ex) {</span>
+<span class="fc" id="L194">            throw new BadRequestException(&quot;Unexpected Keycloak user creation error: &quot; + ex.getMessage());</span>
+        }
+    }
+
+    @Override
+    public void updatePasswordByEmail(String email, String newPassword) {
+<span class="fc" id="L200">        String adminToken = fetchAdminToken();</span>
+<span class="fc" id="L201">        String userId = findUserIdByEmail(adminToken, email);</span>
+<span class="fc bfc" id="L202" title="All 4 branches covered.">        if (userId == null || userId.isBlank()) {</span>
+<span class="fc" id="L203">            throw new BadRequestException(&quot;Keycloak user not found for email: &quot; + email);</span>
+        }
+
+<span class="fc" id="L206">        resetPasswordByUserId(adminToken, userId, newPassword);</span>
+<span class="fc" id="L207">    }</span>
+
+    @Override
+    public void logoutByRefreshToken(String refreshToken) {
+<span class="fc bfc" id="L211" title="All 4 branches covered.">        if (refreshToken == null || refreshToken.isBlank()) {</span>
+<span class="fc" id="L212">            return;</span>
+        }
+
+<span class="fc" id="L215">        String logoutUrl = String.format(&quot;%s/realms/%s/protocol/openid-connect/logout&quot;, serverUrl, realm);</span>
+
+<span class="fc" id="L217">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L218">        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);</span>
+
+<span class="fc" id="L220">        MultiValueMap&lt;String, String&gt; body = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="fc" id="L221">        body.add(&quot;client_id&quot;, clientId);</span>
+<span class="fc bfc" id="L222" title="All 4 branches covered.">        if (clientSecret != null &amp;&amp; !clientSecret.isBlank()) {</span>
+<span class="fc" id="L223">            body.add(&quot;client_secret&quot;, clientSecret);</span>
+        }
+<span class="fc" id="L225">        body.add(&quot;refresh_token&quot;, refreshToken);</span>
+
+        try {
+<span class="fc" id="L228">            restTemplate.postForEntity(logoutUrl, new HttpEntity&lt;&gt;(body, headers), Void.class);</span>
+<span class="fc" id="L229">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc" id="L230">            throw new BadRequestException(&quot;Unable to logout from Keycloak: &quot; + ex.getResponseBodyAsString());</span>
+<span class="fc" id="L231">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L232">            throw new BadRequestException(&quot;Keycloak is unreachable during logout.&quot;);</span>
+<span class="fc" id="L233">        }</span>
+<span class="fc" id="L234">    }</span>
+
+    private void resetPasswordByUserId(String adminToken, String userId, String newPassword) {
+
+<span class="fc" id="L238">        String resetPasswordUrl = String.format(&quot;%s/admin/realms/%s/users/%s/reset-password&quot;, serverUrl, realm, userId);</span>
+
+<span class="fc" id="L240">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L241">        headers.setBearerAuth(adminToken);</span>
+<span class="fc" id="L242">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+
+<span class="fc" id="L244">        Map&lt;String, Object&gt; payload = Map.of(</span>
+                &quot;type&quot;, &quot;password&quot;,
+                &quot;temporary&quot;, Boolean.FALSE,
+                &quot;value&quot;, newPassword);
+
+        try {
+<span class="fc" id="L250">            restTemplate.exchange(resetPasswordUrl, HttpMethod.PUT, new HttpEntity&lt;&gt;(payload, headers), Void.class);</span>
+<span class="fc" id="L251">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc" id="L252">            throw new BadRequestException(&quot;Unable to update password in Keycloak: &quot; + ex.getResponseBodyAsString());</span>
+<span class="fc" id="L253">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L254">            throw new BadRequestException(&quot;Keycloak is unreachable while updating password.&quot;);</span>
+<span class="fc" id="L255">        } catch (Exception ex) {</span>
+<span class="fc" id="L256">            throw new BadRequestException(&quot;Unexpected Keycloak password update error: &quot; + ex.getMessage());</span>
+<span class="fc" id="L257">        }</span>
+<span class="fc" id="L258">    }</span>
+
+    private String fetchAdminToken() {
+<span class="fc" id="L261">        String tokenUrl = String.format(&quot;%s/realms/%s/protocol/openid-connect/token&quot;, serverUrl, realm);</span>
+
+<span class="fc" id="L263">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L264">        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);</span>
+
+<span class="fc" id="L266">        MultiValueMap&lt;String, String&gt; body = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="fc" id="L267">        body.add(&quot;grant_type&quot;, &quot;client_credentials&quot;);</span>
+<span class="fc" id="L268">        body.add(&quot;client_id&quot;, adminClientId);</span>
+<span class="fc bfc" id="L269" title="All 4 branches covered.">        if (adminClientSecret != null &amp;&amp; !adminClientSecret.isBlank()) {</span>
+<span class="fc" id="L270">            body.add(&quot;client_secret&quot;, adminClientSecret);</span>
+        }
+
+        try {
+            @SuppressWarnings(&quot;rawtypes&quot;)
+<span class="fc" id="L275">            ResponseEntity&lt;Map&gt; response = restTemplate.postForEntity(tokenUrl, new HttpEntity&lt;&gt;(body, headers), Map.class);</span>
+<span class="fc bfc" id="L276" title="All 2 branches covered.">            Object accessToken = response.getBody() != null ? response.getBody().get(&quot;access_token&quot;) : null;</span>
+<span class="fc bfc" id="L277" title="All 2 branches covered.">            if (accessToken == null) {</span>
+<span class="fc" id="L278">                throw new BadRequestException(&quot;Unable to get Keycloak admin token&quot;);</span>
+            }
+<span class="fc" id="L280">            return accessToken.toString();</span>
+<span class="fc" id="L281">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc" id="L282">            return fetchAdminTokenWithAdminCli(ex.getResponseBodyAsString());</span>
+<span class="fc" id="L283">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L284">            throw new BadRequestException(&quot;Keycloak is unreachable. Check KEYCLOAK_SERVER_URL and availability.&quot;);</span>
+        }
+    }
+
+    private String fetchAdminTokenWithAdminCli(String firstError) {
+<span class="fc" id="L289">        String adminTokenUrl = String.format(&quot;%s/realms/%s/protocol/openid-connect/token&quot;, serverUrl,</span>
+                keycloakAdminRealm);
+
+<span class="fc" id="L292">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L293">        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);</span>
+
+<span class="fc" id="L295">        MultiValueMap&lt;String, String&gt; body = new LinkedMultiValueMap&lt;&gt;();</span>
+<span class="fc" id="L296">        body.add(&quot;grant_type&quot;, &quot;password&quot;);</span>
+<span class="fc" id="L297">        body.add(&quot;client_id&quot;, &quot;admin-cli&quot;);</span>
+<span class="fc" id="L298">        body.add(&quot;username&quot;, keycloakAdminUsername);</span>
+<span class="fc" id="L299">        body.add(&quot;password&quot;, keycloakAdminPassword);</span>
+
+        try {
+            @SuppressWarnings(&quot;rawtypes&quot;)
+<span class="fc" id="L303">            ResponseEntity&lt;Map&gt; response = restTemplate.postForEntity(adminTokenUrl, new HttpEntity&lt;&gt;(body, headers), Map.class);</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">            Object accessToken = response.getBody() != null ? response.getBody().get(&quot;access_token&quot;) : null;</span>
+<span class="fc bfc" id="L305" title="All 2 branches covered.">            if (accessToken == null) {</span>
+<span class="fc" id="L306">                throw new BadRequestException(&quot;Unable to get Keycloak admin token via admin-cli.&quot;);</span>
+            }
+<span class="fc" id="L308">            return accessToken.toString();</span>
+<span class="fc" id="L309">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc" id="L310">            throw new BadRequestException(&quot;Unable to get Keycloak admin token. client_credentials error: &quot; + firstError</span>
+<span class="fc" id="L311">                    + &quot; | admin-cli error: &quot; + ex.getResponseBodyAsString());</span>
+<span class="fc" id="L312">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L313">            throw new BadRequestException(&quot;Keycloak is unreachable. Check KEYCLOAK_SERVER_URL and availability.&quot;);</span>
+        }
+    }
+
+    private String findUserIdByEmail(String adminToken, String email) {
+<span class="fc" id="L318">        String usersUrl = UriComponentsBuilder</span>
+<span class="fc" id="L319">                .fromHttpUrl(String.format(&quot;%s/admin/realms/%s/users&quot;, serverUrl, realm))</span>
+<span class="fc" id="L320">                .queryParam(&quot;email&quot;, email)</span>
+<span class="fc" id="L321">                .queryParam(&quot;exact&quot;, true)</span>
+<span class="fc" id="L322">                .toUriString();</span>
+
+<span class="fc" id="L324">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L325">        headers.setBearerAuth(adminToken);</span>
+
+        try {
+            @SuppressWarnings(&quot;rawtypes&quot;)
+<span class="fc" id="L329">            ResponseEntity&lt;List&gt; response = restTemplate.exchange(usersUrl, HttpMethod.GET, new HttpEntity&lt;&gt;(headers), List.class);</span>
+<span class="fc bfc" id="L330" title="All 4 branches covered.">            if (response.getBody() == null || response.getBody().isEmpty()) {</span>
+<span class="fc" id="L331">                return null;</span>
+            }
+
+<span class="fc" id="L334">            Object first = response.getBody().get(0);</span>
+<span class="fc bfc" id="L335" title="All 2 branches covered.">            if (first instanceof Map&lt;?, ?&gt; userMap) {</span>
+<span class="fc" id="L336">                Object id = userMap.get(&quot;id&quot;);</span>
+<span class="fc bfc" id="L337" title="All 2 branches covered.">                return id != null ? id.toString() : null;</span>
+            }
+<span class="fc" id="L339">            return null;</span>
+<span class="fc" id="L340">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc" id="L341">            throw new BadRequestException(&quot;Unable to find Keycloak user: &quot; + ex.getResponseBodyAsString());</span>
+<span class="fc" id="L342">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L343">            throw new BadRequestException(&quot;Keycloak is unreachable while searching user.&quot;);</span>
+        }
+    }
+
+    private String extractUserId(ResponseEntity&lt;Void&gt; response, String adminToken, String email) {
+<span class="fc bfc" id="L348" title="All 2 branches covered.">        if (response.getHeaders().getLocation() != null) {</span>
+<span class="fc" id="L349">            String path = response.getHeaders().getLocation().getPath();</span>
+<span class="fc bfc" id="L350" title="All 2 branches covered.">            if (path != null) {</span>
+<span class="fc" id="L351">                String[] segments = path.split(&quot;/&quot;);</span>
+<span class="pc bpc" id="L352" title="1 of 2 branches missed.">                if (segments.length &gt; 0) {</span>
+<span class="fc" id="L353">                    String uuid = segments[segments.length - 1];</span>
+<span class="fc" id="L354">                    log.info(&quot;Extracted Keycloak UUID [{}] from Location header&quot;, uuid);</span>
+<span class="fc" id="L355">                    return uuid;</span>
+                }
+            }
+<span class="fc" id="L358">            log.error(&quot;Failed to extract UUID from Location header path: {}&quot;, path);</span>
+<span class="fc" id="L359">        } else {</span>
+<span class="fc" id="L360">            log.warn(&quot;Keycloak creation response missing Location header for user: {}&quot;, email);</span>
+        }
+<span class="fc" id="L362">        return findUserIdByEmail(adminToken, email);</span>
+    }
+
+    private void ensureUserEnabled(String adminToken, String userId, String email, String firstName, String lastName) {
+<span class="fc" id="L366">        String updateUserUrl = String.format(&quot;%s/admin/realms/%s/users/%s&quot;, serverUrl, realm, userId);</span>
+
+<span class="fc" id="L368">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L369">        headers.setBearerAuth(adminToken);</span>
+<span class="fc" id="L370">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+
+<span class="fc" id="L372">        Map&lt;String, Object&gt; payload = Map.of(</span>
+                &quot;username&quot;, email,
+                &quot;email&quot;, email,
+<span class="fc bfc" id="L375" title="All 2 branches covered.">                &quot;firstName&quot;, firstName == null ? &quot;&quot; : firstName,</span>
+<span class="fc bfc" id="L376" title="All 2 branches covered.">                &quot;lastName&quot;, lastName == null ? &quot;&quot; : lastName,</span>
+                &quot;enabled&quot;, Boolean.TRUE,
+                &quot;emailVerified&quot;, Boolean.TRUE);
+
+        try {
+<span class="fc" id="L381">            restTemplate.exchange(updateUserUrl, HttpMethod.PUT, new HttpEntity&lt;&gt;(payload, headers), Void.class);</span>
+<span class="fc" id="L382">        } catch (HttpStatusCodeException putEx) {</span>
+<span class="fc" id="L383">            throw new BadRequestException(</span>
+<span class="fc" id="L384">                    &quot;Unable to enable existing Keycloak user: &quot; + putEx.getResponseBodyAsString());</span>
+<span class="fc" id="L385">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L386">            throw new BadRequestException(&quot;Keycloak is unreachable while enabling existing user.&quot;);</span>
+<span class="fc" id="L387">        }</span>
+<span class="fc" id="L388">    }</span>
+
+    private void assignRealmRole(String adminToken, String userId, String roleName) {
+<span class="fc" id="L391">        String mappingUrl = String.format(&quot;%s/admin/realms/%s/users/%s/role-mappings/realm&quot;, serverUrl, realm, userId);</span>
+
+<span class="fc" id="L393">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L394">        headers.setBearerAuth(adminToken);</span>
+<span class="fc" id="L395">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+
+        try {
+<span class="fc" id="L398">            Map&lt;String, Object&gt; roleRepresentation = getOrCreateRealmRole(adminToken, roleName);</span>
+<span class="fc" id="L399">            restTemplate.postForEntity(mappingUrl, new HttpEntity&lt;&gt;(List.of(roleRepresentation), headers), Void.class);</span>
+<span class="fc" id="L400">        } catch (BadRequestException ex) {</span>
+<span class="fc" id="L401">            throw ex;</span>
+<span class="fc" id="L402">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc bfc" id="L403" title="All 2 branches covered.">            if (ex.getStatusCode().value() == 409) {</span>
+                // Role already mapped.
+<span class="fc" id="L405">                return;</span>
+            }
+<span class="fc" id="L407">            throw new BadRequestException(&quot;Unable to assign Keycloak role: &quot; + ex.getResponseBodyAsString());</span>
+<span class="fc" id="L408">        } catch (ResourceAccessException ex) {</span>
+<span class="fc" id="L409">            throw new BadRequestException(&quot;Keycloak is unreachable while assigning role.&quot;);</span>
+<span class="fc" id="L410">        }</span>
+<span class="fc" id="L411">    }</span>
+
+    private Map&lt;String, Object&gt; getOrCreateRealmRole(String adminToken, String roleName) {
+<span class="fc" id="L414">        String roleUrl = String.format(&quot;%s/admin/realms/%s/roles/%s&quot;, serverUrl, realm, roleName);</span>
+<span class="fc" id="L415">        String rolesUrl = String.format(&quot;%s/admin/realms/%s/roles&quot;, serverUrl, realm);</span>
+
+<span class="fc" id="L417">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L418">        headers.setBearerAuth(adminToken);</span>
+<span class="fc" id="L419">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+
+        try {
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L423">            ResponseEntity&lt;Map&lt;String, Object&gt;&gt; roleResponse = restTemplate.exchange(roleUrl, HttpMethod.GET, new HttpEntity&lt;&gt;(headers), (Class&lt;Map&lt;String, Object&gt;&gt;) (Class&lt;?&gt;) Map.class);</span>
+<span class="fc bfc" id="L424" title="All 2 branches covered.">            if (roleResponse.getBody() == null) {</span>
+<span class="fc" id="L425">                throw new BadRequestException(&quot;Keycloak role payload is empty: &quot; + roleName);</span>
+            }
+<span class="fc" id="L427">            return roleResponse.getBody();</span>
+<span class="fc" id="L428">        } catch (HttpStatusCodeException ex) {</span>
+<span class="fc bfc" id="L429" title="All 2 branches covered.">            if (ex.getStatusCode().value() != 404) {</span>
+<span class="fc" id="L430">                throw new BadRequestException(&quot;Unable to read Keycloak role: &quot; + ex.getResponseBodyAsString());</span>
+            }
+
+            try {
+<span class="fc" id="L434">                restTemplate.postForEntity(rolesUrl, new HttpEntity&lt;&gt;(Map.of(&quot;name&quot;, roleName), headers), Void.class);</span>
+                @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L436">                ResponseEntity&lt;Map&lt;String, Object&gt;&gt; createdRoleResponse = restTemplate.exchange(roleUrl, HttpMethod.GET,</span>
+                        new HttpEntity&lt;&gt;(headers), (Class&lt;Map&lt;String, Object&gt;&gt;) (Class&lt;?&gt;) Map.class);
+<span class="fc bfc" id="L438" title="All 2 branches covered.">                if (createdRoleResponse.getBody() == null) {</span>
+<span class="fc" id="L439">                    throw new BadRequestException(&quot;Unable to create Keycloak role: &quot; + roleName);</span>
+                }
+<span class="fc" id="L441">                return createdRoleResponse.getBody();</span>
+<span class="fc" id="L442">            } catch (HttpStatusCodeException createEx) {</span>
+<span class="fc" id="L443">                throw new BadRequestException(&quot;Unable to create Keycloak role: &quot; + createEx.getResponseBodyAsString());</span>
+            }
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

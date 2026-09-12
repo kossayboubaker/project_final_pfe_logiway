@@ -1,0 +1,528 @@
+================================================================
+  ORGANISATION SPRINTS — PROJET LOGIWAY
+  Méthodologie : Agile Scrum | 6 Sprints | 2 semaines/sprint
+================================================================
+
+----------------------------------------------------------------
+  NOTE D'INTRODUCTION — PROPOSITION DE STRUCTURE
+----------------------------------------------------------------
+
+  Ce document propose une organisation en 6 sprints Agile Scrum
+  pour le projet LogiWay. Cette structure est une proposition
+  méthodologique destinée à illustrer comment le travail aurait
+  été organisé dans un contexte professionnel réel.
+
+  JUSTIFICATION DU CHOIX DE 6 SPRINTS :
+  → 6 sprints × 2 semaines = 12 semaines (3 mois) de développement
+  → Chaque sprint produit un incrément fonctionnel et livrable
+  → L'ordre respecte les dépendances techniques entre modules
+  → La complexité est distribuée de façon équilibrée
+  → Les sprints critiques (1, 4, 6) encadrent les sprints secondaires
+
+  RÔLES DANS LA PLATEFORME LOGIWAY :
+  ┌─────────────┬────────────────────────────────────────────────┐
+  │ SUPERADMIN  │ Vision globale multi-entreprises, modération,   │
+  │             │ validation des comptes, accès à toutes les      │
+  │             │ analytics et données de toutes les entreprises  │
+  ├─────────────┼────────────────────────────────────────────────┤
+  │ MANAGER     │ Gestion de son entreprise : flotte, chauffeurs, │
+  │             │ trajets, secteurs, réclamations de son équipe   │
+  ├─────────────┼────────────────────────────────────────────────┤
+  │ DRIVER      │ Espace personnel : ses trajets, ses pauses ML,  │
+  │ (Chauffeur) │ ses congés, ses réclamations, le cockpit de     │
+  │             │ conduite avec alertes réglementaires en direct  │
+  └─────────────┴────────────────────────────────────────────────┘
+
+  CHOIX STRUCTURELS IMPORTANTS :
+  → Gestion des Réclamations placée en Sprint 4 (pas Sprint 2)
+    car elle dépend du service IA Flask (port 5001) développé
+    en même temps que le module ML des pauses
+  → Les pauses réglementaires ML concernent DRIVER (alerte directe)
+    ET SUPERADMIN/MANAGER (analytics globales) — détaillé Sprint 4
+  → Le Dashboard Sprint 5 agrège les données de tous les sprints
+    précédents — impossible de le faire avant
+
+----------------------------------------------------------------
+
+PRINCIPES APPLIQUÉS :
+  - Chaque sprint produit un incrément fonctionnel livrable
+  - Les sprints suivent la dépendance naturelle des fonctionnalités
+  - Les fonctionnalités critiques (auth, core métier) en premier
+  - Les fonctionnalités avancées (IA, ML) après la base stable
+  - Tests et DevOps en dernier pour couvrir l'ensemble du projet
+
+================================================================
+  SPRINT 1 — FONDATIONS : Auth + Utilisateurs + Structure
+  Durée : 2 semaines
+================================================================
+
+OBJECTIF DU SPRINT :
+  Mettre en place la base de toute la plateforme : authentification
+  sécurisée, gestion des rôles, et la structure organisationnelle
+  (entreprises, secteurs, véhicules). Rien ne peut fonctionner sans
+  cette fondation.
+
+POURQUOI EN PREMIER :
+  - L'authentification (Keycloak) est un prérequis de TOUTES les features
+  - Les entreprises et secteurs sont référencés par tous les autres modules
+  - Les véhicules sont nécessaires aux trajets (Sprint 4)
+
+USER STORIES PAR RÔLE :
+
+  1.1 - Authentification (Keycloak)
+       [TOUS LES RÔLES]
+       → Login / Logout avec email et mot de passe
+       → Refresh token JWT automatique
+       → Redirection après login selon le rôle :
+           SUPERADMIN → /dashboard/superadmin
+           MANAGER    → /dashboard/manager (ou /company-profile si nouveau)
+           DRIVER     → /dashboard/driver
+       → Guard de navigation Angular (RBAC) — bloque l'accès non autorisé
+       → Réinitialisation de mot de passe
+
+  1.2 - Gestion des Utilisateurs
+       [SUPERADMIN] Gère tous les utilisateurs de toutes les entreprises
+       → Créer / Modifier / Supprimer un utilisateur
+       → Assigner rôle (MANAGER / DRIVER) et entreprise
+       → Activer / Désactiver / Rejeter un compte
+       → Vue liste paginée avec filtres
+
+       [MANAGER] Gère les utilisateurs de son entreprise uniquement
+       → Voir ses chauffeurs, modifier leurs informations
+       → Créer un nouveau chauffeur (DRIVER)
+
+  1.3 - Gestion des Entreprises
+       [SUPERADMIN uniquement]
+       → Créer une entreprise (workflow EN_ATTENTE → ACTIF → REJETÉ)
+       → Valider ou rejeter une demande d'inscription d'entreprise
+       → Voir le profil complet de chaque entreprise
+       → Isolation des données : chaque entreprise ne voit que ses données
+
+       [MANAGER]
+       → Compléter le profil de son entreprise (logo, informations)
+       → Vue en attente si entreprise non encore validée
+
+  1.4 - Gestion des Secteurs
+       [MANAGER uniquement]
+       → Créer / Modifier / Supprimer un secteur géographique
+       → Associer des chauffeurs (DRIVER) à un secteur
+       → Visualisation des secteurs sur carte Leaflet
+
+  1.5 - Gestion des Véhicules
+       [MANAGER uniquement]
+       → Ajouter / Modifier / Supprimer un véhicule
+       → Affectation véhicule ↔ chauffeur (DRIVER)
+       → Suivi de disponibilité
+
+LIVRABLES DU SPRINT 1 :
+  ✓ Authentification Keycloak fonctionnelle pour les 3 rôles
+  ✓ Interface de gestion utilisateurs (CRUD)
+  ✓ Interface de gestion entreprises avec workflow de validation
+  ✓ Interface de gestion secteurs avec carte
+  ✓ Interface de gestion flotte véhicules
+
+================================================================
+  SPRINT 2 — OPÉRATIONS RH : Congés + Notifications
+  Durée : 2 semaines
+================================================================
+
+OBJECTIF DU SPRINT :
+  Gérer les opérations RH quotidiennes : demandes de congé des
+  chauffeurs et le système de notifications en temps réel qui
+  informe tous les acteurs des événements de la plateforme.
+
+POURQUOI EN DEUXIÈME :
+  - Les congés nécessitent les utilisateurs et rôles du Sprint 1
+  - Les notifications (SSE) sont utilisées par les sprints suivants
+  - Fonctionnalités indépendantes des trajets et de l'IA
+
+USER STORIES PAR RÔLE :
+
+  2.1 - Gestion des Congés
+
+       [DRIVER]
+       → Soumettre une demande de congé (dates, motif, type)
+       → Voir le statut de ses demandes : EN_ATTENTE → APPROUVÉ / REFUSÉ
+       → Voir les jours restants
+       → Recevoir une notification à l'approbation / refus
+
+       [MANAGER]
+       → Voir toutes les demandes de son équipe
+       → Approuver ou refuser avec commentaire
+       → Vue calendrier des absences de l'équipe
+       → Alertes si effectif insuffisant
+
+       [SUPERADMIN]
+       → Vue globale des congés de toutes les entreprises
+       → Statistiques d'absentéisme par entreprise
+
+  2.2 - Système de Notifications (SSE — Server-Sent Events)
+
+       [TOUS LES RÔLES] — règles d'envoi différenciées par rôle
+       → Notifications push en temps réel (pas de rechargement de page)
+       → Persistance MySQL des notifications non lues
+       → Marquage lu / non lu
+       → Badge de compteur dans la barre de navigation
+
+       [SUPERADMIN] reçoit :
+       → Nouvelle entreprise EN_ATTENTE de validation
+       → Réclamation URGENT (Sprint 4)
+       → Nouvelles inscriptions utilisateurs
+
+       [MANAGER] reçoit :
+       → Nouvelle demande de congé de son équipe
+       → Alerte pause réglementaire d'un chauffeur (Sprint 4)
+       → Nouvelle réclamation dans son entreprise
+
+       [DRIVER] reçoit :
+       → Congé approuvé ou refusé
+       → Alerte pause réglementaire personnelle (Sprint 4)
+       → Réponse à sa réclamation
+
+LIVRABLES DU SPRINT 2 :
+  ✓ Workflow de demande et validation de congé pour les 3 rôles
+  ✓ Calendrier d'équipe
+  ✓ Système SSE temps réel opérationnel
+  ✓ Centre de notifications avec historique différencié par rôle
+
+================================================================
+  SPRINT 3 — COMMUNICATION : Messagerie + Chatbot RAG
+  Durée : 2 semaines
+================================================================
+
+OBJECTIF DU SPRINT :
+  Fournir les outils de communication interne : messagerie directe
+  entre utilisateurs et assistant IA intelligent basé sur les données
+  du projet (RAG — Retrieval-Augmented Generation).
+
+POURQUOI EN TROISIÈME :
+  - Le messenger est indépendant des modules métier complexes
+  - Le chatbot RAG peut être développé en parallèle du messenger
+  - Les deux features enrichissent l'expérience sans bloquer le cœur métier
+
+NOTE : Messenger = fonctionnalité classique | RAG = fonctionnalité avancée IA
+       Si le temps est limité, le Messenger est prioritaire sur le RAG.
+
+USER STORIES PAR RÔLE :
+
+  3.1 - Messagerie Interne (Messenger)
+
+       [TOUS LES RÔLES]
+       → Conversations privées 1-to-1
+       → Liste des contacts de l'entreprise
+       → Historique des messages
+       → Indicateur de lecture (vu/non vu)
+       → Notification de nouveau message (Sprint 2)
+
+       [SUPERADMIN] peut contacter n'importe quel utilisateur
+       [MANAGER] peut contacter ses chauffeurs et le SuperAdmin
+       [DRIVER] peut contacter son manager
+
+  3.2 - Chatbot IA RAG (Retrieval-Augmented Generation)
+
+       [SUPERADMIN / MANAGER]
+       → Questions en langage naturel sur les données de la plateforme
+         ex. : "Combien de trajets cette semaine ?" / "Liste des pauses non respectées"
+       → Génération de rapports automatiques (PDF, texte, Excel)
+       → Powered by Google Gemini API + FAISS (vectorisation)
+       → Service FastAPI (port 8000)
+       → Historique des conversations sauvegardé
+
+       [DRIVER]
+       → Questions sur ses propres trajets et pauses
+       → Consultation des règles réglementaires CE 561/2006
+
+LIVRABLES DU SPRINT 3 :
+  ✓ Interface de messagerie fonctionnelle pour les 3 rôles
+  ✓ Service RAG (FastAPI + Gemini) connecté au frontend
+  ✓ Interface chatbot avec historique
+  ✓ Génération de rapports PDF/texte
+
+================================================================
+  SPRINT 4 — CŒUR MÉTIER : Trajets + ML Pauses + Réclamations IA
+  Durée : 2 semaines
+================================================================
+
+OBJECTIF DU SPRINT :
+  Implémenter le cœur métier logistique : gestion des trajets avec
+  calcul d'itinéraire (OSRM), prédiction ML des pauses réglementaires
+  (CE 561/2006 RandomForest), et validation intelligente des
+  réclamations par IA (toxicité + sémantique).
+
+POURQUOI EN QUATRIÈME :
+  - Nécessite les véhicules et chauffeurs du Sprint 1
+  - Les notifications du Sprint 2 sont utilisées pour les alertes pauses
+  - Module le plus complexe techniquement — nécessite une base stable
+
+USER STORIES PAR RÔLE :
+
+  4.1 - Gestion des Trajets
+
+       [MANAGER]
+       → Créer un trajet (départ, destination, chauffeur, véhicule, date)
+       → Calcul d'itinéraire automatique via OSRM
+       → Suivi de tous les trajets actifs de son entreprise sur carte
+       → Calcul ETA (Estimated Time of Arrival)
+       → Historique des trajets complétés avec performance
+
+       [SUPERADMIN]
+       → Voir les trajets de toutes les entreprises
+       → Statistiques globales de livraison
+
+       [DRIVER]
+       → Voir son trajet assigné du jour
+       → Position GPS en temps réel sur la carte
+       → Calcul de l'itinéraire optimisé
+       → Heure d'arrivée estimée
+
+  4.2 - Pauses Réglementaires ML (CE 561/2006)
+
+       Service Flask ML (port 5000) — modèle RandomForest (scikit-learn)
+
+       [DRIVER — vue principale, alertes directes]
+       → Alerte WARNING_ALERT affichée sur la carte à 3h de conduite
+         "Vous approchez de la limite — pause recommandée dans 30min"
+       → Alerte MANDATORY_REST obligatoire à 4h30
+         "Pause réglementaire obligatoire de 45 minutes requise"
+       → Décompte visuel du temps de conduite en cours
+       → Historique de ses pauses prises / manquées
+       → Conformité CE 561/2006 visible dans le cockpit
+
+       [MANAGER — vue de supervision]
+       → Tableau de bord des pauses de son équipe en temps réel
+       → Alertes si un chauffeur dépasse les limites réglementaires
+       → Historique des pauses par chauffeur
+       → Taux de conformité CE 561/2006 de l'entreprise
+
+       [SUPERADMIN — vue globale analytique]
+       → Analytics des pauses de toutes les entreprises
+       → Tableau comparatif de conformité par entreprise
+       → Identification des entreprises à risque réglementaire
+       → Export des données de conformité
+
+  4.3 - Réclamations avec Validation IA
+
+       Service Flask IA (port 5001) — détection toxicité + sémantique
+
+       [DRIVER]
+       → Formulaire de réclamation : sujet, description, priorité
+         (BASSE / MOYENNE / HAUTE / URGENT)
+       → Validation IA automatique avant soumission :
+           Couche 1 : Détection toxicité (seuil 0.55) — bloque si toxique
+           Couche 2 : Cohérence sémantique métier (seuil 0.25) — vérifie
+                      que le contenu est lié à la logistique
+       → Voir le statut de ses réclamations : EN_COURS → RÉSOLU / REJETÉ
+       → Recevoir la réponse du modérateur
+
+       [MANAGER]
+       → Voir les réclamations de son équipe
+       → Résoudre ou rejeter avec commentaire
+       → Statistiques des réclamations de son entreprise
+
+       [SUPERADMIN]
+       → Voir TOUTES les réclamations de toutes les entreprises
+       → Modérer les réclamations URGENT en priorité
+       → Recevoir notification immédiate si priorité URGENT (Sprint 2)
+       → Statistiques globales : taux résolution, priorités, tendances
+
+LIVRABLES DU SPRINT 4 :
+  ✓ Carte de suivi trajets temps réel (3 vues selon rôle)
+  ✓ Système d'alertes pauses ML pour DRIVER (cockpit) + analytics MANAGER/SUPERADMIN
+  ✓ Validation IA des réclamations opérationnelle
+  ✓ Workflows réclamations pour les 3 rôles
+
+================================================================
+  SPRINT 5 — INTELLIGENCE : Dashboard KPIs + Statistiques
+  Durée : 2 semaines
+================================================================
+
+OBJECTIF DU SPRINT :
+  Offrir une vision globale et analytique de toute la plateforme
+  via des tableaux de bord KPIs adaptés à chaque rôle. Ce sprint
+  est en dernier car il agrège les données de tous les sprints
+  précédents.
+
+POURQUOI EN CINQUIÈME :
+  - Les KPIs nécessitent des données réelles de tous les modules
+  - Impossible de calculer des statistiques sans les sprints 1 à 4
+  - Valeur ajoutée maximale en fin de projet
+
+USER STORIES PAR RÔLE :
+
+  5.1 - Dashboard SUPERADMIN
+       [SUPERADMIN uniquement]
+       → KPIs globaux : nb entreprises actives, utilisateurs, trajets/jour
+       → Taux de résolution des réclamations par entreprise
+       → Tableau de conformité CE 561/2006 (pauses ML) multi-entreprises
+       → Graphiques d'activité : trajets, livraisons, incidents
+       → Carte de chaleur des zones de livraison les plus actives
+       → Alertes entreprises : pauses non respectées, réclamations urgentes
+       → Statistiques d'absentéisme (congés) par entreprise
+
+  5.2 - Dashboard MANAGER
+       [MANAGER uniquement]
+       → KPIs entreprise : trajets actifs, véhicules dispos, chauffeurs en service
+       → Statistiques réclamations : en cours / résolues / rejetées
+       → Suivi des congés et absences de l'équipe
+       → Performance livraisons : ETA prévu vs ETA réel
+       → Alertes pauses : chauffeurs non conformes aujourd'hui
+       → Graphiques hebdomadaires et mensuels
+
+  5.3 - Dashboard DRIVER — Cockpit de Conduite
+       [DRIVER uniquement]
+       → Trajet en cours : carte, itinéraire, ETA, distance restante
+       → Compteur de temps de conduite avec jauge visuelle
+       → Prochaine pause ML prédite (heure + durée)
+       → Mes réclamations en cours et leur statut
+       → Mes congés approuvés et à venir
+       → Mes statistiques personnelles (trajets complétés, km)
+
+  5.4 - Statistiques Avancées
+       [SUPERADMIN / MANAGER]
+       → Graphiques Chart.js : livraisons, flotte, conducteurs, congés
+       → Filtres temporels : jour, semaine, mois, année
+       → Export PDF des rapports (intégration chatbot RAG Sprint 3)
+       → Comparaisons période N vs période N-1
+
+LIVRABLES DU SPRINT 5 :
+  ✓ 3 dashboards différenciés par rôle (SUPERADMIN / MANAGER / DRIVER)
+  ✓ Cockpit chauffeur avec alertes pauses temps réel
+  ✓ Graphiques et KPIs enrichis avec données réelles
+  ✓ Export de rapports
+
+================================================================
+  SPRINT 6 — QUALITÉ & DÉPLOIEMENT : Tests + DevOps
+  Durée : 2 semaines
+================================================================
+
+OBJECTIF DU SPRINT :
+  Valider la qualité de l'ensemble de la plateforme par des tests
+  automatisés à tous les niveaux, et préparer le déploiement
+  en production via Docker et Docker Compose.
+
+POURQUOI EN DERNIER :
+  - Les tests E2E et de performance nécessitent une application complète
+  - Le DevOps encapsule et déploie ce qui a été construit
+  - Garantit la stabilité avant livraison finale
+
+USER STORIES :
+
+  6.1 - Tests Unitaires Backend (Spring Boot)
+       → Framework : JUnit 5 + Mockito + JaCoCo
+       → Commande : cd backend && mvn test
+       → Couverture cible : > 90% lignes
+       → Services testés : ReclamationService, PauseService,
+                           TrajetService, EntrepriseService
+       → Résultats obtenus : 97,7% lignes, 91,8% branches
+
+  6.2 - Tests Unitaires Python IA/ML
+       → Framework : pytest + coverage.py
+       → Commande : pytest -v (depuis reclamation-ai-service/)
+       → Couverture cible : > 90%
+       → Modules testés : toxicité, sémantique, endpoints Flask
+       → Résultats obtenus : 99% (15/15 tests passés)
+
+  6.3 - Tests Unitaires Frontend Angular
+       → Framework : Jest + jest-preset-angular + Istanbul
+       → Commande : cd frontend && npm test
+       → Couverture cible : > 90%
+       → Composants testés : SignIn, AuthGuard, RoleGuard
+       → Résultats obtenus : 100% (20+ tests passés)
+
+  6.4 - Tests de Performance (k6)
+       → Framework : k6 v2.2.0
+       → Commande : k6 run tests-perf\logiway_load_test.js
+       → Scénarios : Smoke (1 VU), Load (50 VUs), Stress (300 VUs), Soak (20 VUs)
+       → Seuils : p(95) < 2000ms, taux d'erreur < 5%
+       → Résultats obtenus : p(95) = 38ms, 0% erreurs
+
+  6.5 - Tests End-to-End (Playwright)
+       → Framework : Playwright 1.63.0 + Chromium
+       → Commande : cd frontend && npx playwright test --headed
+       → Scénarios couverts par rôle :
+           MANAGER  : auth (4 tests), navigation dashboard (6 tests)
+           MANAGER  : module réclamations (5 tests)
+       → Résultats obtenus : 15/15 tests passés
+
+  6.6 - Containerisation Docker
+       → Dockerfile backend Spring Boot
+       → Dockerfile frontend Angular (Nginx)
+       → docker-compose.yml :
+           Services : MySQL + Keycloak + Backend + Frontend
+                    + Pause-AI (Flask ML port 5000)
+                    + Reclamation-AI (Flask IA port 5001)
+                    + RAG-Service (FastAPI port 8000)
+       → Variables d'environnement via .env
+       → Réseau Docker isolé
+
+  6.7 - Documentation Finale
+       → README.md avec guide de démarrage
+       → Guide de lancement des services
+       → Rapport de tests complet (RAPPORT_TESTS_LOGIWAY.md)
+       → Guide de déploiement production
+
+LIVRABLES DU SPRINT 6 :
+  ✓ Suite de tests complète (60+ tests automatisés)
+  ✓ Couverture > 97% Backend, 99% IA, 100% Frontend
+  ✓ Tests de performance validés (0% erreur, 38ms p95)
+  ✓ Docker Compose fonctionnel
+  ✓ Documentation livrable
+
+================================================================
+  RÉCAPITULATIF DES 6 SPRINTS
+================================================================
+
+Sprint | Thème                        | Priorité | Complexité
+-------|------------------------------|----------|----------
+  1    | Auth + Utilisateurs + Struct  | CRITIQUE |   ★★★☆☆
+  2    | Congés + Notifications        | HAUTE    |   ★★☆☆☆
+  3    | Messagerie + Chatbot RAG      | MOYENNE  |   ★★★★☆
+  4    | Trajets + ML + Réclamations   | CRITIQUE |   ★★★★★
+  5    | Dashboard KPIs + Stats        | HAUTE    |   ★★★☆☆
+  6    | Tests + DevOps                | CRITIQUE |   ★★★☆☆
+
+ACCÈS PAR RÔLE — SYNTHÈSE :
+
+  SUPERADMIN :
+    Sprint 1 → Gère entreprises, valide comptes, gère tous utilisateurs
+    Sprint 2 → Reçoit notifications globales, stats congés
+    Sprint 3 → Chatbot RAG multi-entreprises, génération rapports
+    Sprint 4 → Analytics pauses globales, modération réclamations URGENT
+    Sprint 5 → Dashboard KPI multi-entreprises, carte de chaleur
+    Sprint 6 → Tests validés, déploiement production
+
+  MANAGER :
+    Sprint 1 → Gère son équipe, ses secteurs, sa flotte
+    Sprint 2 → Approuve congés, reçoit alertes équipe
+    Sprint 3 → Messagerie avec chauffeurs, chatbot RAG entreprise
+    Sprint 4 → Suit trajets, supervise pauses, gère réclamations
+    Sprint 5 → Dashboard entreprise, performance livraisons
+    Sprint 6 → Tests validés, déploiement production
+
+  DRIVER (Chauffeur) :
+    Sprint 1 → Se connecte, voit son profil et véhicule assigné
+    Sprint 2 → Pose congés, reçoit notifications personnelles
+    Sprint 3 → Messagerie avec manager, chatbot sur ses trajets
+    Sprint 4 → Conduit avec alertes pauses ML en temps réel,
+               soumet réclamations validées par IA
+    Sprint 5 → Cockpit personnel : trajet, pauses, stats perso
+    Sprint 6 → Tests validés, déploiement production
+
+DÉPENDANCES ENTRE SPRINTS :
+  Sprint 2 dépend de → Sprint 1 (utilisateurs, rôles)
+  Sprint 3 dépend de → Sprint 1 (utilisateurs)
+  Sprint 4 dépend de → Sprint 1 (véhicules, chauffeurs) + Sprint 2 (notifications)
+  Sprint 5 dépend de → Sprints 1, 2, 3, 4 (toutes les données)
+  Sprint 6 dépend de → Sprints 1 à 5 (application complète)
+
+TECHNOLOGIES PAR SPRINT :
+  Sprint 1 : Spring Boot, Angular 19, Keycloak 24, MySQL 8, Leaflet
+  Sprint 2 : Spring Boot SSE, Angular, MySQL, Calendar
+  Sprint 3 : Spring Boot WebSocket, Angular, FastAPI, Gemini API, FAISS
+  Sprint 4 : Spring Boot, OSRM, Flask ML (scikit-learn), Flask IA, Leaflet
+  Sprint 5 : Angular, Chart.js, Spring Boot JPA Aggregations
+  Sprint 6 : JUnit 5, pytest, Jest, k6, Playwright, Docker Compose
+
+================================================================
+  FIN DU DOCUMENT
+================================================================

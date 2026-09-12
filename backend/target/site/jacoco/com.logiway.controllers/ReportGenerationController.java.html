@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReportGenerationController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">ReportGenerationController.java</span></div><h1>ReportGenerationController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.request.GenerateReportRequest;
+import com.logiway.dto.response.GenerateReportResponse;
+import com.logiway.dto.response.ReportListResponse;
+import com.logiway.dto.response.ReportMetadataResponse;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.ReportGenerationService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping(&quot;/api/reports&quot;)
+<span class="fc" id="L18">@RequiredArgsConstructor</span>
+<span class="fc" id="L19">@Slf4j</span>
+@CrossOrigin(origins = &quot;*&quot;, maxAge = 3600)
+public class ReportGenerationController {
+
+    private final ReportGenerationService reportGenerationService;
+    private final AuthenticatedUserService authenticatedUserService;
+
+    /**
+     * Génère un rapport intelligent via NLU
+     */
+    @PostMapping(&quot;/generate&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_MANAGER')&quot;)
+    public ResponseEntity&lt;GenerateReportResponse&gt; genererRapport(
+            @Valid @RequestBody GenerateReportRequest request) {
+        
+<span class="fc" id="L34">        log.info(&quot;[REPORT-GEN] Requête reçue: requeteNaturelle='{}', formatPrefere='{}'&quot;, </span>
+<span class="fc" id="L35">            request.getRequeteNaturelle(), request.getFormatPrefere());</span>
+        
+        try {
+<span class="fc" id="L38">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L39">            String userId = String.valueOf(utilisateur.getId());</span>
+<span class="fc bfc" id="L40" title="All 2 branches covered.">            String entrepriseId = utilisateur.getEntreprise() != null </span>
+<span class="fc" id="L41">                ? String.valueOf(utilisateur.getEntreprise().getId()) </span>
+<span class="fc" id="L42">                : null;</span>
+
+<span class="fc" id="L44">            log.info(&quot;[REPORT-GEN] Génération rapport pour {} (user {}): {}&quot;, </span>
+<span class="fc" id="L45">                utilisateur.getEmail(), userId, request.getRequeteNaturelle());</span>
+
+<span class="fc" id="L47">            GenerateReportResponse response = reportGenerationService.genererRapport(</span>
+                request, userId, entrepriseId
+            );
+
+            // Always return 200 OK, success flag in response body indicates result
+<span class="fc" id="L52">            return ResponseEntity.ok(response);</span>
+
+<span class="fc" id="L54">        } catch (Exception e) {</span>
+<span class="fc" id="L55">            log.error(&quot;[REPORT-GEN] Erreur génération rapport: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L56">            return ResponseEntity.internalServerError().body(</span>
+<span class="fc" id="L57">                GenerateReportResponse.builder()</span>
+<span class="fc" id="L58">                    .success(false)</span>
+<span class="fc" id="L59">                    .message(&quot;Erreur technique: &quot; + e.getMessage())</span>
+<span class="fc" id="L60">                    .build()</span>
+            );
+        }
+    }
+
+    /**
+     * Liste tous les rapports (avec filtres optionnels)
+     */
+    @GetMapping
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_MANAGER')&quot;)
+    public ResponseEntity&lt;ReportListResponse&gt; listerRapports(
+            @RequestParam(required = false) String domaine,
+            @RequestParam(required = false, defaultValue = &quot;50&quot;) Integer limit) {
+        
+        try {
+<span class="fc" id="L75">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L76">            String userId = String.valueOf(utilisateur.getId());</span>
+
+            // SUPERADMIN peut voir tous les rapports, MANAGER voit les siens
+<span class="fc" id="L79">            boolean isSuperAdmin = utilisateur.getRole().name().equals(&quot;SUPERADMIN&quot;);</span>
+<span class="fc bfc" id="L80" title="All 2 branches covered.">            String userIdFilter = isSuperAdmin ? null : userId;</span>
+
+<span class="fc" id="L82">            ReportListResponse response = reportGenerationService.listerRapports(</span>
+                userIdFilter, domaine, limit
+            );
+
+<span class="fc" id="L86">            return ResponseEntity.ok(response);</span>
+
+<span class="fc" id="L88">        } catch (Exception e) {</span>
+<span class="fc" id="L89">            log.error(&quot;Erreur liste rapports: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L90">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Récupère les métadonnées d'un rapport spécifique
+     */
+    @GetMapping(&quot;/{reportId}&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_MANAGER')&quot;)
+    public ResponseEntity&lt;ReportMetadataResponse&gt; getMetadataRapport(@PathVariable String reportId) {
+        try {
+<span class="fc" id="L101">            ReportMetadataResponse metadata = reportGenerationService.getMetadataRapport(reportId);</span>
+
+<span class="fc bfc" id="L103" title="All 2 branches covered.">            if (metadata != null) {</span>
+<span class="fc" id="L104">                return ResponseEntity.ok(metadata);</span>
+            } else {
+<span class="fc" id="L106">                return ResponseEntity.notFound().build();</span>
+            }
+
+<span class="fc" id="L109">        } catch (Exception e) {</span>
+<span class="fc" id="L110">            log.error(&quot;Erreur métadonnées rapport {}: {}&quot;, reportId, e.getMessage(), e);</span>
+<span class="fc" id="L111">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Télécharge un rapport généré
+     */
+    @GetMapping(&quot;/download/{reportId}&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_MANAGER')&quot;)
+    public ResponseEntity&lt;byte[]&gt; telechargerRapport(@PathVariable String reportId) {
+        try {
+<span class="fc" id="L122">            log.info(&quot;Téléchargement rapport: {}&quot;, reportId);</span>
+<span class="fc" id="L123">            return reportGenerationService.telechargerRapport(reportId);</span>
+
+<span class="fc" id="L125">        } catch (Exception e) {</span>
+<span class="fc" id="L126">            log.error(&quot;Erreur téléchargement rapport {}: {}&quot;, reportId, e.getMessage(), e);</span>
+<span class="fc" id="L127">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Supprime un rapport
+     */
+    @DeleteMapping(&quot;/{reportId}&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN', 'ROLE_MANAGER')&quot;)
+    public ResponseEntity&lt;Void&gt; supprimerRapport(@PathVariable String reportId) {
+        try {
+<span class="fc" id="L138">            boolean success = reportGenerationService.supprimerRapport(reportId);</span>
+
+<span class="fc bfc" id="L140" title="All 2 branches covered.">            if (success) {</span>
+<span class="fc" id="L141">                return ResponseEntity.noContent().build();</span>
+            } else {
+<span class="fc" id="L143">                return ResponseEntity.notFound().build();</span>
+            }
+
+<span class="fc" id="L146">        } catch (Exception e) {</span>
+<span class="fc" id="L147">            log.error(&quot;Erreur suppression rapport {}: {}&quot;, reportId, e.getMessage(), e);</span>
+<span class="fc" id="L148">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

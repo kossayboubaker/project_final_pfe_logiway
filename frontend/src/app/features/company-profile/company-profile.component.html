@@ -1,0 +1,180 @@
+<div class="profile-page animate-fade-up">
+    <div class="profile-header">
+        <h1 class="text-gradient">Profil Entreprise</h1>
+        <p class="subtitle" *ngIf="hasCompany">Gérez les informations officielles de votre organisation</p>
+        <p class="subtitle" *ngIf="!hasCompany">Créez votre entreprise pour débloquer toutes les sections du dashboard Manager</p>
+    </div>
+
+    <div class="glass-card p-4">
+        <div class="company-section" *ngIf="company">
+            <div class="section-title">
+                <mat-icon color="accent">corporate_fare</mat-icon>
+                <h3>Information sur l'Organisation</h3>
+            </div>
+
+            <div class="company-info-grid" *ngIf="!editingCompany">
+                <mat-card class="glass-card info-item">
+                    <span class="label">Logo / Image</span>
+                    <img *ngIf="isImageDataUrl(company.image)" [src]="company.image" alt="Logo entreprise" style="max-width: 160px; max-height: 100px; border-radius: 8px; object-fit: cover;">
+                    <span class="value" *ngIf="!isImageDataUrl(company.image)">Aucune image</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Nom de l'entreprise</span>
+                    <span class="value">{{company.name}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Email</span>
+                    <span class="value">{{company.email || '---'}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Numéro</span>
+                    <span class="value">{{company.number || '---'}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Code TVA</span>
+                    <span class="value">{{company.codeTVA || '---'}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Représentant légal</span>
+                    <span class="value">{{company.representantLegal || '---'}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Document justificatif</span>
+                    <a *ngIf="isPdfDataUrl(company.documentJustificatif)" [href]="company.documentJustificatif" target="_blank" rel="noopener" class="value">Voir le PDF</a>
+                    <span class="value" *ngIf="!isPdfDataUrl(company.documentJustificatif)">---</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Taille de la flotte</span>
+                    <span class="value">{{company.fleetSize}} Véhicules</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Secteur d'activité</span>
+                    <span class="value">{{company.sector}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item">
+                    <span class="label">Statut</span>
+                    <span class="value">{{company.status}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item wide">
+                    <span class="label">Manager propriétaire</span>
+                    <span class="value">{{company.managerOwnerName || 'Non affecté'}}</span>
+                </mat-card>
+                <mat-card class="glass-card info-item wide">
+                    <span class="label">Adresse Siège Social</span>
+                    <span class="value">{{company.address}}</span>
+                </mat-card>
+            </div>
+
+            <form class="company-edit-form" *ngIf="editingCompany" (ngSubmit)="saveCompanyProfile()">
+                <div class="form-row">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Nom de l'entreprise</mat-label>
+                        <input matInput [(ngModel)]="company.name" name="compName" required>
+                        <mat-icon matSuffix>business</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Email de l'entreprise</mat-label>
+                        <input matInput [(ngModel)]="company.email" name="compEmail">
+                        <mat-icon matSuffix>email</mat-icon>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline">
+                        <mat-label>Secteur d'activité</mat-label>
+                        <mat-select [(ngModel)]="company.sector" name="compSector" required>
+                            <mat-option *ngFor="let option of sectorOptions" [value]="option.value">
+                                {{option.label}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Taille de la flotte (camions)</mat-label>
+                    <input matInput type="number" [(ngModel)]="company.fleetSize" name="compFleet" required>
+                    <mat-icon matSuffix>local_shipping</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Numéro de l'entreprise</mat-label>
+                    <input matInput [(ngModel)]="company.number" name="compNumber">
+                    <mat-icon matSuffix>call</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Code TVA</mat-label>
+                    <input matInput [(ngModel)]="company.codeTVA" name="compCodeTVA">
+                    <mat-icon matSuffix>receipt_long</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Représentant légal</mat-label>
+                    <input matInput [(ngModel)]="company.representantLegal" name="compRepresentative">
+                    <mat-icon matSuffix>badge</mat-icon>
+                </mat-form-field>
+
+                <div class="full-width">
+                    <label>Document représentant légal (PDF/DOC)</label>
+                    <input type="file" accept="application/pdf" (change)="onLegalDocSelected($event)">
+                    <small *ngIf="legalDocFileName">{{ legalDocFileName }}</small>
+                    <div *ngIf="isPdfDataUrl(company.documentJustificatif)">
+                        <a [href]="company.documentJustificatif" target="_blank" rel="noopener">Voir le PDF</a>
+                    </div>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Image (URL ou base64)</mat-label>
+                    <input matInput [(ngModel)]="company.image" name="compImage">
+                    <mat-icon matSuffix>image</mat-icon>
+                </mat-form-field>
+
+                <div class="full-width">
+                    <label>Image entreprise</label>
+                    <input type="file" accept="image/*" (change)="onImageSelected($event)">
+                    <small *ngIf="imageFileName">{{ imageFileName }}</small>
+                    <div *ngIf="isImageDataUrl(company.image)">
+                        <img [src]="company.image" alt="Aperçu image entreprise" style="max-width: 180px; max-height: 120px; border-radius: 8px; margin-top: 8px;">
+                    </div>
+                </div>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Statut</mat-label>
+                    <mat-select [(ngModel)]="company.status" name="compStatus" [disabled]="hasCompany && !canEditCompany">
+                        <mat-option value="Actif">ACTIF</mat-option>
+                        <mat-option value="En Attente">EN_ATTENTE</mat-option>
+                        <mat-option value="Inactif">INACTIF</mat-option>
+                        <mat-option value="Suspendu">SUSPENDU</mat-option>
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Adresse du siège</mat-label>
+                    <textarea matInput [(ngModel)]="company.address" name="compAddress" rows="3"></textarea>
+                    <mat-icon matSuffix>location_on</mat-icon>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Manager propriétaire</mat-label>
+                    <input matInput [(ngModel)]="company.managerOwnerName" name="compManager" disabled>
+                    <mat-icon matSuffix>person</mat-icon>
+                </mat-form-field>
+
+                <div class="actions">
+                    <button type="submit" mat-raised-button color="primary" class="glow-on-hover px-4">
+                        <mat-icon>save</mat-icon> ENREGISTRER
+                    </button>
+                    <button type="button" mat-button class="px-4" (click)="toggleEditCompany()">
+                        ANNULER
+                    </button>
+                </div>
+            </form>
+
+            <div class="actions mt-4" *ngIf="!editingCompany">
+                <button mat-stroked-button color="accent" class="px-4" (click)="toggleEditCompany()">
+                    <mat-icon>{{ hasCompany ? 'edit_calendar' : 'add_business' }}</mat-icon>
+                    {{ hasCompany ? 'MODIFIER LES INFOS ENTREPRISE' : 'CRÉER MON ENTREPRISE' }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

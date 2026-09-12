@@ -1,0 +1,11 @@
+﻿# Rapport Chauffeurs - Toutes périodes
+# Généré le: 17/07/2026 17:05:08
+# Domaine: chauffeurs
+# Période: Toutes périodes
+# Nombre d'enregistrements: 4
+#
+id,statut_conducteur,manager_id,nom,prenom,email
+52,EN_SERVICE,41,foued,med,kossbkr@gmail.com
+49,LIBRE,41,ali,Ahmed,kossay.boubaker@esprit.tn
+45,LIBRE,41,sedik,mohamed,kossayboubaker45@gmail.com
+42,LIBRE,50,abdou,ali,s29791869@gmail.com

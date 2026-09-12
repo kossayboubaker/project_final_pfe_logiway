@@ -1,0 +1,115 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PauseReglementaireRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: PauseReglementaireRepository (com.logiway.repositories)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">PauseReglementaireRepository$MockitoMock$R9Hwh1FX</td>
+  </tr>
+  <tr>
+    <td class="name">PauseReglementaireRepository$MockitoMock$R9Hwh1FX$auxiliary$cMEm7Aw3</td>
+  </tr>
+  <tr>
+    <td class="name">PauseReglementaireRepository$MockitoMock$R9Hwh1FX$auxiliary$IbKGFyuG</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.repositories;
+&nbsp;
+&nbsp;import com.logiway.entities.PauseReglementaire;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;import org.springframework.data.jpa.repository.Query;
+&nbsp;import org.springframework.data.repository.query.Param;
+&nbsp;import org.springframework.stereotype.Repository;
+&nbsp;
+&nbsp;import org.springframework.data.jpa.repository.Modifying;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;@Repository
+&nbsp;public interface PauseReglementaireRepository extends JpaRepository&lt;PauseReglementaire, Long&gt; {
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Find all pauses for a given trajet ID
+&nbsp;     */
+&nbsp;    @Query(&quot;SELECT p FROM PauseReglementaire p WHERE p.trajet.id = :trajetId ORDER BY p.distanceAlongRouteM ASC&quot;)
+&nbsp;    List&lt;PauseReglementaire&gt; findByTrajetId(@Param(&quot;trajetId&quot;) Long trajetId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Find all pauses for trajets assigned to a specific manager
+&nbsp;     * Used for Manager role to see only their drivers&#39; breaks
+&nbsp;     */
+&nbsp;    @Query(&quot;SELECT p FROM PauseReglementaire p WHERE p.trajet.manager.id = :managerId ORDER BY p.distanceAlongRouteM ASC&quot;)
+&nbsp;    List&lt;PauseReglementaire&gt; findByTrajetManagerId(@Param(&quot;managerId&quot;) Long managerId);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Find all pauses for trajets assigned to a specific chauffeur
+&nbsp;     * Used for Chauffeur role to see only their own breaks
+&nbsp;     */
+&nbsp;    @Query(&quot;SELECT p FROM PauseReglementaire p WHERE p.trajet.chauffeur.id = :chauffeurId ORDER BY p.distanceAlongRouteM ASC&quot;)
+&nbsp;    List&lt;PauseReglementaire&gt; findByTrajetChauffeurId(@Param(&quot;chauffeurId&quot;) Long chauffeurId);
+&nbsp;
+&nbsp;    @Modifying
+&nbsp;    @Query(&quot;DELETE FROM PauseReglementaire p WHERE p.trajet.id = :trajetId&quot;)
+&nbsp;    void deleteByTrajetId(@Param(&quot;trajetId&quot;) Long trajetId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-21 19:29</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ProfileController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">ProfileController.java</span></div><h1>ProfileController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.request.ChangePasswordRequest;
+import com.logiway.dto.request.UpdateProfileRequest;
+import com.logiway.dto.chauffeur.ChauffeurAvailabilityResponse;
+import com.logiway.dto.chauffeur.ChauffeurDashboardResponse;
+import com.logiway.dto.response.ApiMessageResponse;
+import com.logiway.dto.response.UserResponse;
+import com.logiway.dto.trajet.TrajetResponse;
+import com.logiway.entities.enums.StatutTrajet;
+import com.logiway.services.ProfileService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping({&quot;/api/profile/me&quot;, &quot;/api/profile/user_connecte&quot;})
+<span class="fc" id="L22">@RequiredArgsConstructor</span>
+@PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+public class ProfileController {
+
+    private final ProfileService profileService;
+
+    @GetMapping
+    public ResponseEntity&lt;UserResponse&gt; getProfile() {
+<span class="fc" id="L30">        return ResponseEntity.ok(profileService.getCurrentProfile());</span>
+    }
+
+    @PutMapping
+    public ResponseEntity&lt;UserResponse&gt; updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+<span class="fc" id="L35">        return ResponseEntity.ok(profileService.updateCurrentProfile(request));</span>
+    }
+
+    @PutMapping(&quot;/password&quot;)
+    public ResponseEntity&lt;ApiMessageResponse&gt; changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+<span class="fc" id="L40">        return ResponseEntity.ok(profileService.changeCurrentPassword(request));</span>
+    }
+
+    @GetMapping(&quot;/dashboard&quot;)
+    public ResponseEntity&lt;ChauffeurDashboardResponse&gt; getDriverDashboard() {
+<span class="fc" id="L45">        return ResponseEntity.ok(profileService.getCurrentDriverDashboard());</span>
+    }
+
+    @GetMapping(&quot;/availability&quot;)
+    public ResponseEntity&lt;ChauffeurAvailabilityResponse&gt; getDriverAvailability() {
+<span class="fc" id="L50">        return ResponseEntity.ok(profileService.getCurrentDriverAvailability());</span>
+    }
+
+    @GetMapping(&quot;/trajets&quot;)
+    public ResponseEntity&lt;Page&lt;TrajetResponse&gt;&gt; getDriverTrips(
+        @RequestParam(required = false) StatutTrajet statut,
+        Pageable pageable
+    ) {
+<span class="fc" id="L58">        return ResponseEntity.ok(profileService.getCurrentDriverTrips(pageable, statut));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

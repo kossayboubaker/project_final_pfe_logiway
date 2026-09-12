@@ -1,0 +1,456 @@
+<div class="sa-shell">
+
+  <!-- ══ LOADING OVERLAY ════════════════════════════════════════════ -->
+  <div class="sa-loading-overlay" *ngIf="isLoading">
+    <div class="sa-spinner-wrap">
+      <div class="sa-spinner"></div>
+      <p>Synchronisation en cours…</p>
+    </div>
+  </div>
+
+  <!-- ══ HEADER ═════════════════════════════════════════════════════ -->
+  <div class="sa-header">
+    <div class="sa-header__left">
+      <div class="sa-header__icon">
+        <mat-icon>analytics</mat-icon>
+      </div>
+      <div>
+        <h1 class="sa-header__title">Console Analytique SuperAdmin</h1>
+        <p class="sa-header__sub">Vue décisionnelle en temps réel — Logiway Platform</p>
+      </div>
+    </div>
+    <div class="sa-header__right">
+      <div class="sa-live-badge">
+        <span class="sa-live-dot"></span>
+        <span>{{ currentTime | date:'HH:mm' }} — {{ currentTime | date:'dd MMM yyyy' }}</span>
+      </div>
+      <button class="sa-btn sa-btn--ghost" (click)="loadStats()" matTooltip="Actualiser les données">
+        <mat-icon>refresh</mat-icon> Actualiser
+      </button>
+      <button class="sa-btn sa-btn--primary" (click)="exportData()" matTooltip="Exporter le rapport">
+        <mat-icon>file_download</mat-icon> Export
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ FILTERS ════════════════════════════════════════════════════ -->
+  <div class="sa-filter-bar">
+    <div class="sa-filter-bar__icon">
+      <mat-icon>filter_list</mat-icon>
+    </div>
+    <span class="sa-filter-bar__label">FILTRES</span>
+
+    <div class="sa-filter-group">
+      <span class="sa-filter-label">Période :</span>
+      <select class="sa-select" [(ngModel)]="filters.period" (change)="applyFilter('period', filters.period)">
+        <option *ngFor="let p of periods" [value]="p">{{ p }}</option>
+      </select>
+    </div>
+
+    <div class="sa-filter-group">
+      <span class="sa-filter-label">Entreprise :</span>
+      <select class="sa-select" [(ngModel)]="filters.companyId" (change)="applyFilter('companyId', filters.companyId)">
+        <option value="ALL">Toutes les entreprises</option>
+        <option *ngFor="let c of companies" [value]="c.id">{{ c.name }}</option>
+      </select>
+    </div>
+
+    <div class="sa-filter-spacer"></div>
+
+    <button class="sa-btn sa-btn--ghost sa-btn--sm" (click)="resetFilters()">
+      <mat-icon>restart_alt</mat-icon> Réinitialiser
+    </button>
+  </div>
+
+  <!-- Active Filter Chips Row -->
+  <div class="sa-filter-chips-row" *ngIf="selectedChauffeurId || selectedIncidentCategory">
+    <span class="sa-active-filter-title">Filtres actifs :</span>
+    <span class="sa-filter-chip" *ngIf="selectedChauffeurId" (click)="clearChartFilter()">
+      <mat-icon class="sa-chip-icon">person</mat-icon>
+      Chauffeur : {{ selectedChauffeurName }}
+      <mat-icon class="sa-chip-close">close</mat-icon>
+    </span>
+    <span class="sa-filter-chip" *ngIf="selectedIncidentCategory" (click)="clearIncidentFilter()">
+      <mat-icon class="sa-chip-icon">report_problem</mat-icon>
+      Incident : {{ selectedIncidentCategory }}
+      <mat-icon class="sa-chip-close">close</mat-icon>
+    </span>
+  </div>
+
+  <!-- ══ SECTION 1: 8 KPI CARDS ════════════════════════════════════ -->
+  <div class="sa-kpi-grid">
+
+    <!-- KPI 1: Chauffeurs Actifs -->
+    <div class="sa-kpi-card sa-kpi-card--blue">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>person_pin</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag" [class]="getKpiHealthClass(driversActivePercent, 60, 40)">
+          {{ driversActivePercent }}%
+        </span>
+      </div>
+      <div class="sa-kpi-card__value">{{ stats.activeDrivers.count }}</div>
+      <div class="sa-kpi-card__label">Chauffeurs Actifs</div>
+      <div class="sa-kpi-card__sub">Sur {{ stats.activeDrivers.total }} total</div>
+      <div class="sa-kpi-card__bar">
+        <div class="sa-kpi-card__bar-fill" [style.width.%]="driversActivePercent" style="background:#60a5fa"></div>
+      </div>
+    </div>
+
+    <!-- KPI 2: Missions en Cours -->
+    <div class="sa-kpi-card sa-kpi-card--indigo">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>local_shipping</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag" [class]="getKpiHealthClass(missionsOnTimePercent, 80, 60)">
+          {{ stats.ongoingMissions.delayed > 0 ? stats.ongoingMissions.delayed + ' retard' : 'OK' }}
+        </span>
+      </div>
+      <div class="sa-kpi-card__value">{{ stats.ongoingMissions.count }}</div>
+      <div class="sa-kpi-card__label">Missions en Cours</div>
+      <div class="sa-kpi-card__mini-row">
+        <span class="sa-mini-tag sa-mini-tag--green">✓ {{ stats.ongoingMissions.onTime }} à l'heure</span>
+        <span class="sa-mini-tag sa-mini-tag--red">⚠ {{ stats.ongoingMissions.delayed }} retard</span>
+      </div>
+    </div>
+
+    <!-- KPI 3: Véhicules en Service -->
+    <div class="sa-kpi-card sa-kpi-card--emerald">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag" [class]="getKpiHealthClass(vehiclesActivePercent, 70, 50)">
+          {{ vehiclesActivePercent }}%
+        </span>
+      </div>
+      <div class="sa-kpi-card__value">{{ stats.activeVehicles.count }}</div>
+      <div class="sa-kpi-card__label">Véhicules en Service</div>
+      <div class="sa-kpi-card__mini-row">
+        <span class="sa-mini-tag sa-mini-tag--amber">🔧 {{ stats.activeVehicles.maintenance }} maint.</span>
+        <span class="sa-mini-tag sa-mini-tag--red">✗ {{ stats.activeVehicles.horsService }} hors</span>
+      </div>
+    </div>
+
+    <!-- KPI 4: Taux Ponctualité -->
+    <div class="sa-kpi-card sa-kpi-card--violet">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>schedule</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag" [class]="getKpiHealthClass(currentPunctualityRate, 85, 70)">
+          Ce mois
+        </span>
+      </div>
+      <div class="sa-kpi-card__value">{{ currentPunctualityRate }}<span class="sa-kpi-card__unit">%</span></div>
+      <div class="sa-kpi-card__label">Taux de Ponctualité</div>
+      <div class="sa-kpi-card__sub">{{ stats.ongoingMissions.terminated }} missions terminées</div>
+      <div class="sa-kpi-card__bar">
+        <div class="sa-kpi-card__bar-fill" [style.width.%]="currentPunctualityRate" style="background:#a78bfa"></div>
+      </div>
+    </div>
+
+    <!-- KPI 5: Congés en Attente -->
+    <div class="sa-kpi-card sa-kpi-card--amber">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>event_note</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag" [class]="getKpiHealthClass(100 - leavePendingPercent, 70, 50)">
+          {{ leavePendingPercent }}% attente
+        </span>
+      </div>
+      <div class="sa-kpi-card__value">{{ stats.pendingLeaves.count }}</div>
+      <div class="sa-kpi-card__label">Congés en Attente</div>
+      <div class="sa-kpi-card__mini-row">
+        <span class="sa-mini-tag sa-mini-tag--green">✓ {{ stats.pendingLeaves.approved }}</span>
+        <span class="sa-mini-tag sa-mini-tag--red">✗ {{ stats.pendingLeaves.rejected }}</span>
+      </div>
+    </div>
+
+    <!-- KPI 6: Réclamations -->
+    <div class="sa-kpi-card sa-kpi-card--red">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>feedback</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag" [class]="getKpiHealthClass(100 - reclamationsOpenPercent, 70, 50)">
+          {{ stats.reclamations.total }} total
+        </span>
+      </div>
+      <div class="sa-kpi-card__value">{{ stats.reclamations.open }}</div>
+      <div class="sa-kpi-card__label">Réclamations Ouvertes</div>
+      <div class="sa-kpi-card__sub">{{ stats.reclamations.resolved }} résolues</div>
+      <div class="sa-kpi-card__bar">
+        <div class="sa-kpi-card__bar-fill" [style.width.%]="reclamationsOpenPercent" style="background:#f87171"></div>
+      </div>
+    </div>
+
+    <!-- KPI 7: Utilisateurs Actifs -->
+    <div class="sa-kpi-card sa-kpi-card--cyan">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>group</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag health-good">Actifs</span>
+      </div>
+      <div class="sa-kpi-card__value">{{ totalUsersActive }}</div>
+      <div class="sa-kpi-card__label">Utilisateurs Actifs</div>
+      <div class="sa-kpi-card__mini-row">
+        <span class="sa-mini-tag sa-mini-tag--cyan">👤 {{ stats.users.admins }} admin</span>
+        <span class="sa-mini-tag sa-mini-tag--cyan">👥 {{ stats.users.managers }} mgr</span>
+      </div>
+    </div>
+
+    <!-- KPI 8: Score Flotte -->
+    <div class="sa-kpi-card sa-kpi-card--gold">
+      <div class="sa-kpi-card__shine"></div>
+      <div class="sa-kpi-card__top">
+        <div class="sa-kpi-card__icon">
+          <mat-icon>emoji_events</mat-icon>
+        </div>
+        <span class="sa-kpi-card__tag" [class]="getKpiHealthClass(fleetPerformanceScore, 75, 55)">
+          Global
+        </span>
+      </div>
+      <div class="sa-kpi-card__value">{{ fleetPerformanceScore }}<span class="sa-kpi-card__unit">/100</span></div>
+      <div class="sa-kpi-card__label">Score Flotte Global</div>
+      <div class="sa-kpi-card__sub">Moyenne des {{ topDrivers.length }} chauffeurs</div>
+      <div class="sa-kpi-card__bar">
+        <div class="sa-kpi-card__bar-fill" [style.width.%]="fleetPerformanceScore" style="background:#fbbf24"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ SECTION 2: GRAPHIQUES PRINCIPAUX ══════════════════════════ -->
+  <div class="sa-charts-grid">
+
+    <!-- Ponctualité 12 mois [8 col] -->
+    <div class="sa-panel sa-panel--w8">
+      <div class="sa-panel__header">
+        <div class="sa-panel__title-group">
+          <span class="sa-panel__dot" style="background:#6366f1;box-shadow:0 0 8px #6366f1"></span>
+          <h3 class="sa-panel__title">Ponctualité des Missions (12 mois)</h3>
+        </div>
+        <div class="sa-legend-row">
+          <span class="sa-legend-item"><span class="sa-legend-dot" style="background:#10b981"></span> À l'heure</span>
+          <span class="sa-legend-item"><span class="sa-legend-dot" style="background:#f59e0b"></span> &lt;30min</span>
+          <span class="sa-legend-item"><span class="sa-legend-dot" style="background:#ef4444"></span> &gt;30min</span>
+          <span class="sa-legend-item"><span class="sa-legend-line" style="background:#818cf8"></span> Taux %</span>
+        </div>
+      </div>
+      <div class="sa-chart-wrap">
+        <canvas baseChart [data]="ponctualiteChartData" [options]="ponctualiteChartOptions" [type]="'bar'"></canvas>
+      </div>
+    </div>
+
+    <!-- Incidents ce mois [4 col] -->
+    <div class="sa-panel sa-panel--w4">
+      <div class="sa-panel__header">
+        <div class="sa-panel__title-group">
+          <span class="sa-panel__dot" style="background:#ef4444;box-shadow:0 0 8px #ef4444"></span>
+          <h3 class="sa-panel__title">Incidents ce Mois</h3>
+        </div>
+        <mat-icon style="color:#ef4444;opacity:0.7">report_problem</mat-icon>
+      </div>
+      <div class="sa-donut-wrap">
+        <canvas baseChart [data]="incidentsChartData" [options]="incidentsChartOptions" [type]="'doughnut'"
+          (chartClick)="onIncidentChartClick($event)"></canvas>
+      </div>
+      <!-- Légende incidents -->
+      <div class="sa-incidents-legend" *ngIf="incidentsChartData.labels?.length">
+        <div class="sa-inc-item" *ngFor="let lbl of incidentsChartData.labels; let i = index"
+          style="cursor: pointer;"
+          [style.opacity]="selectedIncidentCategory && selectedIncidentCategory !== lbl ? 0.35 : 1"
+          (click)="selectIncidentCategory(lbl)">
+          <span class="sa-inc-dot" [style.background]="['#ef4444','#f59e0b','#fbbf24','#38bdf8','#94a3b8'][i]"></span>
+          <span class="sa-inc-label">{{ lbl }}</span>
+          <span class="sa-inc-val">{{ incidentsChartData.datasets[0].data[i] }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flux Missions [8 col] -->
+    <div class="sa-panel sa-panel--w8">
+      <div class="sa-panel__header">
+        <div class="sa-panel__title-group">
+          <span class="sa-panel__dot" style="background:#10b981;box-shadow:0 0 8px #10b981"></span>
+          <h3 class="sa-panel__title">Flux des Missions (12 mois)</h3>
+        </div>
+        <div class="sa-legend-row">
+          <span class="sa-legend-item"><span class="sa-legend-dot" style="background:#10b981"></span> Terminées</span>
+          <span class="sa-legend-item"><span class="sa-legend-dot" style="background:#ef4444"></span> Retardées</span>
+        </div>
+      </div>
+      <div class="sa-chart-wrap">
+        <canvas baseChart [data]="fluxChartData" [options]="fluxChartOptions" [type]="'line'"></canvas>
+      </div>
+    </div>
+
+    <!-- Carburant Jauge [4 col] -->
+    <div class="sa-panel sa-panel--w4">
+      <div class="sa-panel__header">
+        <div class="sa-panel__title-group">
+          <span class="sa-panel__dot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24"></span>
+          <h3 class="sa-panel__title">Consommation Carburant</h3>
+        </div>
+        <mat-icon style="color:#fbbf24;opacity:0.7">local_gas_station</mat-icon>
+      </div>
+      <div class="sa-gauge-wrap">
+        <canvas baseChart [data]="fuelChartData" [options]="fuelChartOptions" [type]="'doughnut'"></canvas>
+        <div class="sa-gauge-center">
+          <span class="sa-gauge-val">{{ fuelDisplayValue }}</span>
+          <span class="sa-gauge-unit">{{ fuelDisplayUnit }}</span>
+          <span class="sa-gauge-trend" [class.sa-gauge-trend--red]="isFuelTrendPositive">
+            {{ fuelTrendDisplay }} vs cible
+          </span>
+        </div>
+      </div>
+      <div class="sa-fuel-meta" *ngIf="lowFuelAlerts > 0">
+        <mat-icon class="sa-fuel-alert-icon">warning_amber</mat-icon>
+        <span>{{ lowFuelAlerts }} véhicule(s) avec carburant bas (&lt;20%)</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ SECTION 3: RH, RÔLES & OPÉRATIONS ═════════════════════════ -->
+  <div class="sa-charts-grid">
+
+    <!-- Répartition des rôles -->
+    <div class="sa-panel sa-panel--w4">
+      <div class="sa-panel__header">
+        <div class="sa-panel__title-group">
+          <span class="sa-panel__dot" style="background:#818cf8;box-shadow:0 0 8px #818cf8"></span>
+          <h3 class="sa-panel__title">Répartition des Rôles</h3>
+        </div>
+        <span class="sa-opt-badge">{{ totalUsers }} utilisateurs</span>
+      </div>
+      <div class="sa-donut-wrap sa-donut-wrap--sm">
+        <canvas baseChart [data]="rolesChartData" [options]="rolesChartOptions" [type]="'doughnut'"></canvas>
+      </div>
+      <div class="sa-role-legend">
+        <div class="sa-role-item" *ngFor="let u of usersBreakdown">
+          <span class="sa-role-dot"
+            [style.background]="u.role==='SUPERADMIN'?'#818cf8':u.role==='MANAGER'?'#34d399':'#fbbf24'"></span>
+          <span class="sa-role-name">{{ u.role | titlecase }}</span>
+          <span class="sa-role-val">{{ u.count }} <small>({{ u.actifs }} actifs)</small></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Congés par statut -->
+    <div class="sa-panel sa-panel--w4">
+      <div class="sa-panel__header">
+        <div class="sa-panel__title-group">
+          <span class="sa-panel__dot" style="background:#fbbf24;box-shadow:0 0 8px #fbbf24"></span>
+          <h3 class="sa-panel__title">Congés par Statut</h3>
+        </div>
+        <span class="sa-opt-badge amber">{{ leavesTotal }} total</span>
+      </div>
+      <div class="sa-chart-wrap sa-chart-wrap--sm">
+        <canvas baseChart [data]="congesChartData" [options]="congesChartOptions" [type]="'bar'"></canvas>
+      </div>
+    </div>
+
+    <!-- Réclamations par statut -->
+    <div class="sa-panel sa-panel--w4">
+      <div class="sa-panel__header">
+        <div class="sa-panel__title-group">
+          <span class="sa-panel__dot" style="background:#f87171;box-shadow:0 0 8px #f87171"></span>
+          <h3 class="sa-panel__title">Réclamations par Statut</h3>
+        </div>
+        <span class="sa-opt-badge red">{{ stats.reclamations.total }} total</span>
+      </div>
+      <div class="sa-chart-wrap sa-chart-wrap--sm">
+        <canvas baseChart [data]="reclamationsChartData" [options]="reclamationsChartOptions" [type]="'bar'"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══ SECTION 5: TOP CHAUFFEURS ═════════════════════════════════ -->
+  <div class="sa-panel sa-panel--full">
+    <div class="sa-panel__header">
+      <div class="sa-panel__title-group">
+        <span class="sa-panel__dot" style="background:#fbbf24;box-shadow:0 0 8px rgba(251,191,36,0.8)"></span>
+        <h3 class="sa-panel__title">Classement Performance — Chauffeurs</h3>
+        <span class="sa-panel__badge">Score moyen flotte : {{ fleetPerformanceScore }}/100</span>
+      </div>
+      <button class="sa-btn sa-btn--ghost sa-btn--sm" [routerLink]="['/users']">
+        Voir tous <mat-icon>arrow_forward</mat-icon>
+      </button>
+    </div>
+
+    <div class="sa-table-wrap">
+      <table class="sa-table">
+        <thead>
+          <tr>
+            <th>RANG</th>
+            <th>CHAUFFEUR</th>
+            <th>MISSIONS</th>
+            <th>PONCTUALITÉ</th>
+            <th>INCIDENTS</th>
+            <th>H. CONDUITE</th>
+            <th>DISPO.</th>
+            <th>RETARD MOY.</th>
+            <th>SCORE GLOBAL</th>
+            <th>STATUT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let d of getFilteredDrivers()" class="sa-table__row" [class.sa-table__row--active]="selectedChauffeurId === d.id" (click)="onTableRowClick(d)">
+            <td class="sa-table__rank">
+              <span *ngIf="d.rank <= 3" class="sa-medal">{{ getMedalEmoji(d.rank) }}</span>
+              <span *ngIf="d.rank > 3" class="sa-rank-num">#{{ d.rank }}</span>
+            </td>
+            <td>
+              <div class="sa-driver-cell">
+                <div class="sa-driver-avatar">{{ d.name.charAt(0).toUpperCase() }}</div>
+                <span class="sa-driver-name">{{ d.name }}</span>
+              </div>
+            </td>
+            <td class="sa-td-num">{{ d.missions }}</td>
+            <td>
+              <div class="sa-ponct-cell">
+                <span [style.color]="getScoreColor(d.ponctuality)">{{ d.ponctuality }}%</span>
+                <div class="sa-mini-bar">
+                  <div class="sa-mini-bar__fill" [style.width.%]="d.ponctuality"
+                    [style.background]="getScoreColor(d.ponctuality)"></div>
+                </div>
+              </div>
+            </td>
+            <td [class.sa-td--red]="d.incidents > 0">{{ d.incidents }}</td>
+            <td class="sa-td-num">{{ d.drivingHours !== null ? d.drivingHours + 'h' : '—' }}</td>
+            <td class="sa-td-num">{{ d.availability !== null ? d.availability + '%' : '—' }}</td>
+            <td class="sa-td-num">{{ d.avgDelay !== null ? d.avgDelay + ' min' : '—' }}</td>
+            <td>
+              <div class="sa-score-cell">
+                <span class="sa-score-val" [style.color]="getScoreColor(d.score)">{{ d.score }}</span>
+                <div class="sa-score-bar">
+                  <div class="sa-score-bar__fill" [style.width.%]="d.score" [style.background]="getScoreColor(d.score)">
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td><span class="sa-badge" [class]="getBadgeClass(d.badge)">{{ d.badge }}</span></td>
+          </tr>
+          <tr *ngIf="!topDrivers.length">
+            <td colspan="10" class="sa-table__empty">Aucune donnée de performance disponible</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,131 @@
+<div class="rapport-page animate-fade-up">
+    <div class="header-section">
+        <div class="header-text">
+            <h1 class="text-gradient">Générateur de Rapports</h1>
+            <p class="subtitle">Générez, visualisez et exportez des rapports détaillés sur toutes les gestions</p>
+        </div>
+    </div>
+
+    <div class="rapport-container">
+        <!-- Panneau de sélection des rapports (gauche) -->
+        <div class="rapport-selector">
+            <h2>Types de Rapports</h2>
+            <div class="rapports-grid">
+                <div *ngFor="let rapport of rapportTypes" 
+                    class="rapport-card glass-card"
+                    [class.active]="selectedRapport?.id === rapport.id"
+                    (click)="selectRapport(rapport)">
+                    <mat-icon class="rapport-icon">{{ rapport.icon }}</mat-icon>
+                    <h3>{{ rapport.titre }}</h3>
+                    <p class="rapport-description">{{ rapport.description }}</p>
+                    <span class="badge-fresh">
+                        <mat-icon>sync</mat-icon>
+                        Temps réel
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Zone d'affichage du rapport (droite) -->
+        <div class="rapport-display">
+            <div *ngIf="!selectedRapport" class="empty-state">
+                <mat-icon>description</mat-icon>
+                <p>Sélectionnez un type de rapport dans le panneau de gauche pour commencer.</p>
+            </div>
+
+            <div *ngIf="selectedRapport && !rapport" class="rapport-config glass-card">
+                <h2>{{ selectedRapport.titre }}</h2>
+                <p>{{ selectedRapport.description }}</p>
+
+                <!-- Formulaire de paramètres si nécessaire -->
+                <form [formGroup]="paramForm" *ngIf="selectedRapport.hasDateRange || selectedRapport.hasMonthYear"
+                    class="params-form">
+                    
+                    <div *ngIf="selectedRapport.hasDateRange" class="date-range-group">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date de début</mat-label>
+                            <input matInput [matDatepicker]="pickerDebut" formControlName="debut">
+                            <mat-datepicker-toggle matIconSuffix [for]="pickerDebut"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerDebut></mat-datepicker>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date de fin</mat-label>
+                            <input matInput [matDatepicker]="pickerFin" formControlName="fin">
+                            <mat-datepicker-toggle matIconSuffix [for]="pickerFin"></mat-datepicker-toggle>
+                            <mat-datepicker #pickerFin></mat-datepicker>
+                        </mat-form-field>
+                    </div>
+
+                    <div *ngIf="selectedRapport.hasMonthYear" class="month-year-group">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Mois</mat-label>
+                            <input matInput type="number" min="1" max="12" formControlName="mois" placeholder="1-12">
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Année</mat-label>
+                            <input matInput type="number" formControlName="annee" placeholder="YYYY">
+                        </mat-form-field>
+                    </div>
+                </form>
+
+                <button mat-flat-button color="primary" class="glow-on-hover generate-btn"
+                    (click)="genererRapport()" [disabled]="isLoading">
+                    <mat-icon *ngIf="!isLoading">play_arrow</mat-icon>
+                    <mat-spinner *ngIf="isLoading" diameter="20" mode="indeterminate"></mat-spinner>
+                    {{ isLoading ? 'Génération...' : 'Générer le Rapport' }}
+                </button>
+            </div>
+
+            <div *ngIf="isLoading && !rapport" class="loading-state">
+                <mat-spinner diameter="48"></mat-spinner>
+                <p>Génération du rapport en cours...</p>
+            </div>
+
+            <div *ngIf="rapport" id="rapport-contenu" class="rapport-content">
+                <div class="rapport-header glass-card">
+                    <div class="header-info">
+                        <h2>{{ rapport.titre }}</h2>
+                        <p class="generation-date">Généré le: {{ getResumeGeneration() }}</p>
+                    </div>
+                    <div class="action-buttons">
+                        <button mat-icon-button matTooltip="Actualiser"
+                            (click)="actualiserRapport()" [disabled]="isLoading" title="Actualiser">
+                            <mat-icon>refresh</mat-icon>
+                        </button>
+                        <button mat-icon-button matTooltip="Exporter en PDF"
+                            (click)="exporterPDF()" title="Exporter en PDF">
+                            <mat-icon>download</mat-icon>
+                        </button>
+                        <button mat-icon-button matTooltip="Copier le résumé"
+                            (click)="copierResume()" [disabled]="!rapport.resumeIA" title="Copier le résumé">
+                            <mat-icon>content_copy</mat-icon>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="sections-container">
+                    <mat-card class="rapport-section glass-card" *ngFor="let section of rapport.sections">
+                        <mat-card-header>
+                            <mat-card-title>{{ section.titre }}</mat-card-title>
+                        </mat-card-header>
+                        <mat-card-content>
+                            <pre class="section-content">{{ section.contenu }}</pre>
+                        </mat-card-content>
+                    </mat-card>
+                </div>
+
+                <mat-card *ngIf="rapport.resumeIA" class="rapport-resume glass-card">
+                    <mat-card-header>
+                        <mat-icon class="ia-icon">auto_awesome</mat-icon>
+                        <mat-card-title>Résumé Intelligent (IA)</mat-card-title>
+                    </mat-card-header>
+                    <mat-card-content>
+                        <p class="resume-text">{{ rapport.resumeIA }}</p>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+        </div>
+    </div>
+</div>

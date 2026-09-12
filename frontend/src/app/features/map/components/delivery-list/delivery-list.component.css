@@ -1,0 +1,315 @@
+.map-sidebar {
+    width: 100%;
+    height: 100%; /* Height matched by flex-parent's layout restrictions */
+    background: var(--glass-bg, rgba(15, 23, 42, 0.85));
+    backdrop-filter: blur(16px);
+    border-right: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text-primary, white);
+}
+
+:host-context(.theme-light) .map-sidebar {
+    background: rgba(255, 255, 255, 0.9);
+    border-right: 1px solid rgba(30, 58, 138, 0.15);
+    color: #0f172a;
+}
+
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex-shrink: 0;
+}
+
+:host-context(.theme-light) .sidebar-header {
+    border-bottom-color: rgba(30, 58, 138, 0.15);
+}
+
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stats-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: white; /* Badge text color kept white inherently for contrast on strong backgrounds */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+.stat-item.active {
+    border-color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stat-item .count { font-size: 0.9rem; margin-top: 2px; }
+.stat-item.trucks { background: #10b981; }
+.stat-item.en-route { background: #3b82f6; }
+.stat-item.arrived { background: #8b5cf6; }
+.stat-item.alerts { background: #ef4444; }
+
+/* Search Section CSS */
+.search-section {
+    padding: 16px 20px 0 20px;
+    flex-shrink: 0;
+}
+
+.custom-search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+
+.custom-search-wrapper:focus-within {
+    border-color: var(--accent, #3b82f6);
+    outline: 2px solid var(--accent, #3b82f6);
+    outline-offset: 1px;
+}
+
+:host-context(.theme-light) .custom-search-wrapper {
+    background: #ffffff;
+    border-color: rgba(30, 58, 138, 0.2);
+}
+
+.custom-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    padding: 10px 40px;
+    color: var(--text-primary, white);
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+:host-context(.theme-light) .custom-search-input {
+    color: #0f172a;
+}
+
+.custom-search-input:focus { outline: none; }
+.custom-search-input::placeholder { color: var(--text-secondary, #94a3b8); }
+:host-context(.theme-light) .custom-search-input::placeholder { color: #64748b; }
+
+.search-icon {
+    position: absolute;
+    left: 10px;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.clear-btn {
+    position: absolute;
+    right: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #94a3b8);
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    padding: 4px;
+}
+
+.clear-btn:hover { background: rgba(0, 0, 0, 0.1); }
+:host-context(.theme-light) .search-icon, :host-context(.theme-light) .clear-btn { color: #64748b; }
+
+/* Truck List Layout */
+.truck-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* custom scrollbar for list */
+.truck-list::-webkit-scrollbar { width: 6px; }
+.truck-list::-webkit-scrollbar-track { background: transparent; }
+.truck-list::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 3px; }
+:host-context(.theme-light) .truck-list::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+
+.section-title {
+    color: var(--text-secondary, rgba(255, 255, 255, 0.5));
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+:host-context(.theme-light) .section-title { color: #334155; }
+
+.pagination-info {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: var(--text-primary);
+}
+:host-context(.theme-light) .pagination-info { background: rgba(0,0,0,0.05); color: #0f172a; }
+
+/* Empty State Styling */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    margin-top: 20px;
+}
+
+.empty-illustration {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+:host-context(.theme-light) .empty-illustration { background: rgba(30, 58, 138, 0.05); }
+
+.empty-illustration mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--text-secondary, #94a3b8); }
+.empty-illustration .overlay-icon {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #ef4444;
+    background: var(--bg-main, #0f172a);
+    border-radius: 50%;
+}
+:host-context(.theme-light) .empty-illustration .overlay-icon { background: #f1f5f9; }
+
+.empty-msg {
+    margin: 0 0 4px 0;
+    color: var(--text-primary, white);
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.empty-sub { margin: 0; color: var(--text-secondary, #94a3b8); font-size: 0.8rem; }
+:host-context(.theme-light) .empty-msg { color: #0f172a; }
+:host-context(.theme-light) .empty-sub { color: #334155; }
+
+/* Pagination Footer */
+.pagination-footer {
+    padding: 12px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    background: rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+
+:host-context(.theme-light) .pagination-footer {
+    background: #ffffff;
+    border-top-color: rgba(30, 58, 138, 0.15);
+}
+
+.page-arrow {
+    background: transparent;
+    border: none;
+    color: var(--text-primary, white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.page-arrow:hover:not(:disabled) { background: var(--glass-bg, rgba(255, 255, 255, 0.1)); }
+.page-arrow:disabled { color: var(--text-muted, #475569); cursor: not-allowed; }
+:host-context(.theme-light) .page-arrow { color: #0f172a; }
+:host-context(.theme-light) .page-arrow:hover:not(:disabled) { background: rgba(30, 58, 138, 0.05); }
+
+.desktop-pages { display: flex; gap: 4px; }
+.mobile-pages { display: none; }
+
+.page-num-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-primary, white);
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-num-btn:hover:not(.active) { background: var(--glass-bg, rgba(255, 255, 255, 0.1)); }
+:host-context(.theme-light) .page-num-btn { color: #0f172a; }
+:host-context(.theme-light) .page-num-btn:hover:not(.active) { background: rgba(30, 58, 138, 0.05); }
+
+.page-num-btn.active {
+    background: var(--accent, #3b82f6);
+    color: white;
+    font-weight: 700;
+}
+
+:host-context(.theme-light) .page-num-btn.active { color: white; } /* Keep active text always white over the blue patch */
+
+/* Mobile view toggle for pagination */
+@media (max-width: 768px) {
+    .desktop-pages { display: none; }
+    .mobile-pages { 
+        display: flex; 
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-primary, white);
+    }
+    :host-context(.theme-light) .mobile-pages { color: #0f172a; }
+}

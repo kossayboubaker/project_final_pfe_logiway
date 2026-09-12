@@ -1,0 +1,189 @@
+<div class="messenger-container glass-effect animate-fade-up">
+    <div class="contacts-panel">
+        <div class="search-box">
+            <mat-form-field appearance="outline" class="full-width messenger-search">
+                <mat-label>Rechercher...</mat-label>
+                <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" placeholder="Rechercher un contact">
+                <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+        </div>
+
+        <mat-nav-list class="contact-list">
+            <mat-list-item *ngFor="let contact of filteredContacts; trackBy: trackByContactId"
+                [class.active]="selectedContact?.id === contact.id"
+                (click)="selectContact(contact)">
+                <div matListItemAvatar class="contact-avatar-holder">
+                    <ng-container *ngIf="contact.image; else initialsAvatar">
+                        <img class="contact-avatar-image" [src]="contact.image" [alt]="contact.displayName">
+                        <span class="presence-dot" [class.online]="contact.isOnline"></span>
+                    </ng-container>
+                    <ng-template #initialsAvatar>
+                        <div class="contact-avatar">{{ contact.initials }}</div>
+                        <span class="presence-dot" [class.online]="contact.isOnline"></span>
+                    </ng-template>
+                </div>
+
+                <div matListItemTitle class="contact-title-row">
+                    <span class="contact-name">{{ contact.displayName }}</span>
+                    <span class="contact-role">{{ contact.roleLabel }}</span>
+                    <span *ngIf="!contact.isOnline" class="offline-status">· Hors ligne</span>
+                </div>
+                <div matListItemLine class="contact-preview">{{ contact.lastMessagePreview || 'Aucun message pour le moment.' }}</div>
+                <div matListItemMeta class="contact-meta">
+                    <span class="contact-time" *ngIf="contact.lastMessageDate">{{ contact.lastMessageDate | date:'HH:mm' }}</span>
+                    <span class="unread-count" *ngIf="contact.unreadCount">{{ contact.unreadCount }}</span>
+                </div>
+            </mat-list-item>
+        </mat-nav-list>
+    </div>
+
+    <div class="chat-panel" *ngIf="selectedContact; else noSelect">
+        <div class="chat-header">
+            <div class="contact-info">
+                <ng-container *ngIf="selectedContact.image; else headerInitials">
+                    <img class="contact-avatar-image small" [src]="selectedContact.image" [alt]="selectedContact.displayName">
+                    <span class="presence-dot header-dot" [class.online]="selectedContact.isOnline"></span>
+                </ng-container>
+                <ng-template #headerInitials>
+                    <div class="contact-avatar small">{{ selectedContact.initials }}</div>
+                    <span class="presence-dot header-dot" [class.online]="selectedContact.isOnline"></span>
+                </ng-template>
+
+                <div class="text">
+                    <h3>{{ selectedContact.displayName }}</h3>
+                    <span class="contact-meta-info">
+                        <span class="role-label">{{ selectedContact.roleLabel }}</span>
+                        ·
+                        <span class="online-status" [ngClass]="{ 'online': selectedContact.isOnline, 'offline': !selectedContact.isOnline }">{{ selectedContact.isOnline ? 'En ligne' : 'Hors ligne' }}</span>
+                    </span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <!-- Call buttons removed until feature is functional -->
+            </div>
+        </div>
+
+        <div #messagesArea class="messages-area" (scroll)="onMessagesScroll()">
+            <div class="message-wrapper" *ngFor="let msg of messages; trackBy: trackByMessageId" [class.sent]="msg.sentByMe">
+                <div class="inline-message-actions" *ngIf="msg.sentByMe && !msg.supprime">
+                    <button mat-icon-button aria-label="Options du message" type="button" [matMenuTriggerFor]="messageMenu" [matMenuTriggerData]="{message: msg}">
+                        <mat-icon>more_vert</mat-icon>
+                    </button>
+                </div>
+                <ng-container *ngIf="msg.supprime">
+                    <div class="message-bubble deleted-bubble">
+                        <span class="deleted-message">Message supprimé</span>
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="!msg.supprime" [ngSwitch]="msg.type">
+                    <div *ngSwitchCase="'TEXTE'" class="message-bubble text-bubble">
+                        <ng-container *ngIf="editingMessageId === msg.id; else readonlyText">
+                            <input class="message-edit-input" [(ngModel)]="editingMessageContent" (keyup.enter)="saveEditedMessage(msg)" (keyup.escape)="cancelEditMessage()" />
+                            <div class="message-edit-actions">
+                                <button mat-button type="button" (click)="saveEditedMessage(msg)">Valider</button>
+                                <button mat-button type="button" (click)="cancelEditMessage()">Annuler</button>
+                            </div>
+                        </ng-container>
+                        <ng-template #readonlyText>
+                            <span>{{ msg.contenu }}</span>
+                            <div class="message-edited-label" *ngIf="msg.modifie" [title]="msg.dateModification ? ('Modifié le ' + (msg.dateModification | date:'short')) : 'Message modifié'">modifié</div>
+                        </ng-template>
+                    </div>
+
+                    <div *ngSwitchCase="'IMAGE'" class="message-bubble media-bubble image-bubble" (click)="openImage(msg)">
+                        <div class="media-loader" *ngIf="!isImageLoaded(msg.id)">
+                            <mat-spinner diameter="28"></mat-spinner>
+                        </div>
+                        <img *ngIf="getFileUrl(msg)" [src]="getFileUrl(msg)" [alt]="msg.nomFichierOriginal || 'Image'" (load)="onImageLoaded(msg.id)">
+                    </div>
+
+                    <div *ngSwitchCase="'PDF'" class="message-bubble media-bubble pdf-bubble">
+                        <div class="pdf-icon"><mat-icon>picture_as_pdf</mat-icon></div>
+                        <div class="pdf-content">
+                            <strong>{{ msg.nomFichierOriginal || 'Document PDF' }}</strong>
+                            <span>{{ getMessageSizeLabel(msg) }}</span>
+                        </div>
+                        <button mat-icon-button type="button" (click)="downloadFile(msg)"><mat-icon>download</mat-icon></button>
+                    </div>
+
+                    <div *ngSwitchCase="'VOCAL'" class="message-bubble media-bubble vocal-bubble">
+                        <div class="vocal-meta">
+                            <mat-icon>graphic_eq</mat-icon>
+                            <span>Message vocal · {{ msg.dureeVocale || 0 }} s</span>
+                        </div>
+                        <audio *ngIf="getFileUrl(msg)" [src]="getFileUrl(msg)" controls preload="metadata"></audio>
+                    </div>
+
+                    <div *ngSwitchCase="'APPEL'" class="message-bubble call-bubble">
+                        <mat-icon>call</mat-icon>
+                        <span>{{ msg.contenu }}</span>
+                    </div>
+                </ng-container>
+
+                <div class="message-footer">
+                    <span class="time">{{ getMessageDateLabel(msg) }}</span>
+                    <span *ngIf="msg.sentByMe" class="delivery-state" [ngClass]="getMessageViewState(msg).toLowerCase()" [title]="getMessageTooltip(msg)">
+                        <mat-icon *ngIf="getMessageViewState(msg) === 'SENT'">done</mat-icon>
+                        <mat-icon *ngIf="getMessageViewState(msg) === 'RECEIVED'">done_all</mat-icon>
+                        <mat-icon *ngIf="getMessageViewState(msg) === 'READ'">done_all</mat-icon>
+                    </span>
+                </div>
+
+                <div class="inline-message-actions" *ngIf="canEditMessage(msg) || canDeleteMessage(msg)">
+                    <button mat-icon-button aria-label="Options du message" type="button" [matMenuTriggerFor]="messageMenu" [matMenuTriggerData]="{message: msg}">
+                        <mat-icon>more_vert</mat-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <mat-menu #messageMenu="matMenu">
+            <ng-template matMenuContent let-message="message">
+                <button mat-menu-item type="button" *ngIf="canEditMessage(message)" (click)="beginEditMessage(message)">
+                    <mat-icon>edit</mat-icon>
+                    <span>Modifier</span>
+                </button>
+                <button mat-menu-item type="button" *ngIf="canDeleteMessage(message)" (click)="deleteMessage(message)">
+                    <mat-icon>delete</mat-icon>
+                    <span>Supprimer</span>
+                </button>
+            </ng-template>
+        </mat-menu>
+
+        <div class="recording-banner" *ngIf="isRecording">
+            <mat-icon>fiber_manual_record</mat-icon>
+            <span>Enregistrement vocal en cours · {{ recordingSeconds }} s</span>
+        </div>
+
+        <div class="input-area">
+            <button mat-icon-button type="button" (click)="openFilePicker()"><mat-icon>add</mat-icon></button>
+            <input #fileInput type="file" hidden accept="image/jpeg,image/png,image/gif,application/pdf" (change)="onFileSelected($event)">
+            <input type="text" placeholder="Écrivez un message..." [(ngModel)]="newMessage" (keyup.enter)="sendMessage()">
+            <button mat-icon-button type="button" class="voice-btn"
+                (mousedown)="startRecording()" (mouseup)="stopRecording()" (mouseleave)="stopRecording()"
+                (touchstart)="startRecording()" (touchend)="stopRecording()">
+                <mat-icon>{{ isRecording ? 'mic' : 'mic_none' }}</mat-icon>
+            </button>
+            <button mat-icon-button color="primary" type="button" [disabled]="!newMessage.trim()" (click)="sendMessage()">
+                <mat-icon>send</mat-icon>
+            </button>
+        </div>
+    </div>
+
+    <ng-template #noSelect>
+        <div class="no-chat">
+            <mat-icon>chat_bubble_outline</mat-icon>
+            <p>Sélectionnez une discussion pour commencer</p>
+        </div>
+    </ng-template>
+</div>
+
+<div class="image-preview-backdrop" *ngIf="previewImageUrl" (click)="closeImagePreview()">
+    <div class="image-preview-card" (click)="$event.stopPropagation()">
+        <div class="image-preview-header">
+            <span>{{ previewImageLabel }}</span>
+            <button mat-icon-button type="button" (click)="closeImagePreview()"><mat-icon>close</mat-icon></button>
+        </div>
+        <img [src]="previewImageUrl" [alt]="previewImageLabel">
+    </div>
+</div>

@@ -1,0 +1,94 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   ⚠️  ERREUR PowerShell : "Module 'transformers' not found"  ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  ❌ PROBLÈME IDENTIFIÉ                                        │
+│                                                               │
+│  1. Tu utilises PowerShell au lieu de CMD                    │
+│  2. Le module Python 'transformers' n'est pas installé       │
+│  3. app.py essaie d'utiliser transformers (lourd, 3-4 GB)    │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  ✅ SOLUTION RAPIDE (30 SECONDES)                            │
+│                                                               │
+│  Double-clique sur ce fichier :                              │
+│                                                               │
+│      📄 INSTALLER_ET_DEMARRER_SERVICES.bat                   │
+│                                                               │
+│  Il va :                                                      │
+│    1. Installer les dépendances Python manquantes            │
+│    2. Démarrer les 3 services IA automatiquement            │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  ALTERNATIVE : COMMANDES MANUELLES (CMD, PAS PowerShell)    │
+│                                                               │
+│  Appuie sur Windows + R, tape "cmd", puis :                 │
+│                                                               │
+│  cd C:\Users\kossa\OneDrive\Desktop\essais\reclamation-ai-service
+│  pip install flask flask-cors                                │
+│  python app_simple.py                                        │
+│                                                               │
+│  ✅ Le service démarre sur http://localhost:5001            │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  POURQUOI app_simple.py AU LIEU DE app.py ?                  │
+│                                                               │
+│  • app.py         → Utilise transformers (ML lourd, 3-4 GB) │
+│  • app_simple.py  → Règles simples (léger, 10 MB)           │
+│                                                               │
+│  Pour les tests unitaires, app_simple.py suffit !           │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  SI TU ES DANS POWERSHELL ACTUELLEMENT                       │
+│                                                               │
+│  Tape juste "cmd" puis Entrée pour basculer en CMD          │
+│                                                               │
+│  Ou tape les commandes avec ".\" devant :                    │
+│    .\start_simple.bat     au lieu de    start_simple.bat     │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════
+
+🎯 RECOMMANDATION POUR LES TESTS UNITAIRES
+
+Je te recommande de NE PAS démarrer les services IA.
+
+À la place, dis-moi :  "corrige avec mocks"
+
+Et je vais modifier ReclamationServiceTest.java pour qu'il n'ait
+PAS besoin du service IA.
+
+Avantages :
+  ✅ Tests rapides (~10 secondes)
+  ✅ Pas besoin d'installer transformers
+  ✅ Pas besoin de démarrer les services
+  ✅ Tests unitaires vrais (isolés)
+
+═══════════════════════════════════════════════════════════════
+
+
+🆘 RÉSUMÉ
+
+1. Double-clique : INSTALLER_ET_DEMARRER_SERVICES.bat
+   OU
+2. Dis-moi : "corrige avec mocks" (recommandé pour tests)
+
+═══════════════════════════════════════════════════════════════

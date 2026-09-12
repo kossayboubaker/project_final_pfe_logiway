@@ -1,0 +1,103 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Manager</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.entities</a>
+</div>
+
+<h1>Coverage Summary for Class: Manager (com.logiway.entities)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+</tr>
+<tr>
+  <td class="name">Manager</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.entities;
+&nbsp;
+&nbsp;import jakarta.persistence.*;
+&nbsp;import lombok.*;
+&nbsp;import lombok.experimental.SuperBuilder;
+&nbsp;
+&nbsp;import java.util.HashSet;
+&nbsp;import java.util.Set;
+&nbsp;
+&nbsp;@Entity
+&nbsp;@Table(name = &quot;managers&quot;)
+&nbsp;@PrimaryKeyJoinColumn(name = &quot;id&quot;)
+&nbsp;@Getter
+&nbsp;@Setter
+&nbsp;@NoArgsConstructor
+&nbsp;@AllArgsConstructor
+&nbsp;@SuperBuilder
+&nbsp;public class Manager extends Utilisateur {
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;secteur_id&quot;)
+&nbsp;    private Secteur secteur;
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;manager&quot;)
+&nbsp;    @Builder.Default
+&nbsp;    private Set&lt;Chauffeur&gt; chauffeurs = new HashSet&lt;&gt;();
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;manager&quot;)
+&nbsp;    @Builder.Default
+&nbsp;    private Set&lt;Trajet&gt; trajets = new HashSet&lt;&gt;();
+&nbsp;
+&nbsp;    @OneToMany(mappedBy = &quot;manager&quot;)
+&nbsp;    @Builder.Default
+&nbsp;    private Set&lt;Conge&gt; conges = new HashSet&lt;&gt;();
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

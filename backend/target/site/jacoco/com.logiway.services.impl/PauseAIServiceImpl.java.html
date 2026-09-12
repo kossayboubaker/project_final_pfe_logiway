@@ -1,0 +1,1040 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PauseAIServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">PauseAIServiceImpl.java</span></div><h1>PauseAIServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logiway.dto.pause.PauseAIDashboardResponse;
+import com.logiway.dto.pause.PauseAIPredictionResponse;
+import com.logiway.entities.*;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutPause;
+import com.logiway.entities.enums.StatutTrajet;
+import com.logiway.entities.enums.TypeAlerteIA;
+import com.logiway.exceptions.ResourceNotFoundException;
+import com.logiway.repositories.PauseAIPredictionRepository;
+import com.logiway.repositories.PauseReglementaireRepository;
+import com.logiway.repositories.TrajetRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.NotificationRealtimeService;
+import com.logiway.services.PauseAIService;
+import jakarta.transaction.Transactional;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.Locale;
+
+@Service
+<span class="fc" id="L39">@RequiredArgsConstructor</span>
+@Transactional
+<span class="fc" id="L41">@Slf4j</span>
+public class PauseAIServiceImpl implements PauseAIService {
+
+    private final PauseAIPredictionRepository predictionRepository;
+    private final PauseReglementaireRepository pauseRepository;
+    private final TrajetRepository trajetRepository;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final NotificationRealtimeService notificationRealtimeService;
+    private final UtilisateurRepository utilisateurRepository;
+    private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
+
+    @Value(&quot;${pause.ai.url:http://localhost:5000}&quot;)
+    private String pauseAiUrl;
+
+    private static final double SEUIL_SCORE_RECOMMANDE = 70.0;
+    private static final double SEUIL_SCORE_URGENT = 85.0;
+    private static final double SEUIL_HEURES_MIN = 3.0;
+    private static final double SEUIL_HEURES_CRITIQUE = 4.5;
+    private static final int INTERVALLE_EVALUATION_MINUTES = 2;
+
+    @PostConstruct
+    public void verifierAPIFlaskAuDemarrage() {
+<span class="fc" id="L64">        List&lt;String&gt; healthChecks = List.of(&quot;/api/health&quot;, &quot;/health&quot;, &quot;/api/status&quot;);</span>
+<span class="fc bfc" id="L65" title="All 2 branches covered.">        for (String path : healthChecks) {</span>
+            try {
+<span class="fc" id="L67">                ResponseEntity&lt;String&gt; response = restTemplate.getForEntity(pauseAiUrl + path, String.class);</span>
+<span class="fc bfc" id="L68" title="All 2 branches covered.">                if (response.getStatusCode().is2xxSuccessful()) {</span>
+<span class="fc" id="L69">                    log.info(&quot;[PAUSE-AI] API Flask Pause AI accessible — modèle prêt ({}{})&quot;, pauseAiUrl, path);</span>
+<span class="fc" id="L70">                    return;</span>
+                }
+<span class="fc" id="L72">            } catch (Exception ex) {</span>
+<span class="fc" id="L73">                log.debug(&quot;[PAUSE-AI] Health check échoué sur {}{}: {}&quot;, pauseAiUrl, path, ex.getMessage());</span>
+<span class="fc" id="L74">            }</span>
+<span class="fc" id="L75">        }</span>
+
+<span class="fc" id="L77">        log.warn(&quot;[PAUSE-AI] ⚠️ AVERTISSEMENT : API Flask Pause AI inaccessible sur port 5000 — mode fallback activé&quot;);</span>
+<span class="fc" id="L78">    }</span>
+
+    @Override
+    public PauseAIPredictionResponse evaluerPause(Long trajetId, Double currentLatitude, 
+                                                   Double currentLongitude, Double distanceParcourueKm) {
+<span class="fc" id="L83">        Trajet trajet = trajetRepository.findById(trajetId)</span>
+<span class="fc" id="L84">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        if (trajet.getStatut() != StatutTrajet.EN_COURS) {</span>
+<span class="fc" id="L87">            log.warn(&quot;[PAUSE-AI] Trajet {} n'est pas EN_COURS, statut: {}&quot;, trajetId, trajet.getStatut());</span>
+<span class="fc" id="L88">            throw new IllegalStateException(&quot;Le trajet n'est pas en cours&quot;);</span>
+        }
+
+        // Calculer hours_driving
+<span class="fc" id="L92">        LocalDateTime now = LocalDateTime.now();</span>
+<span class="fc" id="L93">        Duration dureeCond = Duration.between(trajet.getDateDepart(), now);</span>
+        
+        // Soustraire le temps des pauses déjà effectuées
+<span class="fc" id="L96">        List&lt;PauseReglementaire&gt; pausesEffectuees = pauseRepository.findByTrajetId(trajetId).stream()</span>
+<span class="fc bfc" id="L97" title="All 4 branches covered.">            .filter(p -&gt; p.getStatut() == StatutPause.ATTEINTE &amp;&amp; p.getDurationSeconds() != null)</span>
+<span class="fc" id="L98">            .toList();</span>
+        
+<span class="fc" id="L100">        long tempsPausesSecondes = pausesEffectuees.stream()</span>
+<span class="fc" id="L101">            .mapToLong(p -&gt; p.getDurationSeconds())</span>
+<span class="fc" id="L102">            .sum();</span>
+        
+<span class="fc" id="L104">        double hoursDriving = (dureeCond.getSeconds() - tempsPausesSecondes) / 3600.0;</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        double totalDistanceKm = trajet.getDistanceKm() != null ? trajet.getDistanceKm() : 0.0;</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        double distAlongRatio = totalDistanceKm &gt; 0 ? distanceParcourueKm / totalDistanceKm : 0.0;</span>
+
+<span class="fc" id="L108">        log.info(</span>
+            &quot;[PAUSE-AI] Évaluation déclenchée — TrajetId={} | hours_driving={}h | dist_along_ratio={} | position=({}, {})&quot;,
+            trajetId,
+<span class="fc" id="L111">            formatDouble(hoursDriving),</span>
+<span class="fc" id="L112">            formatDouble(distAlongRatio),</span>
+<span class="fc" id="L113">            formatDouble(currentLatitude),</span>
+<span class="fc" id="L114">            formatDouble(currentLongitude)</span>
+        );
+
+        // Règle des 3 heures - ne pas évaluer si &lt; 3h
+<span class="fc bfc" id="L118" title="All 2 branches covered.">        if (hoursDriving &lt; SEUIL_HEURES_MIN) {</span>
+<span class="fc" id="L119">            log.info(&quot;[PAUSE-AI] hours_driving={}h &lt; 3h, évaluation ignorée&quot;, formatDouble(hoursDriving));</span>
+<span class="fc" id="L120">            return null;</span>
+        }
+
+        // Vérifier la dernière évaluation pour respecter l'intervalle de 2 minutes
+<span class="fc" id="L124">        Optional&lt;PauseAIPrediction&gt; dernierePrediction = predictionRepository.findLastPredictionForTrajet(trajetId);</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (dernierePrediction.isPresent()) {</span>
+<span class="fc" id="L126">            Duration depuisDerniereEval = Duration.between(dernierePrediction.get().getTimestamp(), now);</span>
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">            if (depuisDerniereEval.toMinutes() &lt; INTERVALLE_EVALUATION_MINUTES) {</span>
+<span class="fc" id="L128">                log.info(&quot;[PAUSE-AI] Dernière évaluation il y a {} min, skip (intervalle: {} min)&quot;, </span>
+<span class="fc" id="L129">                         depuisDerniereEval.toMinutes(), INTERVALLE_EVALUATION_MINUTES);</span>
+<span class="fc" id="L130">                return toResponse(dernierePrediction.get());</span>
+            }
+        }
+
+        // Rechercher POI candidat via Overpass
+<span class="fc" id="L135">        Map&lt;String, Object&gt; poiCandidat = rechercherMeilleurPOI(currentLatitude, currentLongitude);</span>
+<span class="fc" id="L136">        log.info(</span>
+            &quot;[PAUSE-AI] POI trouvé — type={} | nom={} | distance={}m | hgv={} | toilets={} | score_potentiel estimé&quot;,
+<span class="fc" id="L138">            poiCandidat.get(&quot;type&quot;),</span>
+<span class="fc" id="L139">            poiCandidat.get(&quot;name&quot;),</span>
+<span class="fc" id="L140">            formatDouble((Double) poiCandidat.get(&quot;distance&quot;)),</span>
+<span class="fc" id="L141">            isTagYes(poiCandidat, &quot;hgv&quot;),</span>
+<span class="fc" id="L142">            isTagYes(poiCandidat, &quot;toilets&quot;)</span>
+        );
+        
+        // Construire les features pour le modèle
+<span class="fc" id="L146">        Map&lt;String, Object&gt; features = construireFeaturesIA(</span>
+            trajet, hoursDriving, distAlongRatio, currentLatitude, currentLongitude, poiCandidat
+        );
+<span class="fc" id="L149">        log.debug(</span>
+            &quot;[PAUSE-AI] Features → total_dist={}km | ratio={} | perp={}m | poi_type={} | hgv={} | shower={} | toilets={} | 24h={}&quot;,
+<span class="fc" id="L151">            formatDouble((Double) features.get(&quot;total_distance_km&quot;)),</span>
+<span class="fc" id="L152">            formatDouble((Double) features.get(&quot;dist_along_ratio&quot;)),</span>
+<span class="fc" id="L153">            formatDouble((Double) features.get(&quot;perp_distance_m&quot;)),</span>
+<span class="fc" id="L154">            features.get(&quot;poi_type_encoded&quot;),</span>
+<span class="fc" id="L155">            features.get(&quot;has_hgv&quot;),</span>
+<span class="fc" id="L156">            features.get(&quot;has_shower&quot;),</span>
+<span class="fc" id="L157">            features.get(&quot;has_toilets&quot;),</span>
+<span class="fc" id="L158">            features.get(&quot;is_24h&quot;)</span>
+        );
+
+        // Appeler le modèle Python
+<span class="fc" id="L162">        Integer score = null;</span>
+<span class="fc" id="L163">        boolean flaskDisponible = true;</span>
+        try {
+<span class="fc" id="L165">            score = appellerModeleIA(features);</span>
+<span class="fc" id="L166">            log.info(&quot;[PAUSE-AI] Score IA reçu = {}/100&quot;, score);</span>
+<span class="fc" id="L167">        } catch (Exception e) {</span>
+<span class="fc" id="L168">            flaskDisponible = false;</span>
+<span class="fc" id="L169">            log.warn(&quot;[PAUSE-AI] ⚠️ API Flask indisponible — fallback activé | TrajetId={} | hours_driving={}h → alerte si &gt;= 4.5h&quot;, trajetId, formatDouble(hoursDriving));</span>
+<span class="fc" id="L170">            log.debug(&quot;[PAUSE-AI] Détail erreur Flask: {}&quot;, e.getMessage(), e);</span>
+
+<span class="fc bfc" id="L172" title="All 2 branches covered.">            if (hoursDriving &gt;= SEUIL_HEURES_CRITIQUE) {</span>
+<span class="fc" id="L173">                score = 100;</span>
+            } else {
+<span class="fc" id="L175">                score = 0;</span>
+            }
+<span class="fc" id="L177">        }</span>
+
+        // Déterminer le type d'alerte
+<span class="fc" id="L180">        TypeAlerteIA typeAlerte = TypeAlerteIA.AUCUNE;</span>
+<span class="fc" id="L181">        boolean alerteDeclenchee = false;</span>
+
+<span class="fc bfc" id="L183" title="All 4 branches covered.">        if (score &gt;= SEUIL_SCORE_URGENT || hoursDriving &gt;= SEUIL_HEURES_CRITIQUE) {</span>
+<span class="fc" id="L184">            typeAlerte = TypeAlerteIA.URGENTE;</span>
+<span class="fc" id="L185">            alerteDeclenchee = true;</span>
+<span class="fc" id="L186">            log.warn(</span>
+                &quot;[PAUSE-AI] ⚠️ ALERTE URGENTE — TrajetId={} | Chauffeur={} | Score={}/100 | hours_driving={}h | POI recommandé={}&quot;,
+                trajetId,
+<span class="fc bfc" id="L189" title="All 2 branches covered.">                trajet.getChauffeur() != null ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim() : &quot;N/A&quot;,</span>
+                score,
+<span class="fc" id="L191">                formatDouble(hoursDriving),</span>
+<span class="fc" id="L192">                poiCandidat.get(&quot;name&quot;)</span>
+            );
+<span class="fc bfc" id="L194" title="All 2 branches covered.">        } else if (score &gt;= SEUIL_SCORE_RECOMMANDE) {</span>
+<span class="fc" id="L195">            typeAlerte = TypeAlerteIA.RECOMMANDEE;</span>
+<span class="fc" id="L196">            alerteDeclenchee = true;</span>
+<span class="fc" id="L197">            log.info(&quot;[PAUSE-AI] Score reçu = {}/100 | seuil_alerte=70 | seuil_urgence=85 | décision=RECOMMANDEE&quot;, score);</span>
+        } else {
+<span class="fc" id="L199">            log.info(&quot;[PAUSE-AI] Score reçu = {}/100 | seuil_alerte=70 | seuil_urgence=85 | décision=AUCUNE&quot;, score);</span>
+        }
+
+<span class="fc bfc" id="L202" title="All 4 branches covered.">        if (!flaskDisponible &amp;&amp; hoursDriving &gt;= SEUIL_HEURES_CRITIQUE) {</span>
+<span class="fc" id="L203">            log.warn(&quot;[PAUSE-AI] Fallback critique maintenu pour trajet {} malgré l'absence du modèle Flask&quot;, trajetId);</span>
+        }
+
+        // Persister la prédiction
+<span class="fc" id="L207">        PauseAIPrediction prediction = PauseAIPrediction.builder()</span>
+<span class="fc" id="L208">            .trajet(trajet)</span>
+<span class="fc" id="L209">            .timestamp(now)</span>
+<span class="fc" id="L210">            .hoursDriving(hoursDriving)</span>
+<span class="fc" id="L211">            .distAlongRatio(distAlongRatio)</span>
+<span class="fc" id="L212">            .score(score)</span>
+<span class="fc" id="L213">            .poiType((String) poiCandidat.get(&quot;type&quot;))</span>
+<span class="fc" id="L214">            .alerteDeclenchee(alerteDeclenchee)</span>
+<span class="fc" id="L215">            .typeAlerte(typeAlerte)</span>
+<span class="fc" id="L216">            .latitudePoi((Double) poiCandidat.get(&quot;lat&quot;))</span>
+<span class="fc" id="L217">            .longitudePoi((Double) poiCandidat.get(&quot;lon&quot;))</span>
+<span class="fc" id="L218">            .nomPoi((String) poiCandidat.get(&quot;name&quot;))</span>
+<span class="fc" id="L219">            .distancePoiM((Double) poiCandidat.get(&quot;distance&quot;))</span>
+<span class="fc" id="L220">            .build();</span>
+
+<span class="fc" id="L222">        PauseAIPrediction saved = predictionRepository.save(prediction);</span>
+<span class="fc" id="L223">        log.info(&quot;[PAUSE-AI] Prédiction persistée avec ID: {}&quot;, saved.getId());</span>
+
+        // Déclencher SSE si alerte
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        if (alerteDeclenchee) {</span>
+<span class="fc" id="L227">            declencherAlerteSSE(trajet, saved, poiCandidat);</span>
+        }
+
+<span class="fc" id="L230">        return toResponse(saved);</span>
+    }
+
+    @Override
+    public List&lt;PauseAIPredictionResponse&gt; getHistoriquePredictions(Long trajetId) {
+        // Vérifier l'accès
+<span class="fc" id="L236">        Trajet trajet = trajetRepository.findById(trajetId)</span>
+<span class="fc" id="L237">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+        
+<span class="fc" id="L239">        verifierAccesTrajet(trajet);</span>
+
+<span class="fc" id="L241">        List&lt;PauseAIPrediction&gt; predictions = predictionRepository.findByTrajetIdOrderByTimestampAsc(trajetId);</span>
+<span class="fc" id="L242">        return predictions.stream().map(this::toResponse).collect(Collectors.toList());</span>
+    }
+
+    @Override
+    public PauseAIDashboardResponse getDashboardStats(LocalDateTime startDate, LocalDateTime endDate, Long chauffeurId) {
+<span class="fc" id="L247">        List&lt;PauseAIPrediction&gt; predictions = resolveAccessiblePredictions(startDate, endDate, chauffeurId);</span>
+
+<span class="fc" id="L249">        List&lt;Long&gt; trajetIds = predictions.stream()</span>
+<span class="fc" id="L250">            .map(p -&gt; p.getTrajet().getId())</span>
+<span class="fc" id="L251">            .distinct()</span>
+<span class="fc" id="L252">            .collect(Collectors.toList());</span>
+
+<span class="fc" id="L254">        Map&lt;Long, List&lt;PauseReglementaire&gt;&gt; pausesByTrajet = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">        for (Long tid : trajetIds) {</span>
+<span class="fc" id="L256">            pausesByTrajet.put(tid, pauseRepository.findByTrajetId(tid));</span>
+<span class="fc" id="L257">        }</span>
+
+        // Global stats
+<span class="fc" id="L260">        int totalRecommandees = (int) predictions.stream()</span>
+<span class="fc" id="L261">            .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc" id="L262">            .count();</span>
+
+<span class="fc" id="L264">        int pausesEffectuees = (int) predictions.stream()</span>
+<span class="fc" id="L265">            .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc" id="L266">            .filter(pred -&gt; {</span>
+<span class="fc" id="L267">                List&lt;PauseReglementaire&gt; tp = pausesByTrajet.get(pred.getTrajet().getId());</span>
+<span class="pc bpc" id="L268" title="1 of 2 branches missed.">                if (tp == null) return false;</span>
+<span class="pc bpc" id="L269" title="1 of 2 branches missed.">                return tp.stream().anyMatch(p -&gt; p.getStatut() == StatutPause.ATTEINTE);</span>
+            })
+<span class="fc" id="L271">            .count();</span>
+
+<span class="fc" id="L273">        int pausesIgnorees = totalRecommandees - pausesEffectuees;</span>
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        double tauxConformite = totalRecommandees &gt; 0 ? (pausesEffectuees * 100.0 / totalRecommandees) : 100.0;</span>
+<span class="fc" id="L275">        double scoreMoyenFatigue = predictions.stream()</span>
+<span class="fc" id="L276">            .mapToInt(PauseAIPrediction::getScore)</span>
+<span class="fc" id="L277">            .average()</span>
+<span class="fc" id="L278">            .orElse(0.0);</span>
+
+        // Chauffeur stats
+<span class="fc" id="L281">        Map&lt;Long, List&lt;PauseAIPrediction&gt;&gt; predictionsByChauffeur = predictions.stream()</span>
+<span class="fc" id="L282">            .collect(Collectors.groupingBy(p -&gt; p.getTrajet().getChauffeur().getId()));</span>
+
+<span class="fc" id="L284">        List&lt;PauseAIDashboardResponse.ChauffeurStats&gt; chauffeurStats = predictionsByChauffeur.entrySet().stream()</span>
+<span class="fc" id="L285">            .map(entry -&gt; {</span>
+<span class="fc" id="L286">                Long cId = entry.getKey();</span>
+<span class="fc" id="L287">                List&lt;PauseAIPrediction&gt; cp = entry.getValue();</span>
+<span class="fc" id="L288">                Chauffeur chauffeur = cp.get(0).getTrajet().getChauffeur();</span>
+
+<span class="fc" id="L290">                int nbMissions = (int) cp.stream().map(p -&gt; p.getTrajet().getId()).distinct().count();</span>
+<span class="fc" id="L291">                double scoreMoyen = cp.stream().mapToInt(PauseAIPrediction::getScore).average().orElse(0.0);</span>
+<span class="fc bfc" id="L292" title="All 2 branches covered.">                int alertesUrgentes = (int) cp.stream().filter(p -&gt; p.getTypeAlerte() == TypeAlerteIA.URGENTE).count();</span>
+<span class="fc" id="L293">                int totalAlertesChauf = (int) cp.stream().filter(PauseAIPrediction::getAlerteDeclenchee).count();</span>
+
+<span class="fc" id="L295">                int pausesEffChauf = (int) cp.stream()</span>
+<span class="fc" id="L296">                    .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc" id="L297">                    .filter(pred -&gt; {</span>
+<span class="fc" id="L298">                        List&lt;PauseReglementaire&gt; tp = pausesByTrajet.get(pred.getTrajet().getId());</span>
+<span class="pc bpc" id="L299" title="1 of 2 branches missed.">                        if (tp == null) return false;</span>
+<span class="pc bpc" id="L300" title="1 of 2 branches missed.">                        return tp.stream().anyMatch(p -&gt; p.getStatut() == StatutPause.ATTEINTE);</span>
+                    })
+<span class="fc" id="L302">                    .count();</span>
+<span class="fc" id="L303">                int pausesIgnChauf = totalAlertesChauf - pausesEffChauf;</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">                double tauxConf = totalAlertesChauf &gt; 0 ? (pausesEffChauf * 100.0 / totalAlertesChauf) : 100.0;</span>
+
+                // Compute driver-level metrics from prediction data (ML-derived, not hardcoded)
+<span class="fc" id="L307">                double heuresMoyennes = cp.stream()</span>
+<span class="fc" id="L308">                    .mapToDouble(PauseAIPrediction::getHoursDriving)</span>
+<span class="fc" id="L309">                    .average().orElse(0.0);</span>
+
+<span class="fc" id="L311">                Set&lt;Long&gt; distinctTrajetIds = cp.stream().map(p -&gt; p.getTrajet().getId()).collect(Collectors.toSet());</span>
+<span class="fc" id="L312">                double distanceTotale = distinctTrajetIds.stream()</span>
+<span class="fc" id="L313">                    .mapToDouble(tid -&gt; {</span>
+<span class="fc" id="L314">                        Trajet t = cp.stream().filter(p -&gt; p.getTrajet().getId().equals(tid))</span>
+<span class="fc" id="L315">                            .findFirst().map(PauseAIPrediction::getTrajet).orElse(null);</span>
+<span class="pc bpc" id="L316" title="2 of 4 branches missed.">                        return t != null &amp;&amp; t.getDistanceKm() != null ? t.getDistanceKm() : 0.0;</span>
+                    })
+<span class="fc" id="L318">                    .sum();</span>
+
+<span class="fc" id="L320">                long daysSpan = Duration.between(startDate, endDate).toDays();</span>
+<span class="pc bpc" id="L321" title="1 of 2 branches missed.">                double distanceMoyenneParJour = daysSpan &gt; 0 ? distanceTotale / daysSpan : distanceTotale;</span>
+
+                // POI accessibility score from prediction poiType
+<span class="fc" id="L324">                double scoreAccessibilite = cp.stream()</span>
+<span class="fc bfc" id="L325" title="All 2 branches covered.">                    .filter(p -&gt; p.getPoiType() != null)</span>
+<span class="fc" id="L326">                    .mapToInt(p -&gt; {</span>
+<span class="fc" id="L327">                        String pt = p.getPoiType().toLowerCase();</span>
+<span class="pc bpc" id="L328" title="1 of 4 branches missed.">                        if (pt.contains(&quot;services&quot;) || pt.contains(&quot;rest_area&quot;)) return 90;</span>
+<span class="pc bpc" id="L329" title="1 of 4 branches missed.">                        if (pt.contains(&quot;fuel&quot;) || pt.contains(&quot;station&quot;)) return 75;</span>
+<span class="pc bpc" id="L330" title="2 of 6 branches missed.">                        if (pt.contains(&quot;restaurant&quot;) || pt.contains(&quot;cafe&quot;) || pt.contains(&quot;fast_food&quot;)) return 60;</span>
+<span class="fc" id="L331">                        return 40;</span>
+                    })
+<span class="fc" id="L333">                    .average().orElse(50.0);</span>
+
+                // NiveauRisque derived from ML model thresholds
+                String niveauRisque;
+<span class="pc bpc" id="L337" title="1 of 6 branches missed.">                if (scoreMoyen &gt; SEUIL_SCORE_URGENT &amp;&amp; tauxConf &lt; 40 &amp;&amp; alertesUrgentes &gt; 8) {</span>
+<span class="fc" id="L338">                    niveauRisque = &quot;CRITICAL&quot;;</span>
+<span class="pc bpc" id="L339" title="1 of 6 branches missed.">                } else if (scoreMoyen &gt; SEUIL_SCORE_RECOMMANDE || tauxConf &lt; 60 || alertesUrgentes &gt; 5) {</span>
+<span class="fc" id="L340">                    niveauRisque = &quot;HIGH&quot;;</span>
+<span class="pc bpc" id="L341" title="2 of 6 branches missed.">                } else if (scoreMoyen &gt; 50 || tauxConf &lt; 80 || alertesUrgentes &gt; 2) {</span>
+<span class="fc" id="L342">                    niveauRisque = &quot;MODERATE&quot;;</span>
+                } else {
+<span class="fc" id="L344">                    niveauRisque = &quot;LOW&quot;;</span>
+                }
+
+                // Sentiment classification derived from ML conditions
+                String sentiment;
+<span class="pc bpc" id="L349" title="1 of 8 branches missed.">                boolean isVeryDissatisfied = scoreMoyen &gt; SEUIL_SCORE_URGENT</span>
+                    || (scoreMoyen &gt; SEUIL_SCORE_RECOMMANDE &amp;&amp; tauxConf &lt; 50 &amp;&amp; alertesUrgentes &gt; 5);
+<span class="pc bpc" id="L351" title="2 of 8 branches missed.">                boolean isDissatisfied = scoreMoyen &gt; SEUIL_SCORE_RECOMMANDE</span>
+                    || tauxConf &lt; 70 || alertesUrgentes &gt; 3 || heuresMoyennes &gt; SEUIL_HEURES_CRITIQUE;
+<span class="pc bpc" id="L353" title="3 of 8 branches missed.">                boolean isSatisfied = scoreMoyen &lt; 50 &amp;&amp; tauxConf &gt; 85 &amp;&amp; alertesUrgentes &lt; 2 &amp;&amp; heuresMoyennes &lt; SEUIL_HEURES_MIN + 0.5;</span>
+
+<span class="fc bfc" id="L355" title="All 2 branches covered.">                if (isVeryDissatisfied) {</span>
+<span class="fc" id="L356">                    sentiment = &quot;VERY_DISSATISFIED&quot;;</span>
+<span class="fc bfc" id="L357" title="All 2 branches covered.">                } else if (isDissatisfied) {</span>
+<span class="fc" id="L358">                    sentiment = &quot;DISSATISFIED&quot;;</span>
+<span class="fc bfc" id="L359" title="All 2 branches covered.">                } else if (isSatisfied) {</span>
+<span class="fc" id="L360">                    sentiment = &quot;SATISFIED&quot;;</span>
+                } else {
+<span class="fc" id="L362">                    sentiment = &quot;NEUTRAL&quot;;</span>
+                }
+
+                // Arrivée estimée &amp; distance réelle depuis le trajet le plus récent
+<span class="fc" id="L366">                LocalDateTime arriveeEstimee = null;</span>
+<span class="fc" id="L367">                Double distanceReelle = null;</span>
+<span class="fc" id="L368">                String pointDepart = null;</span>
+<span class="fc" id="L369">                String pointArrivee = null;</span>
+<span class="fc" id="L370">                String statutTrajet = null;</span>
+<span class="fc" id="L371">                String immatriculationVehicule = null;</span>
+
+<span class="fc" id="L373">                Trajet latestTrip = cp.stream()</span>
+<span class="fc" id="L374">                    .map(PauseAIPrediction::getTrajet)</span>
+<span class="pc bpc" id="L375" title="1 of 4 branches missed.">                    .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS || t.getStatut() == StatutTrajet.ACTIF)</span>
+<span class="fc" id="L376">                    .findFirst()</span>
+<span class="fc" id="L377">                    .orElseGet(() -&gt; cp.stream()</span>
+<span class="fc" id="L378">                        .map(PauseAIPrediction::getTrajet)</span>
+<span class="pc bpc" id="L379" title="1 of 2 branches missed.">                        .filter(t -&gt; t.getStatut() == StatutTrajet.COMPLETE)</span>
+<span class="fc" id="L380">                        .findFirst().orElse(null));</span>
+
+<span class="pc bpc" id="L382" title="1 of 2 branches missed.">                if (latestTrip != null) {</span>
+<span class="fc bfc" id="L383" title="All 2 branches covered.">                    if (latestTrip.getStatut() == StatutTrajet.COMPLETE) {</span>
+<span class="fc" id="L384">                        arriveeEstimee = latestTrip.getDateArriveeReelle();</span>
+<span class="fc" id="L385">                        distanceReelle = latestTrip.getDistanceKm();</span>
+                    } else {
+                        // In-progress: estimate arrival from departure + duration
+<span class="pc bpc" id="L388" title="1 of 4 branches missed.">                        if (latestTrip.getDateDepart() != null &amp;&amp; latestTrip.getDureeEstimeeMinutes() != null) {</span>
+<span class="fc" id="L389">                            arriveeEstimee = latestTrip.getDateDepart()</span>
+<span class="fc" id="L390">                                .plusMinutes(latestTrip.getDureeEstimeeMinutes());</span>
+                        }
+                        // Real distance = Haversine from departure to latest prediction POI
+<span class="fc" id="L393">                        PauseAIPrediction latestPred = cp.stream()</span>
+<span class="fc" id="L394">                            .filter(p -&gt; p.getTrajet().getId().equals(latestTrip.getId()))</span>
+<span class="fc" id="L395">                            .max(Comparator.comparing(PauseAIPrediction::getTimestamp))</span>
+<span class="fc" id="L396">                            .orElse(null);</span>
+<span class="pc bpc" id="L397" title="1 of 4 branches missed.">                        if (latestPred != null &amp;&amp; latestPred.getLatitudePoi() != null</span>
+<span class="fc bfc" id="L398" title="All 2 branches covered.">                            &amp;&amp; latestTrip.getLatitudeDepart() != null) {</span>
+<span class="fc" id="L399">                            distanceReelle = haversineKm(</span>
+<span class="fc" id="L400">                                latestTrip.getLatitudeDepart(), latestTrip.getLongitudeDepart(),</span>
+<span class="fc" id="L401">                                latestPred.getLatitudePoi(), latestPred.getLongitudePoi());</span>
+                        } else {
+<span class="fc" id="L403">                            distanceReelle = latestTrip.getDistanceKm();</span>
+                        }
+                    }
+<span class="fc" id="L406">                    pointDepart = latestTrip.getPointDepart();</span>
+<span class="fc" id="L407">                    pointArrivee = latestTrip.getDestination();</span>
+<span class="fc" id="L408">                    statutTrajet = latestTrip.getStatut().name();</span>
+<span class="fc bfc" id="L409" title="All 2 branches covered.">                    if (latestTrip.getVehicule() != null) {</span>
+<span class="fc" id="L410">                        immatriculationVehicule = latestTrip.getVehicule().getMatricule();</span>
+                    }
+                }
+
+<span class="fc" id="L414">                return PauseAIDashboardResponse.ChauffeurStats.builder()</span>
+<span class="fc" id="L415">                    .chauffeurId(cId)</span>
+<span class="fc" id="L416">                    .nomChauffeur(chauffeur.getPrenom() + &quot; &quot; + chauffeur.getNom())</span>
+<span class="fc" id="L417">                    .nombreMissions(nbMissions)</span>
+<span class="fc" id="L418">                    .scoreFatigueMoyen(Math.round(scoreMoyen * 100.0) / 100.0)</span>
+<span class="fc" id="L419">                    .alertesUrgentes(alertesUrgentes)</span>
+<span class="fc" id="L420">                    .pausesIgnorees(pausesIgnChauf)</span>
+<span class="fc" id="L421">                    .tauxConformite(Math.round(tauxConf * 100.0) / 100.0)</span>
+<span class="fc" id="L422">                    .niveauRisque(niveauRisque)</span>
+<span class="fc" id="L423">                    .distanceMoyenneParJour(Math.round(distanceMoyenneParJour * 100.0) / 100.0)</span>
+<span class="fc" id="L424">                    .heuresMoyennesConduite(Math.round(heuresMoyennes * 100.0) / 100.0)</span>
+<span class="fc" id="L425">                    .pausesRecommandees(totalAlertesChauf)</span>
+<span class="fc" id="L426">                    .pausesEffectuees(pausesEffChauf)</span>
+<span class="fc" id="L427">                    .scoreMoyenAccessibilite(Math.round(scoreAccessibilite * 100.0) / 100.0)</span>
+<span class="fc" id="L428">                    .sentiment(sentiment)</span>
+<span class="fc" id="L429">                    .arriveeEstimee(arriveeEstimee)</span>
+<span class="pc bpc" id="L430" title="1 of 2 branches missed.">                    .distanceReelle(distanceReelle != null ? Math.round(distanceReelle * 100.0) / 100.0 : null)</span>
+<span class="fc" id="L431">                    .pointDepart(pointDepart)</span>
+<span class="fc" id="L432">                    .pointArrivee(pointArrivee)</span>
+<span class="fc" id="L433">                    .statutTrajet(statutTrajet)</span>
+<span class="fc" id="L434">                    .immatriculationVehicule(immatriculationVehicule)</span>
+<span class="fc" id="L435">                    .build();</span>
+            })
+<span class="fc" id="L437">            .collect(Collectors.toList());</span>
+
+        // ML Insights computed from actual prediction data
+<span class="fc" id="L440">        PauseAIDashboardResponse.MLInsights mlInsights = computeMLInsights(</span>
+            predictions, pausesByTrajet, chauffeurStats, startDate, endDate);
+
+        // Heatmap points with enhanced data
+<span class="fc" id="L444">        List&lt;PauseAIDashboardResponse.HeatmapPoint&gt; heatmapPoints = predictions.stream()</span>
+<span class="fc" id="L445">            .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="pc bpc" id="L446" title="2 of 4 branches missed.">            .filter(p -&gt; p.getLatitudePoi() != null &amp;&amp; p.getLongitudePoi() != null)</span>
+<span class="fc" id="L447">            .map(pred -&gt; {</span>
+<span class="fc" id="L448">                String type = &quot;RECOMMANDEE_EFFECTUEE&quot;;</span>
+<span class="fc" id="L449">                List&lt;PauseReglementaire&gt; tp = pausesByTrajet.get(pred.getTrajet().getId());</span>
+<span class="pc bpc" id="L450" title="2 of 6 branches missed.">                boolean effectuee = tp != null &amp;&amp; tp.stream().anyMatch(p -&gt; p.getStatut() == StatutPause.ATTEINTE);</span>
+
+<span class="fc bfc" id="L452" title="All 4 branches covered.">                if (pred.getTypeAlerte() == TypeAlerteIA.URGENTE &amp;&amp; !effectuee) {</span>
+<span class="fc" id="L453">                    type = &quot;URGENTE_IGNOREE&quot;;</span>
+<span class="fc bfc" id="L454" title="All 2 branches covered.">                } else if (!effectuee) {</span>
+<span class="fc" id="L455">                    type = &quot;RECOMMANDEE_IGNOREE&quot;;</span>
+                }
+<span class="pc bpc" id="L457" title="1 of 2 branches missed.">                String chauffeurNom = pred.getTrajet().getChauffeur() != null</span>
+<span class="fc" id="L458">                    ? pred.getTrajet().getChauffeur().getPrenom() + &quot; &quot; + pred.getTrajet().getChauffeur().getNom()</span>
+<span class="pc" id="L459">                    : &quot;N/A&quot;;</span>
+
+<span class="fc" id="L461">                return PauseAIDashboardResponse.HeatmapPoint.builder()</span>
+<span class="fc" id="L462">                    .latitude(pred.getLatitudePoi())</span>
+<span class="fc" id="L463">                    .longitude(pred.getLongitudePoi())</span>
+<span class="fc" id="L464">                    .type(type)</span>
+<span class="fc" id="L465">                    .score(pred.getScore())</span>
+<span class="fc" id="L466">                    .nomLieu(pred.getNomPoi())</span>
+<span class="fc" id="L467">                    .fatigueScore(pred.getScore())</span>
+<span class="fc" id="L468">                    .accessibilityScore(computePoiAccessibilityScore(pred.getPoiType()))</span>
+<span class="fc" id="L469">                    .timestamp(pred.getTimestamp())</span>
+<span class="fc" id="L470">                    .chauffeurNom(chauffeurNom)</span>
+<span class="fc" id="L471">                    .build();</span>
+            })
+<span class="fc" id="L473">            .collect(Collectors.toList());</span>
+
+<span class="fc" id="L475">        return PauseAIDashboardResponse.builder()</span>
+<span class="fc" id="L476">            .totalPausesRecommandees(totalRecommandees)</span>
+<span class="fc" id="L477">            .pausesEffectuees(pausesEffectuees)</span>
+<span class="fc" id="L478">            .pausesIgnorees(pausesIgnorees)</span>
+<span class="fc" id="L479">            .tauxConformite(Math.round(tauxConformite * 100.0) / 100.0)</span>
+<span class="fc" id="L480">            .scoreMoyenFatigue(Math.round(scoreMoyenFatigue * 100.0) / 100.0)</span>
+<span class="fc" id="L481">            .mlInsights(mlInsights)</span>
+<span class="fc" id="L482">            .chauffeurStats(chauffeurStats)</span>
+<span class="fc" id="L483">            .heatmapPoints(heatmapPoints)</span>
+<span class="fc" id="L484">            .build();</span>
+    }
+
+    private PauseAIDashboardResponse.MLInsights computeMLInsights(
+            List&lt;PauseAIPrediction&gt; predictions,
+            Map&lt;Long, List&lt;PauseReglementaire&gt;&gt; pausesByTrajet,
+            List&lt;PauseAIDashboardResponse.ChauffeurStats&gt; chauffeurStats,
+            LocalDateTime startDate,
+            LocalDateTime endDate) {
+
+        // Split predictions into first and second half for trend analysis
+<span class="fc" id="L495">        int midPoint = predictions.size() / 2;</span>
+<span class="fc" id="L496">        List&lt;PauseAIPrediction&gt; firstHalf = predictions.subList(0, midPoint);</span>
+<span class="fc" id="L497">        List&lt;PauseAIPrediction&gt; secondHalf = predictions.subList(midPoint, predictions.size());</span>
+
+<span class="fc" id="L499">        double firstHalfCompliance = computeComplianceFor(firstHalf, pausesByTrajet);</span>
+<span class="fc" id="L500">        double secondHalfCompliance = computeComplianceFor(secondHalf, pausesByTrajet);</span>
+<span class="fc bfc" id="L501" title="All 2 branches covered.">        double tendanceConformite = firstHalfCompliance &gt; 0</span>
+<span class="fc" id="L502">            ? ((secondHalfCompliance - firstHalfCompliance) / firstHalfCompliance) * 100.0</span>
+<span class="fc" id="L503">            : 0.0;</span>
+
+<span class="fc" id="L505">        double firstHalfFatigue = firstHalf.stream().mapToInt(PauseAIPrediction::getScore).average().orElse(0.0);</span>
+<span class="fc" id="L506">        double secondHalfFatigue = secondHalf.stream().mapToInt(PauseAIPrediction::getScore).average().orElse(0.0);</span>
+<span class="fc bfc" id="L507" title="All 2 branches covered.">        double tendanceFatigue = firstHalfFatigue &gt; 0</span>
+<span class="fc" id="L508">            ? ((secondHalfFatigue - firstHalfFatigue) / firstHalfFatigue) * 100.0</span>
+<span class="fc" id="L509">            : 0.0;</span>
+
+        // Max fatigue score and highest risk driver
+<span class="fc" id="L512">        double scoreFatigueMax = chauffeurStats.stream()</span>
+<span class="fc" id="L513">            .mapToDouble(PauseAIDashboardResponse.ChauffeurStats::getScoreFatigueMoyen)</span>
+<span class="fc" id="L514">            .max().orElse(0.0);</span>
+
+<span class="fc" id="L516">        String chauffeurPlusRisque = chauffeurStats.stream()</span>
+<span class="fc" id="L517">            .max(Comparator.comparingDouble(PauseAIDashboardResponse.ChauffeurStats::getScoreFatigueMoyen))</span>
+<span class="fc" id="L518">            .map(PauseAIDashboardResponse.ChauffeurStats::getNomChauffeur)</span>
+<span class="fc" id="L519">            .orElse(&quot;N/A&quot;);</span>
+
+        // Count drivers by fatigue level
+<span class="fc" id="L522">        int chauffeursCritiques = (int) chauffeurStats.stream()</span>
+<span class="fc bfc" id="L523" title="All 2 branches covered.">            .filter(s -&gt; s.getScoreFatigueMoyen() &gt; SEUIL_SCORE_URGENT)</span>
+<span class="fc" id="L524">            .count();</span>
+<span class="fc" id="L525">        int chauffeursModeres = (int) chauffeurStats.stream()</span>
+<span class="fc bfc" id="L526" title="All 2 branches covered.">            .filter(s -&gt; s.getScoreFatigueMoyen() &gt; SEUIL_SCORE_RECOMMANDE</span>
+<span class="fc bfc" id="L527" title="All 2 branches covered.">                      &amp;&amp; s.getScoreFatigueMoyen() &lt;= SEUIL_SCORE_URGENT)</span>
+<span class="fc" id="L528">            .count();</span>
+
+        // Pause pattern analysis
+<span class="fc" id="L531">        int pausesHeuresRepas = (int) predictions.stream()</span>
+<span class="pc bpc" id="L532" title="1 of 2 branches missed.">            .filter(p -&gt; p.getTimestamp() != null)</span>
+<span class="fc" id="L533">            .filter(p -&gt; {</span>
+<span class="fc" id="L534">                int h = p.getTimestamp().getHour();</span>
+<span class="fc bfc" id="L535" title="All 8 branches covered.">                return (h &gt;= 11 &amp;&amp; h &lt;= 14) || (h &gt;= 18 &amp;&amp; h &lt;= 21);</span>
+            })
+<span class="fc" id="L537">            .count();</span>
+
+<span class="fc" id="L539">        int pausesNuit = (int) predictions.stream()</span>
+<span class="pc bpc" id="L540" title="1 of 2 branches missed.">            .filter(p -&gt; p.getTimestamp() != null)</span>
+<span class="fc" id="L541">            .filter(p -&gt; {</span>
+<span class="fc" id="L542">                int h = p.getTimestamp().getHour();</span>
+<span class="fc bfc" id="L543" title="All 4 branches covered.">                return h &gt;= 22 || h &lt;= 6;</span>
+            })
+<span class="fc" id="L545">            .count();</span>
+
+        // Mid-route pauses (40-60% along route)
+<span class="fc" id="L548">        long midRoutePauses = predictions.stream()</span>
+<span class="fc" id="L549">            .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc bfc" id="L550" title="All 4 branches covered.">            .filter(p -&gt; p.getDistAlongRatio() &gt;= 0.40 &amp;&amp; p.getDistAlongRatio() &lt;= 0.60)</span>
+<span class="fc" id="L551">            .count();</span>
+<span class="fc" id="L552">        long totalAlerted = predictions.stream().filter(PauseAIPrediction::getAlerteDeclenchee).count();</span>
+<span class="fc bfc" id="L553" title="All 2 branches covered.">        double tauxPausesMiParcours = totalAlerted &gt; 0 ? (midRoutePauses * 100.0 / totalAlerted) : 0.0;</span>
+
+        // AI acceptance rate
+<span class="fc" id="L556">        long followed = predictions.stream()</span>
+<span class="fc" id="L557">            .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc" id="L558">            .filter(pred -&gt; {</span>
+<span class="fc" id="L559">                List&lt;PauseReglementaire&gt; tp = pausesByTrajet.get(pred.getTrajet().getId());</span>
+<span class="pc bpc" id="L560" title="1 of 2 branches missed.">                if (tp == null) return false;</span>
+<span class="pc bpc" id="L561" title="1 of 2 branches missed.">                return tp.stream().anyMatch(p -&gt; p.getStatut() == StatutPause.ATTEINTE);</span>
+            })
+<span class="fc" id="L563">            .count();</span>
+<span class="fc bfc" id="L564" title="All 2 branches covered.">        double tauxAcceptationAI = totalAlerted &gt; 0 ? (followed * 100.0 / totalAlerted) : 100.0;</span>
+
+        // Voluntary pauses (pauses taken without any AI alert)
+<span class="fc" id="L567">        int pausesVolontaires = (int) pausesByTrajet.values().stream()</span>
+<span class="fc" id="L568">            .flatMap(Collection::stream)</span>
+<span class="pc bpc" id="L569" title="1 of 2 branches missed.">            .filter(p -&gt; p.getStatut() == StatutPause.ATTEINTE)</span>
+<span class="fc" id="L570">            .filter(p -&gt; predictions.stream()</span>
+<span class="fc" id="L571">                .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc" id="L572">                .noneMatch(pred -&gt; pred.getTrajet().getId().equals(p.getTrajet().getId())))</span>
+<span class="fc" id="L573">            .count();</span>
+
+        // Average AI score of completed pauses
+<span class="fc" id="L576">        double scoreMoyenPausesEff = predictions.stream()</span>
+<span class="fc" id="L577">            .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc" id="L578">            .filter(pred -&gt; {</span>
+<span class="fc" id="L579">                List&lt;PauseReglementaire&gt; tp = pausesByTrajet.get(pred.getTrajet().getId());</span>
+<span class="pc bpc" id="L580" title="1 of 2 branches missed.">                if (tp == null) return false;</span>
+<span class="pc bpc" id="L581" title="1 of 2 branches missed.">                return tp.stream().anyMatch(p -&gt; p.getStatut() == StatutPause.ATTEINTE);</span>
+            })
+<span class="fc" id="L583">            .mapToInt(PauseAIPrediction::getScore)</span>
+<span class="fc" id="L584">            .average().orElse(0.0);</span>
+
+<span class="fc" id="L586">        return PauseAIDashboardResponse.MLInsights.builder()</span>
+<span class="fc" id="L587">            .chauffeursCritiquesFatigue(chauffeursCritiques)</span>
+<span class="fc" id="L588">            .chauffeursModereesFatigue(chauffeursModeres)</span>
+<span class="fc" id="L589">            .scoreFatigueMax(Math.round(scoreFatigueMax * 100.0) / 100.0)</span>
+<span class="fc" id="L590">            .chauffeurPlusRisque(chauffeurPlusRisque)</span>
+<span class="fc" id="L591">            .tendanceConformite(Math.round(tendanceConformite * 100.0) / 100.0)</span>
+<span class="fc" id="L592">            .tendanceScoreFatigue(Math.round(tendanceFatigue * 100.0) / 100.0)</span>
+<span class="fc" id="L593">            .pausesHeuresRepas(pausesHeuresRepas)</span>
+<span class="fc" id="L594">            .pausesNuit(pausesNuit)</span>
+<span class="fc" id="L595">            .tauxPausesMiParcours(Math.round(tauxPausesMiParcours * 100.0) / 100.0)</span>
+<span class="fc" id="L596">            .tauxAcceptationAI(Math.round(tauxAcceptationAI * 100.0) / 100.0)</span>
+<span class="fc" id="L597">            .pausesVolontaires(pausesVolontaires)</span>
+<span class="fc" id="L598">            .scoreMoyenPausesEffectuees(Math.round(scoreMoyenPausesEff * 100.0) / 100.0)</span>
+<span class="fc" id="L599">            .build();</span>
+    }
+
+    private double computeComplianceFor(List&lt;PauseAIPrediction&gt; preds,
+                                         Map&lt;Long, List&lt;PauseReglementaire&gt;&gt; pausesByTrajet) {
+<span class="fc bfc" id="L604" title="All 2 branches covered.">        if (preds.isEmpty()) return 100.0;</span>
+<span class="fc" id="L605">        long alerted = preds.stream().filter(PauseAIPrediction::getAlerteDeclenchee).count();</span>
+<span class="fc bfc" id="L606" title="All 2 branches covered.">        if (alerted == 0) return 100.0;</span>
+<span class="fc" id="L607">        long completed = preds.stream()</span>
+<span class="fc" id="L608">            .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="fc" id="L609">            .filter(pred -&gt; {</span>
+<span class="fc" id="L610">                List&lt;PauseReglementaire&gt; tp = pausesByTrajet.get(pred.getTrajet().getId());</span>
+<span class="pc bpc" id="L611" title="1 of 2 branches missed.">                if (tp == null) return false;</span>
+<span class="pc bpc" id="L612" title="1 of 2 branches missed.">                return tp.stream().anyMatch(p -&gt; p.getStatut() == StatutPause.ATTEINTE);</span>
+            })
+<span class="fc" id="L614">            .count();</span>
+<span class="fc" id="L615">        return completed * 100.0 / alerted;</span>
+    }
+
+    private int computePoiAccessibilityScore(String poiType) {
+<span class="fc bfc" id="L619" title="All 2 branches covered.">        if (poiType == null) return 50;</span>
+<span class="fc" id="L620">        String pt = poiType.toLowerCase();</span>
+<span class="fc bfc" id="L621" title="All 4 branches covered.">        if (pt.contains(&quot;services&quot;) || pt.contains(&quot;rest_area&quot;)) return 90;</span>
+<span class="fc bfc" id="L622" title="All 4 branches covered.">        if (pt.contains(&quot;fuel&quot;) || pt.contains(&quot;station&quot;)) return 75;</span>
+<span class="fc bfc" id="L623" title="All 6 branches covered.">        if (pt.contains(&quot;restaurant&quot;) || pt.contains(&quot;cafe&quot;) || pt.contains(&quot;fast_food&quot;)) return 60;</span>
+<span class="fc bfc" id="L624" title="All 2 branches covered.">        if (pt.contains(&quot;parking&quot;)) return 55;</span>
+<span class="fc" id="L625">        return 40;</span>
+    }
+
+    @Override
+    public String exportDashboardCsv(LocalDateTime startDate, LocalDateTime endDate, Long chauffeurId) {
+<span class="fc" id="L630">        List&lt;PauseAIPrediction&gt; predictions = resolveAccessiblePredictions(startDate, endDate, chauffeurId);</span>
+<span class="fc bfc" id="L631" title="All 2 branches covered.">        if (predictions.isEmpty()) {</span>
+<span class="fc" id="L632">            return &quot;chauffeur,date trajet,trajet,score moyen,alertes urgentes,pauses effectuees,pauses ignorees,taux conformite\n&quot;;</span>
+        }
+
+<span class="fc" id="L635">        Map&lt;Long, List&lt;PauseAIPrediction&gt;&gt; predictionsByTrajet = predictions.stream()</span>
+<span class="fc" id="L636">            .collect(Collectors.groupingBy(pred -&gt; pred.getTrajet().getId()));</span>
+
+<span class="fc" id="L638">        StringBuilder csv = new StringBuilder();</span>
+<span class="fc" id="L639">        csv.append(&quot;chauffeur,date trajet,trajet,score moyen,alertes urgentes,pauses effectuees,pauses ignorees,taux conformite\n&quot;);</span>
+
+<span class="fc bfc" id="L641" title="All 2 branches covered.">        for (Map.Entry&lt;Long, List&lt;PauseAIPrediction&gt;&gt; entry : predictionsByTrajet.entrySet()) {</span>
+<span class="fc" id="L642">            List&lt;PauseAIPrediction&gt; trajPredictions = entry.getValue();</span>
+<span class="pc bpc" id="L643" title="1 of 2 branches missed.">            if (trajPredictions.isEmpty()) {</span>
+<span class="nc" id="L644">                continue;</span>
+            }
+
+<span class="fc" id="L647">            Trajet trajet = trajPredictions.get(0).getTrajet();</span>
+<span class="fc" id="L648">            List&lt;PauseReglementaire&gt; trajPauses = pauseRepository.findByTrajetId(trajet.getId());</span>
+<span class="fc bfc" id="L649" title="All 2 branches covered.">            int alertesUrgentes = (int) trajPredictions.stream().filter(pred -&gt; pred.getTypeAlerte() == TypeAlerteIA.URGENTE).count();</span>
+<span class="fc" id="L650">            int alertesTotales = (int) trajPredictions.stream().filter(PauseAIPrediction::getAlerteDeclenchee).count();</span>
+<span class="fc" id="L651">            int pausesEffectueesTrajet = (int) trajPredictions.stream()</span>
+<span class="fc" id="L652">                .filter(PauseAIPrediction::getAlerteDeclenchee)</span>
+<span class="pc bpc" id="L653" title="1 of 2 branches missed.">                .filter(pred -&gt; trajPauses.stream().anyMatch(p -&gt; p.getStatut() == StatutPause.ATTEINTE))</span>
+<span class="fc" id="L654">                .count();</span>
+<span class="fc" id="L655">            int pausesIgnoreesTrajet = Math.max(0, alertesTotales - pausesEffectueesTrajet);</span>
+<span class="fc bfc" id="L656" title="All 2 branches covered.">            double tauxConformiteTrajet = alertesTotales &gt; 0 ? (pausesEffectueesTrajet * 100.0 / alertesTotales) : 100.0;</span>
+<span class="fc" id="L657">            double scoreMoyen = trajPredictions.stream().mapToInt(PauseAIPrediction::getScore).average().orElse(0.0);</span>
+
+<span class="fc bfc" id="L659" title="All 2 branches covered.">            csv.append(csvEscape(trajet.getChauffeur() != null ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim() : &quot;N/A&quot;)).append(',')</span>
+<span class="fc bfc" id="L660" title="All 2 branches covered.">                .append(csvEscape(trajet.getDateDepart() != null ? trajet.getDateDepart().toString() : trajPredictions.get(0).getTimestamp().toString())).append(',')</span>
+<span class="fc bfc" id="L661" title="All 4 branches covered.">                .append(csvEscape((trajet.getPointDepart() != null ? trajet.getPointDepart() : &quot;Départ&quot;) + &quot; - &quot; + (trajet.getDestination() != null ? trajet.getDestination() : &quot;Arrivée&quot;))).append(',')</span>
+<span class="fc" id="L662">                .append(formatCsvNumber(scoreMoyen)).append(',')</span>
+<span class="fc" id="L663">                .append(alertesUrgentes).append(',')</span>
+<span class="fc" id="L664">                .append(pausesEffectueesTrajet).append(',')</span>
+<span class="fc" id="L665">                .append(pausesIgnoreesTrajet).append(',')</span>
+<span class="fc" id="L666">                .append(formatCsvNumber(tauxConformiteTrajet))</span>
+<span class="fc" id="L667">                .append('\n');</span>
+<span class="fc" id="L668">        }</span>
+
+<span class="fc" id="L670">        return csv.toString();</span>
+    }
+
+    @Override
+    public Map&lt;String, Object&gt; getPausesCompletes(Long trajetId) {
+<span class="fc" id="L675">        Trajet trajet = trajetRepository.findById(trajetId)</span>
+<span class="fc" id="L676">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+        
+<span class="fc" id="L678">        verifierAccesTrajet(trajet);</span>
+        
+<span class="fc" id="L680">        log.info(&quot;[PAUSE-AI] Récupération pauses complètes pour trajet {} (lat_depart={}, lon_depart={}, lat_arrivee={}, lon_arrivee={})&quot;,</span>
+<span class="fc" id="L681">                 trajetId, trajet.getLatitudeDepart(), trajet.getLongitudeDepart(), </span>
+<span class="fc" id="L682">                 trajet.getLatitudeArrivee(), trajet.getLongitudeArrivee());</span>
+        
+        // Construire la requête pour l'API Flask /api/predict
+<span class="fc" id="L685">        Map&lt;String, Object&gt; requestBody = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L686">        requestBody.put(&quot;startLat&quot;, trajet.getLatitudeDepart());</span>
+<span class="fc" id="L687">        requestBody.put(&quot;startLon&quot;, trajet.getLongitudeDepart());</span>
+<span class="fc" id="L688">        requestBody.put(&quot;endLat&quot;, trajet.getLatitudeArrivee());</span>
+<span class="fc" id="L689">        requestBody.put(&quot;endLon&quot;, trajet.getLongitudeArrivee());</span>
+<span class="fc" id="L690">        requestBody.put(&quot;trip_id&quot;, trajetId);</span>
+        
+<span class="fc bfc" id="L692" title="All 2 branches covered.">        if (trajet.getDureeEstimeeMinutes() != null) {</span>
+<span class="fc" id="L693">            requestBody.put(&quot;trip_duration_minutes&quot;, trajet.getDureeEstimeeMinutes());</span>
+        }
+        
+<span class="fc bfc" id="L696" title="All 2 branches covered.">        if (trajet.getDateDepart() != null) {</span>
+<span class="fc" id="L697">            requestBody.put(&quot;departure_time&quot;, trajet.getDateDepart().toString());</span>
+        }
+        
+<span class="fc" id="L700">        String url = pauseAiUrl + &quot;/api/predict&quot;;</span>
+<span class="fc" id="L701">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L702">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L703">        HttpEntity&lt;Map&lt;String, Object&gt;&gt; request = new HttpEntity&lt;&gt;(requestBody, headers);</span>
+        
+        try {
+<span class="fc" id="L706">            log.info(&quot;[PAUSE-AI] Appel Flask POST {}&quot;, url);</span>
+            @SuppressWarnings(&quot;rawtypes&quot;)
+<span class="fc" id="L708">            ResponseEntity&lt;Map&gt; response = restTemplate.postForEntity(url, request, Map.class);</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L710">            Map&lt;String, Object&gt; result = (Map&lt;String, Object&gt;) response.getBody();</span>
+            
+<span class="fc bfc" id="L712" title="All 2 branches covered.">            if (result == null) {</span>
+<span class="fc" id="L713">                log.warn(&quot;[PAUSE-AI] Réponse Flask vide pour trajet {}&quot;, trajetId);</span>
+<span class="fc" id="L714">                return Map.of(&quot;stops&quot;, List.of(), &quot;meta&quot;, Map.of());</span>
+            }
+            
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L718">            List&lt;Map&lt;String, Object&gt;&gt; stops = (List&lt;Map&lt;String, Object&gt;&gt;) result.getOrDefault(&quot;stops&quot;, List.of());</span>
+            
+            // Mapper les champs lat/lon vers latitude/longitude pour compatibilité frontend
+<span class="fc" id="L721">            List&lt;Map&lt;String, Object&gt;&gt; mappedStops = stops.stream()</span>
+<span class="fc" id="L722">                .map(stop -&gt; {</span>
+<span class="fc" id="L723">                    Map&lt;String, Object&gt; mapped = new HashMap&lt;&gt;(stop);</span>
+<span class="pc bpc" id="L724" title="1 of 2 branches missed.">                    if (stop.containsKey(&quot;lat&quot;)) {</span>
+<span class="fc" id="L725">                        mapped.put(&quot;latitude&quot;, stop.get(&quot;lat&quot;));</span>
+                    }
+<span class="pc bpc" id="L727" title="1 of 2 branches missed.">                    if (stop.containsKey(&quot;lon&quot;)) {</span>
+<span class="fc" id="L728">                        mapped.put(&quot;longitude&quot;, stop.get(&quot;lon&quot;));</span>
+                    }
+<span class="fc" id="L730">                    return mapped;</span>
+                })
+<span class="fc" id="L732">                .collect(Collectors.toList());</span>
+            
+<span class="fc" id="L734">            log.info(&quot;[PAUSE-AI] ✅ {} points de pause retournés pour trajet {} (types: {})&quot;,</span>
+<span class="fc" id="L735">                     mappedStops.size(), trajetId,</span>
+<span class="fc" id="L736">                     mappedStops.stream()</span>
+<span class="fc" id="L737">                         .map(s -&gt; String.valueOf(s.get(&quot;type&quot;)))</span>
+<span class="fc" id="L738">                         .distinct()</span>
+<span class="fc" id="L739">                         .collect(Collectors.joining(&quot;, &quot;)));</span>
+            
+<span class="fc" id="L741">            Map&lt;String, Object&gt; finalResult = new HashMap&lt;&gt;(result);</span>
+<span class="fc" id="L742">            finalResult.put(&quot;stops&quot;, mappedStops);</span>
+<span class="fc" id="L743">            return finalResult;</span>
+            
+<span class="fc" id="L745">        } catch (Exception e) {</span>
+<span class="fc" id="L746">            log.error(&quot;[PAUSE-AI] ❌ Erreur lors de l'appel Flask pour trajet {}: {}&quot;, trajetId, e.getMessage(), e);</span>
+<span class="fc" id="L747">            throw new RuntimeException(&quot;Impossible de récupérer les pauses complètes depuis l'API Flask&quot;, e);</span>
+        }
+    }
+
+    // ========== Méthodes privées ==========
+
+    private Map&lt;String, Object&gt; rechercherMeilleurPOI(Double lat, Double lon) {
+        // Appel Overpass pour trouver les POIs dans un rayon de 500m
+        // Pour simplifier, on retourne un POI fictif si aucun n'est trouvé
+        
+<span class="fc" id="L757">        Map&lt;String, Object&gt; poiFictif = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L758">        poiFictif.put(&quot;type&quot;, &quot;BAS_COTE&quot;);</span>
+<span class="fc" id="L759">        poiFictif.put(&quot;lat&quot;, lat);</span>
+<span class="fc" id="L760">        poiFictif.put(&quot;lon&quot;, lon);</span>
+<span class="fc" id="L761">        poiFictif.put(&quot;name&quot;, &quot;Arrêt bas-côté&quot;);</span>
+<span class="fc" id="L762">        poiFictif.put(&quot;distance&quot;, 800.0);</span>
+<span class="fc" id="L763">        poiFictif.put(&quot;tags&quot;, new HashMap&lt;String, String&gt;());</span>
+        
+        // TODO: Implémenter la vraie recherche Overpass avec priorisation :
+        // 1. highway=services
+        // 2. highway=rest_area
+        // 3. amenity=fuel
+        // 4. amenity=restaurant
+        // 5. autres
+        
+<span class="fc" id="L772">        return poiFictif;</span>
+    }
+
+    private List&lt;PauseAIPrediction&gt; resolveAccessiblePredictions(LocalDateTime startDate, LocalDateTime endDate, Long chauffeurId) {
+<span class="fc" id="L776">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L777">        Role userRole = currentUser.getRole();</span>
+
+<span class="fc bfc" id="L779" title="All 2 branches covered.">        if (userRole == Role.SUPERADMIN) {</span>
+<span class="fc bfc" id="L780" title="All 2 branches covered.">            if (chauffeurId != null) {</span>
+<span class="fc" id="L781">                return predictionRepository.findByChauffeurIdAndDateRange(chauffeurId, startDate, endDate);</span>
+            }
+<span class="fc" id="L783">            return predictionRepository.findByDateRange(startDate, endDate);</span>
+        }
+
+<span class="fc bfc" id="L786" title="All 2 branches covered.">        if (userRole == Role.MANAGER) {</span>
+<span class="fc bfc" id="L787" title="All 2 branches covered.">            Long entrepriseId = currentUser.getEntreprise() != null ? currentUser.getEntreprise().getId() : null;</span>
+<span class="fc bfc" id="L788" title="All 2 branches covered.">            if (entrepriseId == null) {</span>
+<span class="fc" id="L789">                throw new IllegalStateException(&quot;Manager sans entreprise associée&quot;);</span>
+            }
+
+<span class="fc bfc" id="L792" title="All 2 branches covered.">            if (chauffeurId != null) {</span>
+<span class="fc" id="L793">                List&lt;PauseAIPrediction&gt; predictions = predictionRepository.findByChauffeurIdAndDateRange(chauffeurId, startDate, endDate);</span>
+<span class="pc bpc" id="L794" title="1 of 2 branches missed.">                if (!predictions.isEmpty()</span>
+<span class="pc bpc" id="L795" title="1 of 2 branches missed.">                    &amp;&amp; predictions.get(0).getTrajet().getChauffeur() != null</span>
+<span class="pc bpc" id="L796" title="1 of 2 branches missed.">                    &amp;&amp; predictions.get(0).getTrajet().getChauffeur().getEntreprise() != null</span>
+<span class="fc bfc" id="L797" title="All 2 branches covered.">                    &amp;&amp; !predictions.get(0).getTrajet().getChauffeur().getEntreprise().getId().equals(entrepriseId)) {</span>
+<span class="fc" id="L798">                    throw new ResourceNotFoundException(&quot;Chauffeur non accessible&quot;);</span>
+                }
+<span class="fc" id="L800">                return predictions;</span>
+            }
+
+<span class="fc" id="L803">            return predictionRepository.findByEntrepriseIdAndDateRange(entrepriseId, startDate, endDate);</span>
+        }
+
+<span class="fc" id="L806">        throw new IllegalStateException(&quot;Rôle non autorisé pour accéder au dashboard&quot;);</span>
+    }
+
+    private String csvEscape(String value) {
+<span class="fc bfc" id="L810" title="All 2 branches covered.">        if (value == null) {</span>
+<span class="fc" id="L811">            return &quot;&quot;;</span>
+        }
+<span class="fc" id="L813">        return '&quot;' + value.replace(&quot;\&quot;&quot;, &quot;\&quot;\&quot;&quot;) + '&quot;';</span>
+    }
+
+    private String formatCsvNumber(double value) {
+<span class="fc" id="L817">        return String.format(Locale.ROOT, &quot;%.2f&quot;, value);</span>
+    }
+
+    private String formatDouble(Double value) {
+<span class="fc bfc" id="L821" title="All 2 branches covered.">        if (value == null) {</span>
+<span class="fc" id="L822">            return &quot;0.00&quot;;</span>
+        }
+<span class="fc" id="L824">        return String.format(Locale.ROOT, &quot;%.2f&quot;, value);</span>
+    }
+
+    private String isTagYes(Map&lt;String, Object&gt; poi, String key) {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L829">        Map&lt;String, String&gt; tags = (Map&lt;String, String&gt;) poi.getOrDefault(&quot;tags&quot;, new HashMap&lt;&gt;());</span>
+<span class="fc bfc" id="L830" title="All 2 branches covered.">        return &quot;yes&quot;.equalsIgnoreCase(tags.get(key)) ? &quot;oui&quot; : &quot;non&quot;;</span>
+    }
+
+    private Map&lt;String, Object&gt; construireFeaturesIA(Trajet trajet, double hoursDriving, 
+                                                      double distAlongRatio, Double currentLat, 
+                                                      Double currentLon, Map&lt;String, Object&gt; poi) {
+<span class="fc" id="L836">        Map&lt;String, Object&gt; features = new HashMap&lt;&gt;();</span>
+        
+<span class="fc bfc" id="L838" title="All 2 branches covered.">        double totalDistanceKm = trajet.getDistanceKm() != null ? trajet.getDistanceKm() : 0.0;</span>
+<span class="fc" id="L839">        double totalDistanceM = totalDistanceKm * 1000.0;</span>
+<span class="fc" id="L840">        double distAlongM = Math.max(0.0, Math.min(1.0, distAlongRatio)) * totalDistanceM;</span>
+<span class="fc" id="L841">        features.put(&quot;total_distance_m&quot;, totalDistanceM);</span>
+<span class="fc" id="L842">        features.put(&quot;dist_along_m&quot;, distAlongM);</span>
+        
+<span class="fc" id="L844">        Double perpDistanceM = (Double) poi.getOrDefault(&quot;distance&quot;, 500.0);</span>
+<span class="fc" id="L845">        features.put(&quot;perp_dist_m&quot;, perpDistanceM);</span>
+<span class="fc" id="L846">        features.put(&quot;hours_driving&quot;, hoursDriving);</span>
+        
+<span class="fc" id="L848">        int arrivalHour = LocalDateTime.now().getHour();</span>
+<span class="fc" id="L849">        features.put(&quot;arrival_hour&quot;, arrivalHour);</span>
+        
+        // Encoder le type de POI
+<span class="fc" id="L852">        String poiType = (String) poi.getOrDefault(&quot;type&quot;, &quot;&quot;);</span>
+<span class="fc bfc" id="L853" title="All 6 branches covered.">        int poiTypeEncoded = switch (poiType) {</span>
+<span class="fc" id="L854">            case &quot;fuel&quot; -&gt; 1;</span>
+<span class="fc" id="L855">            case &quot;restaurant&quot;, &quot;fast_food&quot; -&gt; 2;</span>
+<span class="fc" id="L856">            case &quot;cafe&quot; -&gt; 3;</span>
+<span class="fc" id="L857">            case &quot;rest_area&quot; -&gt; 4;</span>
+<span class="fc" id="L858">            case &quot;services&quot; -&gt; 5;</span>
+<span class="fc" id="L859">            default -&gt; 0;</span>
+        };
+<span class="fc" id="L861">        features.put(&quot;poi_type_encoded&quot;, poiTypeEncoded);</span>
+        
+        // Features booléennes
+<span class="fc bfc" id="L864" title="All 4 branches covered.">        boolean isMealPoi = poiType.equals(&quot;restaurant&quot;) || poiType.equals(&quot;fast_food&quot;) || </span>
+<span class="fc bfc" id="L865" title="All 4 branches covered.">                            poiType.equals(&quot;cafe&quot;) || poiType.equals(&quot;services&quot;);</span>
+<span class="fc bfc" id="L866" title="All 2 branches covered.">        features.put(&quot;is_meal_poi&quot;, isMealPoi ? 1 : 0);</span>
+        
+<span class="pc bpc" id="L868" title="3 of 12 branches missed.">        boolean isMealHour = (arrivalHour &gt;= 6 &amp;&amp; arrivalHour &lt;= 9) || </span>
+                             (arrivalHour &gt;= 11 &amp;&amp; arrivalHour &lt;= 14) || 
+                             (arrivalHour &gt;= 18 &amp;&amp; arrivalHour &lt;= 21);
+<span class="fc bfc" id="L871" title="All 2 branches covered.">        features.put(&quot;is_meal_hour&quot;, isMealHour ? 1 : 0);</span>
+        
+<span class="fc bfc" id="L873" title="All 6 branches covered.">        boolean isMidRangeFuel = poiType.equals(&quot;fuel&quot;) &amp;&amp; distAlongRatio &gt;= 0.40 &amp;&amp; distAlongRatio &lt;= 0.85;</span>
+<span class="fc bfc" id="L874" title="All 2 branches covered.">        features.put(&quot;is_mid_range_fuel&quot;, isMidRangeFuel ? 1 : 0);</span>
+        
+<span class="fc bfc" id="L876" title="All 2 branches covered.">        features.put(&quot;is_too_close&quot;, distAlongRatio &lt; 0.06 ? 1 : 0);</span>
+        
+<span class="fc bfc" id="L878" title="All 4 branches covered.">        boolean isHighwayService = poiType.equals(&quot;services&quot;) || poiType.equals(&quot;rest_area&quot;);</span>
+<span class="fc bfc" id="L879" title="All 2 branches covered.">        features.put(&quot;is_highway_service&quot;, isHighwayService ? 1 : 0);</span>
+        
+        // Tags du POI
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L883">        Map&lt;String, String&gt; tags = (Map&lt;String, String&gt;) poi.getOrDefault(&quot;tags&quot;, new HashMap&lt;&gt;());</span>
+<span class="fc bfc" id="L884" title="All 2 branches covered.">        features.put(&quot;has_hgv&quot;, tags.getOrDefault(&quot;hgv&quot;, &quot;&quot;).equals(&quot;yes&quot;) ? 1 : 0);</span>
+<span class="fc bfc" id="L885" title="All 2 branches covered.">        features.put(&quot;has_shower&quot;, tags.getOrDefault(&quot;shower&quot;, &quot;&quot;).equals(&quot;yes&quot;) ? 1 : 0);</span>
+<span class="fc bfc" id="L886" title="All 2 branches covered.">        features.put(&quot;has_toilets&quot;, tags.getOrDefault(&quot;toilets&quot;, &quot;&quot;).equals(&quot;yes&quot;) ? 1 : 0);</span>
+<span class="fc bfc" id="L887" title="All 2 branches covered.">        features.put(&quot;is_24h&quot;, tags.getOrDefault(&quot;opening_hours&quot;, &quot;&quot;).equals(&quot;24/7&quot;) ? 1 : 0);</span>
+<span class="fc" id="L888">        features.put(&quot;poi_tags&quot;, new HashMap&lt;&gt;(tags));</span>
+        
+<span class="fc" id="L890">        return features;</span>
+    }
+
+    private Integer appellerModeleIA(Map&lt;String, Object&gt; features) throws Exception {
+<span class="fc" id="L894">        String url = pauseAiUrl + &quot;/api/predict/batch&quot;;</span>
+        
+<span class="fc" id="L896">        Map&lt;String, Object&gt; requestBody = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L897">        List&lt;Map&lt;String, Object&gt;&gt; candidates = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L898">        Map&lt;String, Object&gt; candidate = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L899">        candidate.put(&quot;poi&quot;, Map.of(&quot;tags&quot;, features.getOrDefault(&quot;poi_tags&quot;, Map.of())));</span>
+<span class="fc" id="L900">        candidate.put(&quot;dist_along_m&quot;, features.get(&quot;dist_along_m&quot;));</span>
+<span class="fc" id="L901">        candidate.put(&quot;total_distance_m&quot;, features.get(&quot;total_distance_m&quot;));</span>
+<span class="fc" id="L902">        candidate.put(&quot;perp_dist_m&quot;, features.get(&quot;perp_dist_m&quot;));</span>
+<span class="fc" id="L903">        candidate.put(&quot;arrival_hour&quot;, features.get(&quot;arrival_hour&quot;));</span>
+<span class="fc" id="L904">        candidate.put(&quot;hours_driving&quot;, features.get(&quot;hours_driving&quot;));</span>
+<span class="fc" id="L905">        candidates.add(candidate);</span>
+<span class="fc" id="L906">        requestBody.put(&quot;candidates&quot;, candidates);</span>
+        
+<span class="fc" id="L908">        HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L909">        headers.setContentType(MediaType.APPLICATION_JSON);</span>
+<span class="fc" id="L910">        String jsonBody = objectMapper.writeValueAsString(requestBody);</span>
+<span class="fc" id="L911">        HttpEntity&lt;String&gt; request = new HttpEntity&lt;&gt;(jsonBody, headers);</span>
+        
+<span class="fc" id="L913">        log.info(&quot;[PAUSE-AI] Appel au modèle IA: POST {}&quot;, url);</span>
+<span class="fc" id="L914">        log.debug(&quot;[PAUSE-AI] Request body: {}&quot;, jsonBody);</span>
+        
+<span class="fc" id="L916">        ResponseEntity&lt;String&gt; response = restTemplate.postForEntity(url, request, String.class);</span>
+<span class="fc" id="L917">        String responseBody = response.getBody();</span>
+        
+<span class="fc" id="L919">        log.debug(&quot;[PAUSE-AI] Response: {}&quot;, responseBody);</span>
+        
+<span class="fc" id="L921">        Map&lt;String, Object&gt; result = objectMapper.readValue(responseBody, new TypeReference&lt;&gt;() {});</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L923">        List&lt;Map&lt;String, Object&gt;&gt; scores = (List&lt;Map&lt;String, Object&gt;&gt;) result.get(&quot;scores&quot;);</span>
+        
+<span class="fc bfc" id="L925" title="All 4 branches covered.">        if (scores == null || scores.isEmpty()) {</span>
+<span class="fc" id="L926">            throw new RuntimeException(&quot;Aucun score retourné par le modèle IA&quot;);</span>
+        }
+        
+<span class="fc" id="L929">        Object aiScoreObj = scores.get(0).get(&quot;ai_score&quot;);</span>
+<span class="fc bfc" id="L930" title="All 2 branches covered.">        if (aiScoreObj instanceof Number) {</span>
+<span class="fc" id="L931">            return ((Number) aiScoreObj).intValue();</span>
+        }
+        
+<span class="fc" id="L934">        throw new RuntimeException(&quot;Format de réponse invalide&quot;);</span>
+    }
+
+    private void declencherAlerteSSE(Trajet trajet, PauseAIPrediction prediction, Map&lt;String, Object&gt; poi) {
+<span class="fc" id="L938">        List&lt;Long&gt; audience = new ArrayList&lt;&gt;();</span>
+        
+<span class="pc bpc" id="L940" title="1 of 4 branches missed.">        if (trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getId() != null) {</span>
+<span class="fc" id="L941">            audience.add(trajet.getChauffeur().getId());</span>
+        }
+<span class="pc bpc" id="L943" title="1 of 4 branches missed.">        if (trajet.getManager() != null &amp;&amp; trajet.getManager().getId() != null) {</span>
+<span class="fc" id="L944">            audience.add(trajet.getManager().getId());</span>
+        }
+<span class="fc" id="L946">        utilisateurRepository.findByRole(Role.SUPERADMIN).stream()</span>
+<span class="fc" id="L947">            .map(Utilisateur::getId)</span>
+<span class="fc" id="L948">            .forEach(audience::add);</span>
+        
+<span class="fc" id="L950">        List&lt;Long&gt; distinctAudience = audience.stream().distinct().toList();</span>
+        
+<span class="fc bfc" id="L952" title="All 2 branches covered.">        if (!distinctAudience.isEmpty()) {</span>
+<span class="fc" id="L953">            Map&lt;String, Object&gt; eventData = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L954">            eventData.put(&quot;trajetId&quot;, trajet.getId());</span>
+<span class="fc" id="L955">            eventData.put(&quot;predictionId&quot;, prediction.getId());</span>
+<span class="fc" id="L956">            eventData.put(&quot;score&quot;, prediction.getScore());</span>
+<span class="fc" id="L957">            eventData.put(&quot;typeAlerte&quot;, prediction.getTypeAlerte());</span>
+<span class="fc" id="L958">            eventData.put(&quot;hoursDriving&quot;, prediction.getHoursDriving());</span>
+<span class="fc" id="L959">            eventData.put(&quot;poi&quot;, poi);</span>
+            
+<span class="fc" id="L961">            log.info(&quot;[PAUSE-AI] Envoi SSE PAUSE_AI_ALERT pour trajet {} à {} utilisateurs&quot;, </span>
+<span class="fc" id="L962">                     trajet.getId(), distinctAudience.size());</span>
+            
+<span class="fc" id="L964">            notificationRealtimeService.publishNamedEventToUsers(</span>
+                distinctAudience, &quot;PAUSE_AI_ALERT&quot;, eventData);
+        }
+<span class="fc" id="L967">    }</span>
+
+    private void verifierAccesTrajet(Trajet trajet) {
+        try {
+<span class="fc" id="L971">            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L972">            Role userRole = currentUser.getRole();</span>
+<span class="fc" id="L973">            Long userId = currentUser.getId();</span>
+
+<span class="fc bfc" id="L975" title="All 2 branches covered.">            if (userRole == Role.SUPERADMIN) {</span>
+<span class="fc" id="L976">                return; // Accès total</span>
+            }
+
+<span class="fc bfc" id="L979" title="All 2 branches covered.">            if (userRole == Role.MANAGER) {</span>
+<span class="pc bpc" id="L980" title="1 of 2 branches missed.">                boolean isManagerOfChauffeur = trajet.getChauffeur() != null </span>
+<span class="fc bfc" id="L981" title="All 2 branches covered.">                    &amp;&amp; trajet.getChauffeur().getManager() != null </span>
+<span class="fc bfc" id="L982" title="All 2 branches covered.">                    &amp;&amp; trajet.getChauffeur().getManager().getId().equals(userId);</span>
+                
+<span class="fc" id="L984">                boolean isSameCompany = false;</span>
+<span class="pc bpc" id="L985" title="1 of 4 branches missed.">                if (currentUser.getEntreprise() != null &amp;&amp; trajet.getChauffeur() != null </span>
+<span class="pc bpc" id="L986" title="1 of 2 branches missed.">                    &amp;&amp; trajet.getChauffeur().getEntreprise() != null) {</span>
+<span class="fc" id="L987">                    isSameCompany = trajet.getChauffeur().getEntreprise().getId()</span>
+<span class="fc" id="L988">                        .equals(currentUser.getEntreprise().getId());</span>
+                }
+                
+<span class="fc bfc" id="L991" title="All 4 branches covered.">                if (!isManagerOfChauffeur &amp;&amp; !isSameCompany) {</span>
+<span class="fc" id="L992">                    throw new ResourceNotFoundException(&quot;Accès refusé à ce trajet&quot;);</span>
+                }
+<span class="fc" id="L994">                return;</span>
+            }
+
+<span class="fc bfc" id="L997" title="All 2 branches covered.">            if (userRole == Role.CHAUFFEUR) {</span>
+<span class="pc bpc" id="L998" title="1 of 4 branches missed.">                if (trajet.getChauffeur() == null || !trajet.getChauffeur().getId().equals(userId)) {</span>
+<span class="fc" id="L999">                    throw new ResourceNotFoundException(&quot;Accès refusé à ce trajet&quot;);</span>
+                }
+<span class="fc" id="L1001">                return;</span>
+            }
+
+<span class="fc" id="L1004">            throw new ResourceNotFoundException(&quot;Rôle non autorisé&quot;);</span>
+<span class="fc" id="L1005">        } catch (Exception e) {</span>
+<span class="fc" id="L1006">            throw new ResourceNotFoundException(&quot;Accès refusé&quot;);</span>
+        }
+    }
+
+    private PauseAIPredictionResponse toResponse(PauseAIPrediction prediction) {
+<span class="fc" id="L1011">        return PauseAIPredictionResponse.builder()</span>
+<span class="fc" id="L1012">            .id(prediction.getId())</span>
+<span class="fc" id="L1013">            .trajetId(prediction.getTrajet().getId())</span>
+<span class="fc" id="L1014">            .timestamp(prediction.getTimestamp())</span>
+<span class="fc" id="L1015">            .hoursDriving(prediction.getHoursDriving())</span>
+<span class="fc" id="L1016">            .distAlongRatio(prediction.getDistAlongRatio())</span>
+<span class="fc" id="L1017">            .score(prediction.getScore())</span>
+<span class="fc" id="L1018">            .poiType(prediction.getPoiType())</span>
+<span class="fc" id="L1019">            .alerteDeclenchee(prediction.getAlerteDeclenchee())</span>
+<span class="fc" id="L1020">            .typeAlerte(prediction.getTypeAlerte())</span>
+<span class="fc" id="L1021">            .latitudePoi(prediction.getLatitudePoi())</span>
+<span class="fc" id="L1022">            .longitudePoi(prediction.getLongitudePoi())</span>
+<span class="fc" id="L1023">            .nomPoi(prediction.getNomPoi())</span>
+<span class="fc" id="L1024">            .distancePoiM(prediction.getDistancePoiM())</span>
+<span class="fc" id="L1025">            .build();</span>
+    }
+
+    private double haversineKm(Double lat1, Double lon1, Double lat2, Double lon2) {
+<span class="fc bfc" id="L1029" title="All 8 branches covered.">        if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return 0.0;</span>
+<span class="fc" id="L1030">        final int R = 6371;</span>
+<span class="fc" id="L1031">        double dLat = Math.toRadians(lat2 - lat1);</span>
+<span class="fc" id="L1032">        double dLon = Math.toRadians(lon2 - lon1);</span>
+<span class="fc" id="L1033">        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)</span>
+<span class="fc" id="L1034">                 + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))</span>
+<span class="fc" id="L1035">                 * Math.sin(dLon / 2) * Math.sin(dLon / 2);</span>
+<span class="fc" id="L1036">        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));</span>
+<span class="fc" id="L1037">        return R * c;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

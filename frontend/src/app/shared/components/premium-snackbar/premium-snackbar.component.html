@@ -1,0 +1,27 @@
+<div class="premium-alert-container" [ngClass]="data.type">
+    <div class="alert-blur-bg"></div>
+    <div class="alert-content">
+        <div class="icon-section">
+            <div class="icon-circle">
+                <mat-icon>{{ getIcon() }}</mat-icon>
+            </div>
+        </div>
+
+        <div class="text-section">
+            <div class="alert-header">
+                <span class="type-badge">{{ getTypeLabel() }}</span>
+                <h3 class="alert-title">{{ data.title }}</h3>
+            </div>
+            <p class="alert-message">{{ data.message }}</p>
+        </div>
+
+        <div class="action-section">
+            <button mat-button class="dismiss-btn" (click)="snackBarRef.dismiss()">
+                {{ data.action || 'FERMER' }}
+            </button>
+        </div>
+    </div>
+    <div class="progress-bar-container">
+        <div class="progress-bar"></div>
+    </div>
+</div>

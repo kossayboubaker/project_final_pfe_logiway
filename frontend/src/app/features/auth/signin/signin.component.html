@@ -1,0 +1,37 @@
+<div class="auth-page">
+    <div class="auth-card glass-card animate-fade-up">
+        <div class="auth-header">
+            <h1 class="text-gradient">LogiWay</h1>
+            <p>Accédez à votre tableau de bord logistique</p>
+        </div>
+
+        <form (ngSubmit)="onSignIn()" class="auth-form">
+            <div class="login-alert" *ngIf="errorMessage">
+                <mat-icon>error_outline</mat-icon>
+                <span>{{ errorMessage }}</span>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email or Username</mat-label>
+                <input matInput name="email" [(ngModel)]="email" placeholder="john@example.com" required>
+                <mat-icon matSuffix>person</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Password</mat-label>
+                <input matInput type="password" name="password" [(ngModel)]="password" placeholder="••••••••" required>
+                <mat-icon matSuffix>lock</mat-icon>
+            </mat-form-field>
+
+            <div class="auth-options">
+                <mat-checkbox color="primary">Remember me</mat-checkbox>
+                <a routerLink="/auth/forgot-password" class="forgot-link">Forgot password?</a>
+            </div>
+
+            <button mat-raised-button color="primary" class="full-width signin-btn glow-on-hover" [disabled]="isSubmitting">
+                Sign In
+            </button>
+        </form>
+
+    </div>
+</div>

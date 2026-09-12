@@ -1,0 +1,232 @@
+<mat-nav-list class="nav-links">
+    <div class="sidebar-header">
+        <div class="logo-wrapper">
+            <mat-icon class="logo-icon">local_shipping</mat-icon>
+        </div>
+        <h1 class="brand-name text-gradient">LogiWay</h1>
+    </div>
+
+    <!-- Expansion Group: Dashboard -->
+    <mat-accordion [multi]="false" class="sidebar-accordion"
+        *ngIf="!isManagerCompanyLocked; else managerCompanyRequired">
+        <mat-expansion-panel [expanded]="true" class="nav-expansion-panel">
+            <mat-expansion-panel-header>
+                <mat-panel-title>
+                    <mat-icon matListItemIcon>dashboard</mat-icon>
+                    <span>Tableaux de Bord</span>
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <mat-nav-list class="sub-nav">
+                <a mat-list-item [routerLink]="['/dashboard', user?.role?.toLowerCase() || 'superadmin']"
+                    routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>dashboard</mat-icon>
+                    <span matListItemTitle>Tableau de Bord</span>
+                </a>
+                <a mat-list-item *ngIf="user?.role === 'SUPERADMIN' || user?.role === 'MANAGER'"
+                    routerLink="/dashboard/users" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>people</mat-icon>
+                    <span matListItemTitle>Gérer les Comptes</span>
+                </a>
+
+                <a mat-list-item routerLink="/dashboard/calendar" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>event</mat-icon>
+                    <span matListItemTitle>Calendrier Missions</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/trips" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>analytics</mat-icon>
+                    <span matListItemTitle>Performances Flux</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/map" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>map</mat-icon>
+                    <span matListItemTitle>Cartographie</span>
+                </a>
+            </mat-nav-list>
+        </mat-expansion-panel>
+
+        <!-- Expansion Group: Statistiques & Analytique -->
+        <mat-expansion-panel class="nav-expansion-panel">
+            <mat-expansion-panel-header>
+                <mat-panel-title>
+                    <mat-icon matListItemIcon>bar_chart</mat-icon>
+                    <span>Analytique</span>
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <mat-nav-list class="sub-nav">
+                <a mat-list-item routerLink="/dashboard/statistics/users" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>people</mat-icon>
+                    <span matListItemTitle>Utilisateurs</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/statistics/delivery" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>alt_route</mat-icon>
+                    <span matListItemTitle>Trajets</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/statistics/fleet" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon><!-- camion icon -->
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="7" width="18" height="13" rx="2" ry="2"></rect>
+                            <polygon points="16 2 20 7 12 7 12 2"></polygon>
+                            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                        </svg>
+
+                    </mat-icon>
+                    <span matListItemTitle>Flotte</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/statistics/driver" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>person</mat-icon>
+                    <span matListItemTitle>Chauffeurs</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/statistics/leave" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>event_note</mat-icon>
+                    <span matListItemTitle>Congés</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/statistics/history" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>history</mat-icon>
+                    <span matListItemTitle>Historique</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/statistics/notifications" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>notifications</mat-icon>
+                    <span matListItemTitle>Notifications</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/statistics/rapports" routerLinkActive="active-link"
+                    *ngIf="user?.role === 'SUPERADMIN' || user?.role === 'MANAGER'">
+                    <mat-icon matListItemIcon>description</mat-icon>
+                    <span matListItemTitle>Générer Rapports</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/analytics/pauses" routerLinkActive="active-link"
+                    *ngIf="user?.role === 'SUPERADMIN' || user?.role === 'MANAGER'">
+                    <mat-icon matListItemIcon>psychology</mat-icon>
+                    <span matListItemTitle>Pauses IA</span>
+                </a>
+            </mat-nav-list>
+        </mat-expansion-panel>
+
+        <!-- Expansion Group: Management -->
+        <mat-expansion-panel class="nav-expansion-panel" *ngIf="user?.role !== 'DRIVER'">
+            <mat-expansion-panel-header>
+                <mat-panel-title>
+                    <mat-icon matListItemIcon>business_center</mat-icon>
+                    <span>Gestion Logistique</span>
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <mat-nav-list class="sub-nav">
+                <a mat-list-item routerLink="/dashboard/fleet" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>local_shipping</mat-icon>
+                    <span matListItemTitle>Gérer la Flotte</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/company-profile" routerLinkActive="active-link"
+                    *ngIf="user?.role === 'MANAGER'">
+                    <mat-icon matListItemIcon>business</mat-icon>
+                    <span matListItemTitle>Profil Entreprise</span>
+                </a>
+                <a mat-list-item *ngIf="user?.role === 'SUPERADMIN'" routerLink="/dashboard/companies"
+                    routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>domain</mat-icon>
+                    <span matListItemTitle>Réseau Entreprises</span>
+                </a>
+                <a mat-list-item *ngIf="user?.role === 'SUPERADMIN' || user?.role === 'MANAGER'"
+                    routerLink="/dashboard/secteurs" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>account_tree</mat-icon>
+                    <span matListItemTitle>Secteurs d'Activité</span>
+                </a>
+                <a mat-list-item *ngIf="user?.role === 'SUPERADMIN' || user?.role === 'MANAGER'"
+                    routerLink="/dashboard/affectations" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>assignment</mat-icon>
+                    <span matListItemTitle>Affectation Véhicules</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/trips" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>history</mat-icon>
+                    <span matListItemTitle>Détails & Historique</span>
+                </a>
+            </mat-nav-list>
+        </mat-expansion-panel>
+
+        <!-- Expansion Group: Espace Chauffeur / Personnel -->
+        <mat-expansion-panel class="nav-expansion-panel">
+            <mat-expansion-panel-header>
+                <mat-panel-title>
+                    <mat-icon matListItemIcon>assignment_ind</mat-icon>
+                    <span>Espace Personnel</span>
+                </mat-panel-title>
+            </mat-expansion-panel-header>
+
+            <mat-nav-list class="sub-nav">
+                <a mat-list-item routerLink="/dashboard/profile" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>account_circle</mat-icon>
+                    <span matListItemTitle>Mon Profil</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/leave" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>time_to_leave</mat-icon>
+                    <span matListItemTitle>Mes Congés</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/reclamations" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>report</mat-icon>
+                    <span matListItemTitle>Réclamations</span>
+                </a>
+                <a mat-list-item routerLink="/dashboard/messenger" routerLinkActive="active-link">
+                    <mat-icon matListItemIcon>forum</mat-icon>
+                    <span matListItemTitle>Messenger</span>
+                </a>
+            </mat-nav-list>
+        </mat-expansion-panel>
+    </mat-accordion>
+
+    <ng-template #managerCompanyRequired>
+        <mat-accordion [multi]="false" class="sidebar-accordion">
+            <mat-expansion-panel [expanded]="true" class="nav-expansion-panel">
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        <mat-icon matListItemIcon>business</mat-icon>
+                        <span>Activation Entreprise</span>
+                    </mat-panel-title>
+                </mat-expansion-panel-header>
+
+                <mat-nav-list class="sub-nav">
+                    <a mat-list-item routerLink="/dashboard/company-waiting" routerLinkActive="active-link">
+                        <mat-icon matListItemIcon>add_business</mat-icon>
+                        <span matListItemTitle>Validation en attente</span>
+                    </a>
+                    <a mat-list-item routerLink="/dashboard/company-profile" routerLinkActive="active-link">
+                        <mat-icon matListItemIcon>corporate_fare</mat-icon>
+                        <span matListItemTitle>Profil Entreprise</span>
+                    </a>
+                </mat-nav-list>
+            </mat-expansion-panel>
+        </mat-accordion>
+    </ng-template>
+
+    <!-- Bottom Actions -->
+
+    <!-- Centre d'Alertes -->
+    <mat-expansion-panel class="nav-expansion-panel custom-link-panel" hideToggle disabled>
+        <mat-expansion-panel-header routerLink="/dashboard/alerts" routerLinkActive="active-link"
+            class="clickable-header">
+            <mat-panel-title>
+                <mat-icon matListItemIcon>notifications_active</mat-icon>
+                <span>Centre d'Alertes</span>
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+    </mat-expansion-panel>
+
+    <!-- Messenger -->
+    <mat-expansion-panel class="nav-expansion-panel custom-link-panel" hideToggle disabled>
+        <mat-expansion-panel-header routerLink="/dashboard/messenger" routerLinkActive="active-link"
+            class="clickable-header">
+            <mat-panel-title>
+                <mat-icon matListItemIcon>forum</mat-icon>
+                <span>Messenger</span>
+            </mat-panel-title>
+        </mat-expansion-panel-header>
+    </mat-expansion-panel>
+
+    <div class="sidebar-footer">
+        <div class="pro-badge glass-effect">
+            <mat-icon>verified</mat-icon>
+            <span>LogiWay v2.0</span>
+        </div>
+    </div>
+</mat-nav-list>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MessengerRealtimeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">MessengerRealtimeServiceImpl.java</span></div><h1>MessengerRealtimeServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.services.MessengerRealtimeService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+@Service
+<span class="fc" id="L17">@RequiredArgsConstructor</span>
+public class MessengerRealtimeServiceImpl implements MessengerRealtimeService {
+
+<span class="fc" id="L20">    private static final long EMITTER_TIMEOUT_MS = Duration.ofMinutes(30).toMillis();</span>
+
+<span class="fc" id="L22">    private final Map&lt;Long, CopyOnWriteArrayList&lt;SseEmitter&gt;&gt; emittersByUser = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @Override
+    public SseEmitter register(Long userId) {
+<span class="fc bfc" id="L26" title="All 2 branches covered.">        if (userId == null) {</span>
+<span class="fc" id="L27">            throw new com.logiway.exceptions.UnauthorizedException(&quot;User id is missing for messenger realtime registration&quot;);</span>
+        }
+
+<span class="fc" id="L30">        SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);</span>
+<span class="fc" id="L31">        emittersByUser.computeIfAbsent(userId, key -&gt; new CopyOnWriteArrayList&lt;&gt;()).add(emitter);</span>
+
+<span class="fc" id="L33">        emitter.onCompletion(() -&gt; removeEmitter(userId, emitter));</span>
+<span class="fc" id="L34">        emitter.onTimeout(() -&gt; removeEmitter(userId, emitter));</span>
+<span class="fc" id="L35">        emitter.onError((ignored) -&gt; removeEmitter(userId, emitter));</span>
+
+        try {
+<span class="fc" id="L38">            emitter.send(SseEmitter.event().name(&quot;connected&quot;).data(&quot;ok&quot;));</span>
+<span class="fc" id="L39">        } catch (IOException ex) {</span>
+<span class="fc" id="L40">            removeEmitter(userId, emitter);</span>
+<span class="fc" id="L41">        }</span>
+
+<span class="fc" id="L43">        return emitter;</span>
+    }
+
+    @Override
+    public void publishMessageToUsers(Collection&lt;Long&gt; userIds, Object payload) {
+<span class="fc" id="L48">        publish(&quot;message&quot;, userIds, payload);</span>
+<span class="fc" id="L49">    }</span>
+
+    @Override
+    public void publishStatusToUsers(Collection&lt;Long&gt; userIds, Object payload) {
+<span class="fc" id="L53">        publish(&quot;status&quot;, userIds, payload);</span>
+<span class="fc" id="L54">    }</span>
+
+    @Override
+    public void publishConversationToUsers(Collection&lt;Long&gt; userIds, Object payload) {
+<span class="fc" id="L58">        publish(&quot;conversation&quot;, userIds, payload);</span>
+<span class="fc" id="L59">    }</span>
+
+    @Override
+    public void publishPresenceToAll(Object payload) {
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        for (Long userId : emittersByUser.keySet()) {</span>
+<span class="fc" id="L64">            publish(&quot;presence&quot;, List.of(userId), payload);</span>
+<span class="fc" id="L65">        }</span>
+<span class="fc" id="L66">    }</span>
+
+    @Override
+    public void publishNamedEventToUsers(Collection&lt;Long&gt; userIds, String eventName, Object payload) {
+<span class="fc" id="L70">        publish(eventName, userIds, payload);</span>
+<span class="fc" id="L71">    }</span>
+
+    @Override
+    public boolean hasActiveConnection(Long userId) {
+<span class="fc" id="L75">        List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</span>
+<span class="fc bfc" id="L76" title="All 4 branches covered.">        return emitters != null &amp;&amp; !emitters.isEmpty();</span>
+    }
+
+    @Override
+    public void disconnectUser(Long userId) {
+<span class="fc" id="L81">        List&lt;SseEmitter&gt; emitters = emittersByUser.remove(userId);</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        if (emitters == null) {</span>
+<span class="fc" id="L83">            return;</span>
+        }
+
+<span class="fc bfc" id="L86" title="All 2 branches covered.">        for (SseEmitter emitter : emitters) {</span>
+<span class="fc" id="L87">            emitter.complete();</span>
+<span class="fc" id="L88">        }</span>
+<span class="fc" id="L89">    }</span>
+
+    private void publish(String eventName, Collection&lt;Long&gt; userIds, Object payload) {
+<span class="fc bfc" id="L92" title="All 6 branches covered.">        if (userIds == null || userIds.isEmpty() || payload == null) {</span>
+<span class="fc" id="L93">            return;</span>
+        }
+
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        for (Long userId : userIds) {</span>
+<span class="fc" id="L97">            List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</span>
+<span class="fc bfc" id="L98" title="All 4 branches covered.">            if (emitters == null || emitters.isEmpty()) {</span>
+<span class="fc" id="L99">                continue;</span>
+            }
+
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            for (SseEmitter emitter : emitters) {</span>
+                try {
+<span class="fc" id="L104">                    emitter.send(SseEmitter.event().name(eventName).data(payload));</span>
+<span class="fc" id="L105">                } catch (IOException ex) {</span>
+<span class="fc" id="L106">                    removeEmitter(userId, emitter);</span>
+<span class="fc" id="L107">                }</span>
+<span class="fc" id="L108">            }</span>
+<span class="fc" id="L109">        }</span>
+<span class="fc" id="L110">    }</span>
+
+    private void removeEmitter(Long userId, SseEmitter emitter) {
+<span class="fc" id="L113">        List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        if (emitters == null) {</span>
+<span class="fc" id="L115">            return;</span>
+        }
+
+<span class="fc" id="L118">        emitters.remove(emitter);</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (emitters.isEmpty()) {</span>
+<span class="fc" id="L120">            emittersByUser.remove(userId);</span>
+        }
+<span class="fc" id="L122">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

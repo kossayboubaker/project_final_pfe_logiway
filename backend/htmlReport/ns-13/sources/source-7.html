@@ -1,0 +1,100 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > UtilisateurRepository</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.repositories</a>
+</div>
+
+<h1>Coverage Summary for Class: UtilisateurRepository (com.logiway.repositories)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">UtilisateurRepository$MockitoMock$rI7eeLKO</td>
+  </tr>
+  <tr>
+    <td class="name">UtilisateurRepository$MockitoMock$rI7eeLKO$auxiliary$wDoH0qf1</td>
+  </tr>
+  <tr>
+    <td class="name">UtilisateurRepository$MockitoMock$rI7eeLKO$auxiliary$WoRzcPXJ</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.repositories;
+&nbsp;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.enums.Role;
+&nbsp;import org.springframework.data.jpa.repository.JpaRepository;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Optional;
+&nbsp;
+&nbsp;public interface UtilisateurRepository extends JpaRepository&lt;Utilisateur, Long&gt; {
+&nbsp;
+&nbsp;    Optional&lt;Utilisateur&gt; findByEmailIgnoreCase(String email);
+&nbsp;
+&nbsp;    Optional&lt;Utilisateur&gt; findByVerificationToken(String verificationToken);
+&nbsp;
+&nbsp;    boolean existsByEmailIgnoreCase(String email);
+&nbsp;
+&nbsp;    List&lt;Utilisateur&gt; findByRole(Role role);
+&nbsp;
+&nbsp;    List&lt;Utilisateur&gt; findByCreatedBy_Id(Long createdById);
+&nbsp;
+&nbsp;    List&lt;Utilisateur&gt; findByEntreprise_Id(Long entrepriseId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

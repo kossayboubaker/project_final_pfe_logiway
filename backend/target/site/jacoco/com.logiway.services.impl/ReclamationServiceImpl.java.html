@@ -1,0 +1,455 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ReclamationServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">ReclamationServiceImpl.java</span></div><h1>ReclamationServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.logiway.dto.request.CreateReclamationRequest;
+import com.logiway.dto.request.ReclamationDecisionRequest;
+import com.logiway.dto.request.UpdateReclamationRequest;
+import com.logiway.dto.request.ValidateReclamationRequest;
+import com.logiway.dto.response.ValidateReclamationFieldResponse;
+import com.logiway.dto.response.ValidateReclamationResponse;
+import com.logiway.dto.response.ReclamationResponse;
+import com.logiway.entities.Chauffeur;
+import com.logiway.entities.Reclamation;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.enums.PrioriteReclamation;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutReclamation;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.exceptions.ResourceNotFoundException;
+import com.logiway.exceptions.UnauthorizedException;
+import jakarta.persistence.EntityManager;
+import jakarta.annotation.PostConstruct;
+import com.logiway.repositories.ReclamationRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.repositories.ChauffeurRepository;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.ReclamationService;
+import com.logiway.services.NotificationRealtimeService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@Service
+<span class="fc" id="L47">@RequiredArgsConstructor</span>
+<span class="fc" id="L48">@Slf4j</span>
+public class ReclamationServiceImpl implements ReclamationService {
+
+    private final ReclamationRepository reclamationRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final ChauffeurRepository chauffeurRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationRealtimeService notificationRealtimeService;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final RestTemplate restTemplate;
+    private final EntityManager em;
+<span class="fc" id="L59">    private final ObjectMapper objectMapper = new ObjectMapper();</span>
+
+    @Value(&quot;${hf.api.token:}&quot;)
+    private String hfApiToken;
+
+    @Value(&quot;${reclamation.ai.local-service-url}&quot;)
+    private String localAiServiceUrl;
+
+    private static final double TOXICITY_THRESHOLD = 0.55;
+    private static final double SEMANTIC_THRESHOLD = 0.25;
+
+    @PostConstruct
+    public void init() {
+<span class="fc" id="L72">        log.info(&quot;[RECLAMATION-AI] ═══════════════════════════════════════&quot;);</span>
+<span class="fc" id="L73">        log.info(&quot;[RECLAMATION-AI] Pipeline IA Réclamations — Diagnostic&quot;);</span>
+<span class="fc" id="L74">        log.info(&quot;[RECLAMATION-AI] Service local = {}&quot;, localAiServiceUrl);</span>
+<span class="pc bpc" id="L75" title="3 of 4 branches missed.">        log.info(&quot;[RECLAMATION-AI] Token HF configuré = {}&quot;, hfApiToken != null &amp;&amp; !hfApiToken.isBlank());</span>
+<span class="fc" id="L76">        log.info(&quot;[RECLAMATION-AI] Seuil toxicité = {}&quot;, TOXICITY_THRESHOLD);</span>
+<span class="fc" id="L77">        log.info(&quot;[RECLAMATION-AI] Seuil sémantique = {}&quot;, SEMANTIC_THRESHOLD);</span>
+<span class="fc" id="L78">        log.info(&quot;[RECLAMATION-AI] ═══════════════════════════════════════&quot;);</span>
+<span class="fc" id="L79">    }</span>
+
+    @Override
+    @Transactional
+    public ReclamationResponse createReclamation(CreateReclamationRequest request) {
+<span class="fc" id="L84">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L85" title="All 4 branches covered.">        if (currentUser.getRole() != Role.MANAGER &amp;&amp; currentUser.getRole() != Role.CHAUFFEUR) {</span>
+<span class="fc" id="L86">            throw new UnauthorizedException(&quot;Only managers and drivers can submit reclamations&quot;);</span>
+        }
+
+<span class="fc bfc" id="L89" title="All 2 branches covered.">        String subject = request.getSujet() == null ? &quot;&quot; : request.getSujet().trim();</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        String description = request.getDescription() == null ? &quot;&quot; : request.getDescription().trim();</span>
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if (subject.isBlank()) {</span>
+<span class="fc" id="L92">            throw new BadRequestException(&quot;Sujet is required&quot;);</span>
+        }
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (description.isBlank()) {</span>
+<span class="fc" id="L95">            throw new BadRequestException(&quot;Description is required&quot;);</span>
+        }
+
+<span class="fc" id="L98">        validateSubmissionOrThrow(subject, description);</span>
+
+<span class="fc" id="L100">        Reclamation reclamation = Reclamation.builder()</span>
+<span class="fc" id="L101">            .sujet(subject)</span>
+<span class="fc" id="L102">            .description(description)</span>
+<span class="fc" id="L103">            .priorite(request.getPriorite())</span>
+<span class="fc" id="L104">            .statut(StatutReclamation.EN_COURS)</span>
+<span class="fc" id="L105">            .utilisateur(currentUser)</span>
+<span class="fc" id="L106">            .build();</span>
+
+<span class="fc" id="L108">        reclamationRepository.save(reclamation);</span>
+
+<span class="fc" id="L110">        notifySuperAdminsOfNewReclamation(reclamation);</span>
+<span class="fc" id="L111">        createNotificationForUser(currentUser, &quot;Votre réclamation a été soumise avec succès. Le SuperAdmin en a été informé.&quot;);</span>
+
+<span class="fc" id="L113">        return toResponse(reclamation);</span>
+    }
+
+    @Override
+    @Transactional
+    public ReclamationResponse updateReclamation(Long id, UpdateReclamationRequest request) {
+<span class="fc" id="L119">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L120">        Reclamation reclamation = requireOwnedDraftReclamation(id, currentUser);</span>
+
+<span class="pc bpc" id="L122" title="1 of 2 branches missed.">        String subject = request.getSujet() == null ? &quot;&quot; : request.getSujet().trim();</span>
+<span class="pc bpc" id="L123" title="1 of 2 branches missed.">        String description = request.getDescription() == null ? &quot;&quot; : request.getDescription().trim();</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (subject.isBlank()) {</span>
+<span class="fc" id="L125">            throw new BadRequestException(&quot;Sujet is required&quot;);</span>
+        }
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (description.isBlank()) {</span>
+<span class="fc" id="L128">            throw new BadRequestException(&quot;Description is required&quot;);</span>
+        }
+
+<span class="fc" id="L131">        validateSubmissionOrThrow(subject, description);</span>
+
+<span class="fc" id="L133">        reclamation.setSujet(subject);</span>
+<span class="fc" id="L134">        reclamation.setDescription(description);</span>
+<span class="fc" id="L135">        reclamation.setPriorite(request.getPriorite());</span>
+<span class="fc" id="L136">        reclamation.setStatut(StatutReclamation.EN_COURS);</span>
+<span class="fc" id="L137">        reclamation.setCommentaireResolution(null);</span>
+<span class="fc" id="L138">        reclamationRepository.save(reclamation);</span>
+
+<span class="fc" id="L140">        notifySuperAdminsOfNewReclamation(reclamation);</span>
+<span class="fc" id="L141">        return toResponse(reclamation);</span>
+    }
+
+    @Override
+    @Transactional
+    public void deleteReclamation(Long id) {
+<span class="fc" id="L147">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc" id="L149">        Reclamation reclamation = reclamationRepository.findById(id)</span>
+<span class="fc" id="L150">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Reclamation not found&quot;));</span>
+
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L153">            reclamationRepository.delete(reclamation);</span>
+<span class="fc" id="L154">            return;</span>
+        }
+
+<span class="fc bfc" id="L157" title="All 2 branches covered.">        Long ownerId = reclamation.getUtilisateur() != null ? reclamation.getUtilisateur().getId() : null;</span>
+<span class="fc bfc" id="L158" title="All 4 branches covered.">        if (ownerId == null || !ownerId.equals(currentUser.getId())) {</span>
+<span class="fc" id="L159">            throw new UnauthorizedException(&quot;You can only delete your own reclamations&quot;);</span>
+        }
+
+<span class="fc" id="L162">        reclamationRepository.delete(reclamation);</span>
+<span class="fc" id="L163">    }</span>
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;ReclamationResponse&gt; getAccessibleReclamations() {
+        try {
+<span class="fc" id="L169">            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L170">            log.info(&quot;[RECLAMATION] GET /api/reclamations - User: {} ({})&quot;, </span>
+<span class="fc" id="L171">                currentUser.getEmail(), currentUser.getRole());</span>
+
+<span class="fc bfc" id="L173" title="All 2 branches covered.">            if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L174">                log.info(&quot;[RECLAMATION] SuperAdmin - chargement toutes réclamations avec JOIN FETCH&quot;);</span>
+<span class="fc" id="L175">                List&lt;Reclamation&gt; reclamations = reclamationRepository.findAllWithUtilisateur();</span>
+<span class="fc" id="L176">                log.info(&quot;[RECLAMATION] {} réclamations trouvées&quot;, reclamations.size());</span>
+<span class="fc" id="L177">                return reclamations.stream().map(this::toResponse).toList();</span>
+            }
+
+<span class="fc bfc" id="L180" title="All 2 branches covered.">            if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L181">                log.info(&quot;[RECLAMATION] Manager - chargement réclamations équipe avec JOIN FETCH&quot;);</span>
+<span class="fc" id="L182">                List&lt;Utilisateur&gt; managedUsers = chauffeurRepository.findByManagerId(currentUser.getId())</span>
+<span class="fc" id="L183">                    .stream().map(u -&gt; (Utilisateur) u).toList();</span>
+<span class="fc" id="L184">                log.info(&quot;[RECLAMATION] Manager gère {} utilisateurs&quot;, managedUsers.size());</span>
+                
+<span class="fc" id="L186">                List&lt;Reclamation&gt; reclamations = reclamationRepository.findByUtilisateursWithJoin(managedUsers);</span>
+<span class="fc" id="L187">                List&lt;Reclamation&gt; ownReclamations = reclamationRepository.findByUtilisateurWithJoin(currentUser);</span>
+                
+<span class="fc" id="L189">                reclamations.addAll(ownReclamations);</span>
+<span class="fc" id="L190">                log.info(&quot;[RECLAMATION] {} réclamations trouvées pour manager&quot;, reclamations.size());</span>
+<span class="fc" id="L191">                return reclamations.stream().map(this::toResponse).toList();</span>
+            }
+
+<span class="fc bfc" id="L194" title="All 2 branches covered.">            if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L195">                log.info(&quot;[RECLAMATION] Chauffeur - chargement ses propres réclamations avec JOIN FETCH&quot;);</span>
+<span class="fc" id="L196">                List&lt;Reclamation&gt; reclamations = reclamationRepository.findByUtilisateurWithJoin(currentUser);</span>
+<span class="fc" id="L197">                log.info(&quot;[RECLAMATION] {} réclamations trouvées&quot;, reclamations.size());</span>
+<span class="fc" id="L198">                return reclamations.stream().map(this::toResponse).toList();</span>
+            }
+
+<span class="fc" id="L201">            log.warn(&quot;[RECLAMATION] Rôle inconnu: {}&quot;, currentUser.getRole());</span>
+<span class="fc" id="L202">            return List.of();</span>
+<span class="fc" id="L203">        } catch (Exception ex) {</span>
+<span class="fc" id="L204">            log.error(&quot;[RECLAMATION] Erreur GET /api/reclamations&quot;, ex);</span>
+<span class="fc" id="L205">            throw ex;</span>
+        }
+    }
+
+    @Override
+    @Transactional
+    public ReclamationResponse resolveReclamation(Long id, ReclamationDecisionRequest request) {
+<span class="fc" id="L212">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L213" title="All 2 branches covered.">        if (currentUser.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L214">            throw new UnauthorizedException(&quot;Only SuperAdmin can resolve reclamations&quot;);</span>
+        }
+
+<span class="pc bpc" id="L217" title="1 of 6 branches missed.">        if (request == null || request.getCommentaire() == null || request.getCommentaire().isBlank()) {</span>
+<span class="fc" id="L218">            throw new BadRequestException(&quot;Commentaire is required&quot;);</span>
+        }
+
+<span class="fc" id="L221">        Reclamation reclamation = reclamationRepository.findById(id).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Reclamation not found&quot;));</span>
+<span class="fc" id="L222">        reclamation.setStatut(StatutReclamation.RESOLU);</span>
+<span class="fc" id="L223">        reclamation.setCommentaireResolution(request.getCommentaire());</span>
+<span class="fc" id="L224">        reclamationRepository.save(reclamation);</span>
+
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        String sujet = reclamation.getSujet() != null ? reclamation.getSujet() : &quot;votre réclamation&quot;;</span>
+<span class="fc" id="L227">        String notification = &quot;Votre réclamation concernant '&quot; + sujet + &quot;' a été résolue. Commentaire: &quot; + request.getCommentaire();</span>
+<span class="fc" id="L228">        createNotificationForUser(reclamation.getUtilisateur(), notification);</span>
+
+<span class="fc" id="L230">        return toResponse(reclamation);</span>
+    }
+
+    @Override
+    @Transactional
+    public ReclamationResponse rejectReclamation(Long id, ReclamationDecisionRequest request) {
+<span class="fc" id="L236">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L237" title="All 2 branches covered.">        if (currentUser.getRole() != Role.SUPERADMIN) {</span>
+<span class="fc" id="L238">            throw new UnauthorizedException(&quot;Only SuperAdmin can reject reclamations&quot;);</span>
+        }
+
+<span class="pc bpc" id="L241" title="2 of 6 branches missed.">        if (request == null || request.getCommentaire() == null || request.getCommentaire().isBlank()) {</span>
+<span class="fc" id="L242">            throw new BadRequestException(&quot;Commentaire is required&quot;);</span>
+        }
+
+<span class="fc" id="L245">        Reclamation reclamation = reclamationRepository.findById(id).orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Reclamation not found&quot;));</span>
+<span class="fc" id="L246">        reclamation.setStatut(StatutReclamation.REJETE);</span>
+<span class="fc" id="L247">        reclamation.setCommentaireResolution(request.getCommentaire());</span>
+<span class="fc" id="L248">        reclamationRepository.save(reclamation);</span>
+
+<span class="fc bfc" id="L250" title="All 2 branches covered.">        String sujet = reclamation.getSujet() != null ? reclamation.getSujet() : &quot;votre réclamation&quot;;</span>
+<span class="fc" id="L251">        String notification = &quot;Votre réclamation concernant '&quot; + sujet + &quot;' a été rejetée. Motif: &quot; + request.getCommentaire();</span>
+<span class="fc" id="L252">        createNotificationForUser(reclamation.getUtilisateur(), notification);</span>
+
+<span class="fc" id="L254">        return toResponse(reclamation);</span>
+    }
+
+    private ReclamationResponse toResponse(Reclamation r) {
+<span class="fc" id="L258">        Utilisateur u = r.getUtilisateur();</span>
+<span class="fc" id="L259">        return new ReclamationResponse(</span>
+<span class="fc" id="L260">            r.getId(),</span>
+<span class="fc" id="L261">            r.getSujet(),</span>
+<span class="fc" id="L262">            r.getDescription(),</span>
+<span class="fc" id="L263">            r.getPriorite(),</span>
+<span class="fc" id="L264">            r.getStatut(),</span>
+<span class="fc" id="L265">            r.getCommentaireResolution(),</span>
+<span class="fc bfc" id="L266" title="All 2 branches covered.">            u != null ? u.getId() : null,</span>
+<span class="fc bfc" id="L267" title="All 2 branches covered.">            u != null ? (u.getPrenom() + &quot; &quot; + u.getNom()).trim() : null,</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">            u != null ? u.getEmail() : null,</span>
+<span class="fc" id="L269">            r.getDateCreation()</span>
+        );
+    }
+
+    private void notifySuperAdminsOfNewReclamation(Reclamation reclamation) {
+<span class="fc" id="L274">        List&lt;Utilisateur&gt; superAdmins = utilisateurRepository.findByRole(Role.SUPERADMIN);</span>
+
+<span class="fc" id="L276">        String userFullName = &quot;-&quot;;</span>
+<span class="pc bpc" id="L277" title="1 of 2 branches missed.">        if (reclamation.getUtilisateur() != null) {</span>
+<span class="fc bfc" id="L278" title="All 2 branches covered.">            String firstName = reclamation.getUtilisateur().getPrenom() != null ? reclamation.getUtilisateur().getPrenom() : &quot;&quot;;</span>
+<span class="fc bfc" id="L279" title="All 2 branches covered.">            String lastName = reclamation.getUtilisateur().getNom() != null ? reclamation.getUtilisateur().getNom() : &quot;&quot;;</span>
+<span class="fc" id="L280">            userFullName = (firstName + &quot; &quot; + lastName).trim();</span>
+<span class="fc bfc" id="L281" title="All 2 branches covered.">            if (userFullName.isEmpty()) userFullName = reclamation.getUtilisateur().getEmail();</span>
+        }
+
+<span class="pc bpc" id="L284" title="1 of 2 branches missed.">        String sujet = reclamation.getSujet() != null ? reclamation.getSujet() : &quot;-&quot;;</span>
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">        String priorite = reclamation.getPriorite() != null ? reclamation.getPriorite().toString() : &quot;-&quot;;</span>
+
+<span class="fc" id="L287">        String message = &quot;Nouvelle réclamation de &quot; + userFullName + &quot; — Sujet: &quot; + sujet + &quot; — Priorité: &quot; + priorite;</span>
+
+<span class="fc bfc" id="L289" title="All 4 branches covered.">        if (superAdmins == null || superAdmins.isEmpty()) {</span>
+<span class="fc" id="L290">            return;</span>
+        }
+
+<span class="fc" id="L293">        superAdmins.forEach(admin -&gt; createNotification(admin, withReclamationToken(reclamation, message)));</span>
+<span class="fc" id="L294">        notificationRealtimeService.publishToUsers(superAdmins.stream().map(Utilisateur::getId).toList(), null);</span>
+<span class="fc" id="L295">    }</span>
+
+    private String withReclamationToken(Reclamation r, String message) {
+<span class="fc bfc" id="L298" title="All 4 branches covered.">        if (r == null || r.getId() == null) {</span>
+<span class="fc" id="L299">            return message;</span>
+        }
+<span class="fc" id="L301">        return &quot;[RECLAMATION_ID:&quot; + r.getId() + &quot;] &quot; + message;</span>
+    }
+
+    private void createNotification(Utilisateur recipient, String message) {
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">        if (recipient == null) return;</span>
+
+<span class="fc" id="L307">        com.logiway.entities.Notification notification = com.logiway.entities.Notification.builder()</span>
+<span class="fc" id="L308">            .type(TypeNotif.NOTIF_RECLAMATION)</span>
+<span class="fc" id="L309">            .message(message)</span>
+<span class="fc" id="L310">            .utilisateur(recipient)</span>
+<span class="fc" id="L311">            .build();</span>
+<span class="fc" id="L312">        notificationRepository.save(notification);</span>
+<span class="fc" id="L313">        notificationRealtimeService.publishToUsers(List.of(recipient.getId()), notification);</span>
+<span class="fc" id="L314">    }</span>
+
+    private void createNotificationForUser(Utilisateur user, String message) {
+<span class="fc bfc" id="L317" title="All 2 branches covered.">        if (user == null) return;</span>
+<span class="fc" id="L318">        createNotification(user, message);</span>
+<span class="fc" id="L319">    }</span>
+
+    @Override
+    public ValidateReclamationResponse validateText(ValidateReclamationRequest request) {
+<span class="fc bfc" id="L323" title="All 2 branches covered.">        String sujet = request.getSujet() == null ? &quot;&quot; : request.getSujet().trim();</span>
+<span class="fc bfc" id="L324" title="All 2 branches covered.">        String description = request.getDescription() == null ? &quot;&quot; : request.getDescription().trim();</span>
+
+<span class="fc" id="L326">        log.info(&quot;[RECLAMATION-VALIDATE] ═══ Début validation ═══&quot;);</span>
+<span class="pc bpc" id="L327" title="1 of 2 branches missed.">        log.info(&quot;[RECLAMATION-VALIDATE] Validation sujet = \&quot;{}\&quot;&quot;, sujet.length() &gt; 50 ? sujet.substring(0, 50) + &quot;...&quot; : sujet);</span>
+<span class="pc bpc" id="L328" title="1 of 2 branches missed.">        log.info(&quot;[RECLAMATION-VALIDATE] Validation description = \&quot;{}\&quot;&quot;, description.length() &gt; 50 ? description.substring(0, 50) + &quot;...&quot; : description);</span>
+
+        // Validation du sujet
+<span class="fc" id="L331">        ValidateReclamationFieldResponse sujetResult = validateField(sujet, &quot;SUJET&quot;);</span>
+        
+        // Validation de la description
+<span class="fc" id="L334">        ValidateReclamationFieldResponse descriptionResult = validateField(description, &quot;DESCRIPTION&quot;);</span>
+
+<span class="fc bfc" id="L336" title="All 2 branches covered.">        log.info(&quot;[RECLAMATION-VALIDATE] Résultat sujet = {}&quot;, sujetResult.isValide() ? &quot;VALIDE&quot; : sujetResult.getTypeErreur());</span>
+<span class="fc bfc" id="L337" title="All 2 branches covered.">        log.info(&quot;[RECLAMATION-VALIDATE] Résultat description = {}&quot;, descriptionResult.isValide() ? &quot;VALIDE&quot; : descriptionResult.getTypeErreur());</span>
+<span class="fc" id="L338">        log.info(&quot;[RECLAMATION-VALIDATE] ═══ Fin validation ═══&quot;);</span>
+
+<span class="fc" id="L340">        return ValidateReclamationResponse.builder()</span>
+<span class="fc" id="L341">            .sujet(sujetResult)</span>
+<span class="fc" id="L342">            .description(descriptionResult)</span>
+<span class="fc" id="L343">            .build();</span>
+    }
+
+    private ValidateReclamationFieldResponse validateField(String text, String fieldName) {
+<span class="fc bfc" id="L347" title="All 2 branches covered.">        if (text.isBlank()) {</span>
+<span class="fc" id="L348">            return ValidateReclamationFieldResponse.builder().valide(true).build();</span>
+        }
+
+        try {
+<span class="fc" id="L352">            log.info(&quot;[LOCAL-AI] Appel service local pour validation du champ {}&quot;, fieldName);</span>
+            
+<span class="fc" id="L354">            String url = localAiServiceUrl + &quot;/validate&quot;;</span>
+<span class="fc" id="L355">            HttpHeaders headers = new HttpHeaders();</span>
+<span class="fc" id="L356">            headers.setContentType(MediaType.APPLICATION_JSON);</span>
+            
+<span class="fc" id="L358">            Map&lt;String, Object&gt; body = Map.of(</span>
+                &quot;text&quot;, text,
+<span class="fc" id="L360">                &quot;field&quot;, fieldName.toLowerCase()</span>
+            );
+            
+<span class="fc" id="L363">            HttpEntity&lt;Map&lt;String, Object&gt;&gt; entity = new HttpEntity&lt;&gt;(body, headers);</span>
+<span class="fc" id="L364">            ResponseEntity&lt;String&gt; resp = restTemplate.postForEntity(url, entity, String.class);</span>
+            
+<span class="pc bpc" id="L366" title="1 of 4 branches missed.">            if (!resp.getStatusCode().is2xxSuccessful() || resp.getBody() == null) {</span>
+<span class="fc" id="L367">                log.error(&quot;[LOCAL-AI] Service indisponible - code={}&quot;, resp.getStatusCode());</span>
+<span class="fc" id="L368">                throw new BadRequestException(&quot;Service de validation IA temporairement indisponible. Veuillez réessayer dans quelques instants.&quot;);</span>
+            }
+
+<span class="fc" id="L371">            JsonNode node = objectMapper.readTree(resp.getBody());</span>
+<span class="fc" id="L372">            boolean valide = node.get(&quot;valide&quot;).asBoolean();</span>
+            
+<span class="fc bfc" id="L374" title="All 2 branches covered.">            if (!valide) {</span>
+<span class="fc" id="L375">                String typeErreur = node.get(&quot;typeErreur&quot;).asText();</span>
+<span class="fc" id="L376">                String message = node.get(&quot;message&quot;).asText();</span>
+                
+<span class="fc" id="L378">                JsonNode scores = node.get(&quot;scores&quot;);</span>
+<span class="fc bfc" id="L379" title="All 2 branches covered.">                if (scores != null) {</span>
+<span class="fc bfc" id="L380" title="All 4 branches covered.">                    double toxicite = scores.has(&quot;toxicite&quot;) &amp;&amp; !scores.get(&quot;toxicite&quot;).isNull() </span>
+<span class="fc" id="L381">                        ? scores.get(&quot;toxicite&quot;).asDouble() : 0.0;</span>
+<span class="fc bfc" id="L382" title="All 4 branches covered.">                    double semantique = scores.has(&quot;semantique&quot;) &amp;&amp; !scores.get(&quot;semantique&quot;).isNull() </span>
+<span class="fc" id="L383">                        ? scores.get(&quot;semantique&quot;).asDouble() : 0.0;</span>
+                    
+<span class="fc" id="L385">                    log.info(&quot;[LOCAL-AI] {} - Score toxicité = {} | Score sémantique = {} | Décision = BLOCK ({})&quot;,</span>
+<span class="fc" id="L386">                        fieldName, toxicite, semantique, typeErreur);</span>
+                }
+                
+<span class="fc" id="L389">                return ValidateReclamationFieldResponse.builder()</span>
+<span class="fc" id="L390">                    .valide(false)</span>
+<span class="fc" id="L391">                    .typeErreur(typeErreur)</span>
+<span class="fc" id="L392">                    .message(message)</span>
+<span class="fc" id="L393">                    .build();</span>
+            }
+            
+<span class="fc" id="L396">            JsonNode scores = node.get(&quot;scores&quot;);</span>
+<span class="pc bpc" id="L397" title="1 of 2 branches missed.">            if (scores != null) {</span>
+<span class="fc" id="L398">                double toxicite = scores.get(&quot;toxicite&quot;).asDouble();</span>
+<span class="fc" id="L399">                double semantique = scores.get(&quot;semantique&quot;).asDouble();</span>
+<span class="fc" id="L400">                log.info(&quot;[LOCAL-AI] {} - Score toxicité = {} | Score sémantique = {} | Décision = PASS&quot;,</span>
+<span class="fc" id="L401">                    fieldName, toxicite, semantique);</span>
+            }
+            
+<span class="fc" id="L404">            return ValidateReclamationFieldResponse.builder().valide(true).build();</span>
+            
+<span class="fc" id="L406">        } catch (BadRequestException ex) {</span>
+<span class="fc" id="L407">            throw ex;</span>
+<span class="fc" id="L408">        } catch (Exception ex) {</span>
+<span class="fc" id="L409">            log.error(&quot;[LOCAL-AI] Erreur appel service local: {}&quot;, ex.getMessage());</span>
+<span class="fc" id="L410">            throw new BadRequestException(&quot;Service de validation IA temporairement indisponible. Veuillez réessayer dans quelques instants.&quot;);</span>
+        }
+    }
+
+    private void validateSubmissionOrThrow(String subject, String description) {
+<span class="fc" id="L415">        log.info(&quot;[RECLAMATION-SUBMIT] Validation finale avant soumission&quot;);</span>
+        
+        // Valider le sujet
+<span class="fc" id="L418">        ValidateReclamationFieldResponse sujetResult = validateField(subject, &quot;SUJET&quot;);</span>
+<span class="fc bfc" id="L419" title="All 2 branches covered.">        if (!sujetResult.isValide()) {</span>
+<span class="fc" id="L420">            log.warn(&quot;[RECLAMATION-SUBMIT] Sujet refusé: {}&quot;, sujetResult.getTypeErreur());</span>
+<span class="fc" id="L421">            throw new BadRequestException(sujetResult.getMessage());</span>
+        }
+        
+        // Valider la description
+<span class="fc" id="L425">        ValidateReclamationFieldResponse descriptionResult = validateField(description, &quot;DESCRIPTION&quot;);</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">        if (!descriptionResult.isValide()) {</span>
+<span class="fc" id="L427">            log.warn(&quot;[RECLAMATION-SUBMIT] Description refusée: {}&quot;, descriptionResult.getTypeErreur());</span>
+<span class="fc" id="L428">            throw new BadRequestException(descriptionResult.getMessage());</span>
+        }
+        
+<span class="fc" id="L431">        log.info(&quot;[RECLAMATION-SUBMIT] Validation réussie&quot;);</span>
+<span class="fc" id="L432">    }</span>
+
+    private Reclamation requireOwnedDraftReclamation(Long id, Utilisateur currentUser) {
+<span class="fc" id="L435">        Reclamation reclamation = reclamationRepository.findById(id)</span>
+<span class="fc" id="L436">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Reclamation not found&quot;));</span>
+
+<span class="pc bpc" id="L438" title="1 of 4 branches missed.">        if (currentUser == null || currentUser.getId() == null) {</span>
+<span class="fc" id="L439">            throw new UnauthorizedException(&quot;You are not allowed to modify reclamations&quot;);</span>
+        }
+
+<span class="pc bpc" id="L442" title="1 of 2 branches missed.">        Long ownerId = reclamation.getUtilisateur() != null ? reclamation.getUtilisateur().getId() : null;</span>
+<span class="pc bpc" id="L443" title="1 of 4 branches missed.">        if (ownerId == null || !ownerId.equals(currentUser.getId())) {</span>
+<span class="fc" id="L444">            throw new UnauthorizedException(&quot;You can only modify your own reclamations&quot;);</span>
+        }
+
+<span class="fc bfc" id="L447" title="All 2 branches covered.">        if (reclamation.getStatut() != StatutReclamation.EN_COURS) {</span>
+<span class="fc" id="L448">            throw new BadRequestException(&quot;Only pending reclamations can be modified or deleted&quot;);</span>
+        }
+
+<span class="fc" id="L451">        return reclamation;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

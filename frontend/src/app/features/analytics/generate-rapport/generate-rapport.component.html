@@ -1,0 +1,196 @@
+<div class="generate-rapport-container">
+  <!-- En-tête -->
+  <div class="header">
+    <div class="header-content">
+      <h2>📊 Génération de Rapports Intelligents</h2>
+      <p class="subtitle">Créez des rapports professionnels en langage naturel</p>
+    </div>
+    
+    <!-- Navigation entre vues -->
+    <div class="view-toggle">
+      <button 
+        class="toggle-btn" 
+        [class.active]="viewMode === 'generate'"
+        (click)="switchView('generate')">
+        ✨ Générer un Rapport
+      </button>
+      <button 
+        class="toggle-btn" 
+        [class.active]="viewMode === 'list'"
+        (click)="switchView('list')">
+        📋 Mes Rapports ({{ rapports.length }})
+      </button>
+    </div>
+  </div>
+
+  <!-- Messages de feedback -->
+  <div class="messages">
+    <div class="alert alert-success" *ngIf="messageSucces">
+      ✓ {{ messageSucces }}
+    </div>
+    <div class="alert alert-error" *ngIf="messageErreur">
+      ✗ {{ messageErreur }}
+    </div>
+  </div>
+
+  <!-- VUE GÉNÉRATION -->
+  <div class="generate-view" *ngIf="viewMode === 'generate'">
+    <div class="generate-card">
+      <!-- Exemples de requêtes -->
+      <div class="examples-section">
+        <h3>💡 Exemples de requêtes</h3>
+        <div class="examples-grid">
+          <button 
+            *ngFor="let exemple of exempleRequetes" 
+            class="example-btn"
+            (click)="utiliserExemple(exemple)">
+            {{ exemple }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Formulaire de génération -->
+      <div class="form-section">
+        <div class="form-group">
+          <label for="requete">Votre requête en langage naturel</label>
+          <textarea 
+            id="requete"
+            [(ngModel)]="requeteNaturelle"
+            placeholder="Exemple: Génère un rapport PDF des véhicules en maintenance cette semaine"
+            rows="4"
+            [disabled]="isGenerating"></textarea>
+          <small class="hint">Décrivez le rapport que vous souhaitez générer en français naturel</small>
+        </div>
+
+        <div class="form-group">
+          <label for="format">Format du rapport</label>
+          <div class="format-selector">
+            <button 
+              *ngFor="let format of formats"
+              class="format-btn"
+              [class.selected]="formatSelectionne === format"
+              (click)="formatSelectionne = format"
+              [disabled]="isGenerating">
+              {{ getFormatIcon(format) }} {{ format }}
+            </button>
+          </div>
+        </div>
+
+        <button 
+          class="btn-generate"
+          (click)="genererRapport()"
+          [disabled]="isGenerating || !requeteNaturelle.trim()">
+          <span *ngIf="!isGenerating">🚀 Générer le Rapport</span>
+          <span *ngIf="isGenerating">
+            <span class="spinner"></span> Génération en cours...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VUE LISTE -->
+  <div class="list-view" *ngIf="viewMode === 'list'">
+    <!-- Filtres -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label for="domaine-filter">Filtrer par domaine:</label>
+        <select 
+          id="domaine-filter"
+          [(ngModel)]="filtreDomaineSelectionne"
+          (change)="appliquerFiltre()">
+          <option value="">Tous les domaines</option>
+          <option *ngFor="let domaine of domaines" [value]="domaine">
+            {{ domaine || 'Tous' }}
+          </option>
+        </select>
+      </div>
+      
+      <button class="btn-refresh" (click)="chargerRapports()" [disabled]="isLoading">
+        🔄 Actualiser
+      </button>
+    </div>
+
+    <!-- Loader -->
+    <div class="loader" *ngIf="isLoading">
+      <div class="spinner-large"></div>
+      <p>Chargement des rapports...</p>
+    </div>
+
+    <!-- Liste des rapports -->
+    <div class="rapports-grid" *ngIf="!isLoading">
+      <!-- Message si aucun rapport -->
+      <div class="empty-state" *ngIf="rapports.length === 0">
+        <div class="empty-icon">📭</div>
+        <h3>Aucun rapport généré</h3>
+        <p>Commencez par générer votre premier rapport !</p>
+        <button class="btn-primary" (click)="switchView('generate')">
+          ✨ Générer un Rapport
+        </button>
+      </div>
+
+      <!-- Cartes des rapports -->
+      <div class="rapport-card" *ngFor="let rapport of rapports">
+        <div class="card-header">
+          <div class="card-title">
+            <span class="format-icon">{{ getFormatIcon(rapport.format) }}</span>
+            <h4>{{ rapport.titre }}</h4>
+          </div>
+          <div class="card-badges">
+            <span class="badge" [ngClass]="getFormatBadgeClass(rapport.format)">
+              {{ rapport.format }}
+            </span>
+            <span class="badge" [ngClass]="getDomaineBadgeClass(rapport.domaine)">
+              {{ rapport.domaine }}
+            </span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="info-row">
+            <span class="label">📅 Date:</span>
+            <span class="value">{{ rapport.dateCreation | date: 'dd/MM/yyyy HH:mm' }}</span>
+          </div>
+          
+          <div class="info-row" *ngIf="rapport.nbLignes">
+            <span class="label">📊 Lignes:</span>
+            <span class="value">{{ rapport.nbLignes }}</span>
+          </div>
+
+          <div class="info-row" *ngIf="rapport.tailleFichierKo">
+            <span class="label">💾 Taille:</span>
+            <span class="value">{{ formatFileSize(rapport.tailleFichierKo) }}</span>
+          </div>
+
+          <div class="info-row" *ngIf="rapport.tempsGenerationMs">
+            <span class="label">⏱️ Temps:</span>
+            <span class="value">{{ formatGenerationTime(rapport.tempsGenerationMs) }}</span>
+          </div>
+
+          <div class="info-row" *ngIf="rapport.dateDebutDonnees && rapport.dateFinDonnees">
+            <span class="label">📆 Période:</span>
+            <span class="value">
+              {{ rapport.dateDebutDonnees | date: 'dd/MM/yy' }} - 
+              {{ rapport.dateFinDonnees | date: 'dd/MM/yy' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <button 
+            class="btn-action btn-download"
+            (click)="telechargerRapport(rapport)"
+            title="Télécharger">
+            ⬇️ Télécharger
+          </button>
+          <button 
+            class="btn-action btn-delete"
+            (click)="supprimerRapport(rapport)"
+            title="Supprimer">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

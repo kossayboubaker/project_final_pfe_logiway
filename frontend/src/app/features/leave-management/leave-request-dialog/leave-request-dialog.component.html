@@ -1,0 +1,54 @@
+<div class="glass-card dialog-container animate-fade-up">
+    <h2 mat-dialog-title class="text-gradient">{{ isEditMode ? 'Modifier la Demande' : 'Nouvelle Demande de Congé' }}</h2>
+
+    <mat-dialog-content class="mat-typography">
+        <form [formGroup]="leaveForm" class="dialog-form">
+            <div class="form-row">
+                <mat-form-field appearance="outline">
+                    <mat-label>Type de Congé</mat-label>
+                    <mat-select formControlName="type">
+                        <mat-option *ngFor="let type of leaveTypes" [value]="type.value">
+                            {{type.label}}
+                        </mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>category</mat-icon>
+                </mat-form-field>
+            </div>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline">
+                    <mat-label>Date de début</mat-label>
+                    <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                    <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Date de fin</mat-label>
+                    <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                    <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Motif / Commentaires</mat-label>
+                <textarea matInput formControlName="reason" rows="3"
+                    placeholder="Expliquez brièvement votre demande..."></textarea>
+                <mat-icon matSuffix>edit_note</mat-icon>
+            </mat-form-field>
+
+            <div class="duration-preview" *ngIf="durationPreview">
+                Durée estimée: {{ durationPreview }}
+            </div>
+        </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="onCancel()" class="px-4">ANNULER</button>
+        <button mat-raised-button color="primary" class="glow-on-hover px-4" [disabled]="leaveForm.invalid"
+            (click)="onSubmit()">
+            {{ isEditMode ? 'ENREGISTRER' : 'SOUMETTRE LA DEMANDE' }}
+        </button>
+    </mat-dialog-actions>
+</div>

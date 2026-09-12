@@ -1,0 +1,156 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > Trajet</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.entities</a>
+</div>
+
+<h1>Coverage Summary for Class: Trajet (com.logiway.entities)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+</tr>
+<tr>
+  <td class="name">Trajet</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.entities;
+&nbsp;
+&nbsp;import com.logiway.entities.enums.StatutTrajet;
+&nbsp;import com.logiway.entities.enums.PrioriteTrajet;
+&nbsp;import jakarta.persistence.*;
+&nbsp;import lombok.*;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;
+&nbsp;@Entity
+&nbsp;@Table(name = &quot;trajets&quot;)
+&nbsp;@Getter
+&nbsp;@Setter
+&nbsp;@NoArgsConstructor
+&nbsp;@AllArgsConstructor
+&nbsp;@Builder
+&nbsp;public class Trajet {
+&nbsp;
+&nbsp;    @Id
+&nbsp;    @GeneratedValue(strategy = GenerationType.IDENTITY)
+&nbsp;    private Long id;
+&nbsp;
+&nbsp;    @Column(name = &quot;date_depart&quot;)
+&nbsp;    private LocalDateTime dateDepart;
+&nbsp;
+&nbsp;    @Column(name = &quot;date_arrivee&quot;)
+&nbsp;    private LocalDateTime dateArrivee;
+&nbsp;
+&nbsp;    @Column(name = &quot;point_depart&quot;, length = 255)
+&nbsp;    private String pointDepart;
+&nbsp;
+&nbsp;    @Column(length = 255)
+&nbsp;    private String destination;
+&nbsp;
+&nbsp;    @Column(name = &quot;latitude_depart&quot;)
+&nbsp;    private Double latitudeDepart;
+&nbsp;
+&nbsp;    @Column(name = &quot;longitude_depart&quot;)
+&nbsp;    private Double longitudeDepart;
+&nbsp;
+&nbsp;    @Column(name = &quot;latitude_arrivee&quot;)
+&nbsp;    private Double latitudeArrivee;
+&nbsp;
+&nbsp;    @Column(name = &quot;longitude_arrivee&quot;)
+&nbsp;    private Double longitudeArrivee;
+&nbsp;
+&nbsp;    @Column(name = &quot;distance_km&quot;)
+&nbsp;    private Double distanceKm;
+&nbsp;
+&nbsp;    @Column(name = &quot;duree_estimee_minutes&quot;)
+&nbsp;    private Integer dureeEstimeeMinutes;
+&nbsp;
+&nbsp;    @Lob
+&nbsp;    @Column(name = &quot;geometrie_itineraire&quot;, columnDefinition = &quot;LONGTEXT&quot;)
+&nbsp;    private String geometrieItineraire;
+&nbsp;
+&nbsp;    @Column(name = &quot;charge_kg&quot;)
+&nbsp;    private Double chargeKg;
+&nbsp;
+&nbsp;    @Enumerated(EnumType.STRING)
+&nbsp;    @Column(length = 30)
+&nbsp;    private PrioriteTrajet priorite;
+&nbsp;
+&nbsp;    @Column(length = 500)
+&nbsp;    private String notes;
+&nbsp;
+&nbsp;    @Column(name = &quot;date_arrivee_reelle&quot;)
+&nbsp;    private LocalDateTime dateArriveeReelle;
+&nbsp;
+&nbsp;    @Enumerated(EnumType.STRING)
+&nbsp;    @Column(nullable = false, length = 30)
+&nbsp;    private StatutTrajet statut;
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;chauffeur_id&quot;)
+&nbsp;    private Chauffeur chauffeur;
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;vehicule_id&quot;)
+&nbsp;    private Vehicule vehicule;
+&nbsp;
+&nbsp;    @ManyToOne(fetch = FetchType.LAZY)
+&nbsp;    @JoinColumn(name = &quot;manager_id&quot;)
+&nbsp;    private Manager manager;
+&nbsp;
+&nbsp;    @Column(name = &quot;type_optimisation&quot;, length = 30)
+&nbsp;    private String typeOptimisation;
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

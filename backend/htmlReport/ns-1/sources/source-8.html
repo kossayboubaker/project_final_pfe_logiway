@@ -1,0 +1,213 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TrajetOptimisationService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: TrajetOptimisationService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TrajetOptimisationService</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/3)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/20)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/25)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TrajetOptimisationService$OptimizationAssignment</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/4)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/20)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/26)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services;
+&nbsp;
+&nbsp;import com.logiway.dto.trajet.TrajetRequest;
+&nbsp;import com.logiway.entities.Vehicule;
+&nbsp;import com.logiway.entities.enums.StatutVehicule;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.Comparator;
+&nbsp;import java.util.LinkedHashMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;
+&nbsp;@Service
+<b class="nc">&nbsp;@RequiredArgsConstructor</b>
+&nbsp;public class TrajetOptimisationService {
+&nbsp;
+&nbsp;    private final OsrmService osrmService;
+&nbsp;
+&nbsp;    public List&lt;OptimizationAssignment&gt; optimiser(List&lt;TrajetRequest&gt; trajets, List&lt;Vehicule&gt; vehiculesDisponibles) {
+<b class="nc">&nbsp;        List&lt;TrajetRequest&gt; orderedTrajets = new ArrayList&lt;&gt;(trajets == null ? List.of() : trajets);</b>
+<b class="nc">&nbsp;        orderedTrajets.sort(Comparator.comparing(TrajetRequest::priorite, Comparator.nullsLast(Comparator.naturalOrder())).reversed());</b>
+&nbsp;
+<b class="nc">&nbsp;        List&lt;Vehicule&gt; fleet = vehiculesDisponibles == null ? List.of() : vehiculesDisponibles.stream()</b>
+<b class="nc">&nbsp;            .filter(v -&gt; v.getStatut() == StatutVehicule.EN_SERVICE)</b>
+<b class="nc">&nbsp;            .sorted(Comparator.comparing(Vehicule::getId))</b>
+<b class="nc">&nbsp;            .toList();</b>
+&nbsp;
+<b class="nc">&nbsp;        List&lt;OptimizationAssignment&gt; assignments = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;        if (orderedTrajets.isEmpty() || fleet.isEmpty()) {</b>
+<b class="nc">&nbsp;            return assignments;</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;Long, Double&gt; loadByVehicle = new LinkedHashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        for (Vehicule vehicule : fleet) {</b>
+<b class="nc">&nbsp;            loadByVehicle.put(vehicule.getId(), 0d);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        for (TrajetRequest trajet : orderedTrajets) {</b>
+<b class="nc">&nbsp;            Vehicule selected = selectVehicle(fleet, loadByVehicle);</b>
+<b class="nc">&nbsp;            String opt = trajet.typeOptimisation() != null ? trajet.typeOptimisation() : &quot;shortest&quot;;</b>
+<b class="nc">&nbsp;            OsrmService.RouteEstimation route = osrmService.calculerItineraire(</b>
+<b class="nc">&nbsp;                trajet.latitudeDepart(), trajet.longitudeDepart(), trajet.latitudeArrivee(), trajet.longitudeArrivee(), opt);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (selected != null) {</b>
+<b class="nc">&nbsp;                loadByVehicle.computeIfPresent(selected.getId(), (key, value) -&gt; value + (route != null ? route.distanceKm() : 1d));</b>
+<b class="nc">&nbsp;                assignments.add(new OptimizationAssignment(trajet, selected, route));</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        return assignments;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Vehicule selectVehicle(List&lt;Vehicule&gt; fleet, Map&lt;Long, Double&gt; loadByVehicle) {
+<b class="nc">&nbsp;        return fleet.stream()</b>
+<b class="nc">&nbsp;            .min(Comparator.comparing(v -&gt; loadByVehicle.getOrDefault(v.getId(), 0d)))</b>
+<b class="nc">&nbsp;            .orElse(null);</b>
+&nbsp;    }
+&nbsp;
+<b class="nc">&nbsp;    public record OptimizationAssignment(TrajetRequest trajet, Vehicule vehicule, OsrmService.RouteEstimation route) {</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-10 02:59</div>
+</div>
+</body>
+</html>

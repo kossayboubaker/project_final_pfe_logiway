@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RapportService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services</a> &gt; <span class="el_source">RapportService.java</span></div><h1>RapportService.java</h1><pre class="source lang-java linenums">package com.logiway.services;
+
+import com.logiway.dto.response.RapportResponse;
+import com.logiway.entities.Utilisateur;
+import com.logiway.repositories.UtilisateurRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+<span class="fc" id="L16">@RequiredArgsConstructor</span>
+<span class="fc" id="L17">@Slf4j</span>
+public class RapportService {
+
+    private final ChatbotToolsService toolsService;
+    private final GeminiService geminiService;
+    private final UtilisateurRepository utilisateurRepository;
+
+    /**
+     * Génère un rapport sur les congés de la semaine
+     */
+    public RapportResponse genererRapportCongesSemaine(Long utilisateurId) {
+<span class="fc" id="L28">        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)</span>
+<span class="fc" id="L29">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Utilisateur non trouvé&quot;));</span>
+
+<span class="fc" id="L31">        String donneesConges = toolsService.getCongesSemaine();</span>
+
+<span class="fc" id="L33">        List&lt;RapportResponse.RapportSection&gt; sections = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L34">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L35">            .titre(&quot;Congés de la Semaine&quot;)</span>
+<span class="fc" id="L36">            .contenu(donneesConges)</span>
+<span class="fc" id="L37">            .build());</span>
+
+<span class="fc" id="L39">        String resumeIA = genererResumeIA(&quot;Voici les données des congés approuvés pour la semaine en cours. Génère un résumé professionnel des absences:\n\n&quot; + donneesConges);</span>
+
+<span class="fc" id="L41">        return RapportResponse.builder()</span>
+<span class="fc" id="L42">            .titre(&quot;Rapport - Congés de la Semaine&quot;)</span>
+<span class="fc" id="L43">            .dateGeneration(LocalDateTime.now())</span>
+<span class="fc" id="L44">            .sections(sections)</span>
+<span class="fc" id="L45">            .resumeIA(resumeIA)</span>
+<span class="fc" id="L46">            .build();</span>
+    }
+
+    /**
+     * Génère un rapport sur les congés d'une période donnée
+     */
+    public RapportResponse genererRapportCongesPeriode(LocalDate debut, LocalDate fin, Long utilisateurId) {
+<span class="fc" id="L53">        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)</span>
+<span class="fc" id="L54">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Utilisateur non trouvé&quot;));</span>
+
+<span class="fc bfc" id="L56" title="All 2 branches covered.">        Long entrepriseId = utilisateur.getEntreprise() != null ? </span>
+<span class="fc" id="L57">            utilisateur.getEntreprise().getId() : null;</span>
+
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        if (entrepriseId == null) {</span>
+<span class="fc" id="L60">            throw new IllegalArgumentException(&quot;L'utilisateur n'est pas assigné à une entreprise&quot;);</span>
+        }
+
+<span class="fc" id="L63">        String donneesConges = toolsService.getRapportCongesParPeriode(debut, fin, entrepriseId);</span>
+
+<span class="fc" id="L65">        List&lt;RapportResponse.RapportSection&gt; sections = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L66">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L67">            .titre(&quot;Congés de la Période: &quot; + debut + &quot; à &quot; + fin)</span>
+<span class="fc" id="L68">            .contenu(donneesConges)</span>
+<span class="fc" id="L69">            .build());</span>
+
+<span class="fc" id="L71">        String resumeIA = genererResumeIA(&quot;Voici les données des congés approuvés pour la période &quot; + debut + &quot; à &quot; + fin + &quot;. Génère un résumé analytique:\n\n&quot; + donneesConges);</span>
+
+<span class="fc" id="L73">        return RapportResponse.builder()</span>
+<span class="fc" id="L74">            .titre(&quot;Rapport - Congés (&quot; + debut + &quot; à &quot; + fin + &quot;)&quot;)</span>
+<span class="fc" id="L75">            .dateGeneration(LocalDateTime.now())</span>
+<span class="fc" id="L76">            .sections(sections)</span>
+<span class="fc" id="L77">            .resumeIA(resumeIA)</span>
+<span class="fc" id="L78">            .build();</span>
+    }
+
+    /**
+     * Génère un rapport sur le taux d'absences des chauffeurs
+     */
+    public RapportResponse genererRapportTauxAbsences(int mois, int annee, Long utilisateurId) {
+<span class="fc" id="L85">        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)</span>
+<span class="fc" id="L86">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Utilisateur non trouvé&quot;));</span>
+
+<span class="fc bfc" id="L88" title="All 2 branches covered.">        Long entrepriseId = utilisateur.getEntreprise() != null ? </span>
+<span class="fc" id="L89">            utilisateur.getEntreprise().getId() : null;</span>
+
+<span class="fc bfc" id="L91" title="All 2 branches covered.">        if (entrepriseId == null) {</span>
+<span class="fc" id="L92">            throw new IllegalArgumentException(&quot;L'utilisateur n'est pas assigné à une entreprise&quot;);</span>
+        }
+
+<span class="fc" id="L95">        String donneesTaux = toolsService.getTauxAbsencesChauffeurs(mois, annee, entrepriseId);</span>
+
+<span class="fc" id="L97">        List&lt;RapportResponse.RapportSection&gt; sections = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L98">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L99">            .titre(String.format(&quot;Taux d'Absence - %02d/%d&quot;, mois, annee))</span>
+<span class="fc" id="L100">            .contenu(donneesTaux)</span>
+<span class="fc" id="L101">            .build());</span>
+
+<span class="fc" id="L103">        String resumeIA = genererResumeIA(&quot;Voici le taux d'absence des chauffeurs pour &quot; + String.format(&quot;%02d/%d&quot;, mois, annee) + &quot;. Analyse les chauffeurs les plus absents et fournis des recommandations:\n\n&quot; + donneesTaux);</span>
+
+<span class="fc" id="L105">        return RapportResponse.builder()</span>
+<span class="fc" id="L106">            .titre(String.format(&quot;Rapport - Taux d'Absence (%02d/%d)&quot;, mois, annee))</span>
+<span class="fc" id="L107">            .dateGeneration(LocalDateTime.now())</span>
+<span class="fc" id="L108">            .sections(sections)</span>
+<span class="fc" id="L109">            .resumeIA(resumeIA)</span>
+<span class="fc" id="L110">            .build();</span>
+    }
+
+    /**
+     * Génère un rapport sur les réclamations
+     */
+    public RapportResponse genererRapportReclamations(Long utilisateurId) {
+<span class="fc" id="L117">        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)</span>
+<span class="fc" id="L118">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Utilisateur non trouvé&quot;));</span>
+
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        Long entrepriseId = utilisateur.getEntreprise() != null ? </span>
+<span class="fc" id="L121">            utilisateur.getEntreprise().getId() : null;</span>
+
+<span class="fc bfc" id="L123" title="All 2 branches covered.">        if (entrepriseId == null) {</span>
+<span class="fc" id="L124">            throw new IllegalArgumentException(&quot;L'utilisateur n'est pas assigné à une entreprise&quot;);</span>
+        }
+
+<span class="fc" id="L127">        String donneesReclamations = toolsService.getResumeReclamations(entrepriseId);</span>
+
+<span class="fc" id="L129">        List&lt;RapportResponse.RapportSection&gt; sections = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L130">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L131">            .titre(&quot;Résumé des Réclamations&quot;)</span>
+<span class="fc" id="L132">            .contenu(donneesReclamations)</span>
+<span class="fc" id="L133">            .build());</span>
+
+<span class="fc" id="L135">        String resumeIA = genererResumeIA(&quot;Voici le résumé des réclamations. Analyse la situation et fournis des recommandations pour améliorer le taux de résolution:\n\n&quot; + donneesReclamations);</span>
+
+<span class="fc" id="L137">        return RapportResponse.builder()</span>
+<span class="fc" id="L138">            .titre(&quot;Rapport - Réclamations&quot;)</span>
+<span class="fc" id="L139">            .dateGeneration(LocalDateTime.now())</span>
+<span class="fc" id="L140">            .sections(sections)</span>
+<span class="fc" id="L141">            .resumeIA(resumeIA)</span>
+<span class="fc" id="L142">            .build();</span>
+    }
+
+    /**
+     * Génère un rapport complet sur les véhicules
+     */
+    public RapportResponse genererRapportVehicules(Long utilisateurId) {
+<span class="fc" id="L149">        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)</span>
+<span class="fc" id="L150">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Utilisateur non trouvé&quot;));</span>
+
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        Long entrepriseId = utilisateur.getEntreprise() != null ? </span>
+<span class="fc" id="L153">            utilisateur.getEntreprise().getId() : null;</span>
+
+<span class="fc bfc" id="L155" title="All 2 branches covered.">        if (entrepriseId == null) {</span>
+<span class="fc" id="L156">            throw new IllegalArgumentException(&quot;L'utilisateur n'est pas assigné à une entreprise&quot;);</span>
+        }
+
+<span class="fc" id="L159">        String donneesVehicules = toolsService.getRapportVehicules(entrepriseId);</span>
+<span class="fc" id="L160">        String vehiculesEnMaintenance = toolsService.getVehiculesEnMaintenance(entrepriseId);</span>
+
+<span class="fc" id="L162">        List&lt;RapportResponse.RapportSection&gt; sections = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L163">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L164">            .titre(&quot;Résumé Général&quot;)</span>
+<span class="fc" id="L165">            .contenu(donneesVehicules)</span>
+<span class="fc" id="L166">            .build());</span>
+<span class="fc" id="L167">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L168">            .titre(&quot;Véhicules en Maintenance&quot;)</span>
+<span class="fc" id="L169">            .contenu(vehiculesEnMaintenance)</span>
+<span class="fc" id="L170">            .build());</span>
+
+<span class="fc" id="L172">        String resumeIA = genererResumeIA(&quot;Voici les données complètes sur la flotte de véhicules. Analyse l'état du parc et fournis des recommandations:\n\n&quot; + donneesVehicules + &quot;\n&quot; + vehiculesEnMaintenance);</span>
+
+<span class="fc" id="L174">        return RapportResponse.builder()</span>
+<span class="fc" id="L175">            .titre(&quot;Rapport - Véhicules&quot;)</span>
+<span class="fc" id="L176">            .dateGeneration(LocalDateTime.now())</span>
+<span class="fc" id="L177">            .sections(sections)</span>
+<span class="fc" id="L178">            .resumeIA(resumeIA)</span>
+<span class="fc" id="L179">            .build();</span>
+    }
+
+    /**
+     * Génère un rapport complet sur les trajets d'une période
+     */
+    public RapportResponse genererRapportTrajets(LocalDate debut, LocalDate fin, Long utilisateurId) {
+<span class="fc" id="L186">        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)</span>
+<span class="fc" id="L187">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Utilisateur non trouvé&quot;));</span>
+
+<span class="fc bfc" id="L189" title="All 2 branches covered.">        Long entrepriseId = utilisateur.getEntreprise() != null ? </span>
+<span class="fc" id="L190">            utilisateur.getEntreprise().getId() : null;</span>
+
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        if (entrepriseId == null) {</span>
+<span class="fc" id="L193">            throw new IllegalArgumentException(&quot;L'utilisateur n'est pas assigné à une entreprise&quot;);</span>
+        }
+
+<span class="fc" id="L196">        String donneesRapportTrajets = toolsService.getRapportTrajets(debut, fin, entrepriseId);</span>
+<span class="fc" id="L197">        String trajetsEnCours = toolsService.getTrajetsEnCoursParSecteur(entrepriseId);</span>
+
+<span class="fc" id="L199">        List&lt;RapportResponse.RapportSection&gt; sections = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L200">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L201">            .titre(&quot;Rapport Complet: &quot; + debut + &quot; à &quot; + fin)</span>
+<span class="fc" id="L202">            .contenu(donneesRapportTrajets)</span>
+<span class="fc" id="L203">            .build());</span>
+<span class="fc" id="L204">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L205">            .titre(&quot;Trajets en Cours par Secteur&quot;)</span>
+<span class="fc" id="L206">            .contenu(trajetsEnCours)</span>
+<span class="fc" id="L207">            .build());</span>
+
+<span class="fc" id="L209">        String resumeIA = genererResumeIA(&quot;Voici les données complètes sur les trajets pour la période &quot; + debut + &quot; à &quot; + fin + &quot;. Analyse la performance et fournis des recommandations:\n\n&quot; + donneesRapportTrajets + &quot;\n&quot; + trajetsEnCours);</span>
+
+<span class="fc" id="L211">        return RapportResponse.builder()</span>
+<span class="fc" id="L212">            .titre(&quot;Rapport - Trajets (&quot; + debut + &quot; à &quot; + fin + &quot;)&quot;)</span>
+<span class="fc" id="L213">            .dateGeneration(LocalDateTime.now())</span>
+<span class="fc" id="L214">            .sections(sections)</span>
+<span class="fc" id="L215">            .resumeIA(resumeIA)</span>
+<span class="fc" id="L216">            .build();</span>
+    }
+
+    /**
+     * Génère un rapport global sur toutes les gestions
+     */
+    public RapportResponse genererRapportGlobal(Long utilisateurId) {
+<span class="fc" id="L223">        Utilisateur utilisateur = utilisateurRepository.findById(utilisateurId)</span>
+<span class="fc" id="L224">            .orElseThrow(() -&gt; new IllegalArgumentException(&quot;Utilisateur non trouvé&quot;));</span>
+
+<span class="fc bfc" id="L226" title="All 2 branches covered.">        Long entrepriseId = utilisateur.getEntreprise() != null ? </span>
+<span class="fc" id="L227">            utilisateur.getEntreprise().getId() : null;</span>
+
+<span class="fc bfc" id="L229" title="All 2 branches covered.">        if (entrepriseId == null) {</span>
+<span class="fc" id="L230">            throw new IllegalArgumentException(&quot;L'utilisateur n'est pas assigné à une entreprise&quot;);</span>
+        }
+
+<span class="fc" id="L233">        String statsGlobales = toolsService.getStatistiquesGlobales(entrepriseId);</span>
+<span class="fc" id="L234">        String congesSemaine = toolsService.getCongesSemaine();</span>
+<span class="fc" id="L235">        String reclamations = toolsService.getResumeReclamations(entrepriseId);</span>
+<span class="fc" id="L236">        String vehicules = toolsService.getRapportVehicules(entrepriseId);</span>
+<span class="fc" id="L237">        String trajets = toolsService.getTrajetsEnCoursParSecteur(entrepriseId);</span>
+
+<span class="fc" id="L239">        List&lt;RapportResponse.RapportSection&gt; sections = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L240">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L241">            .titre(&quot;Statistiques Globales&quot;)</span>
+<span class="fc" id="L242">            .contenu(statsGlobales)</span>
+<span class="fc" id="L243">            .build());</span>
+<span class="fc" id="L244">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L245">            .titre(&quot;Congés de la Semaine&quot;)</span>
+<span class="fc" id="L246">            .contenu(congesSemaine)</span>
+<span class="fc" id="L247">            .build());</span>
+<span class="fc" id="L248">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L249">            .titre(&quot;Réclamations&quot;)</span>
+<span class="fc" id="L250">            .contenu(reclamations)</span>
+<span class="fc" id="L251">            .build());</span>
+<span class="fc" id="L252">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L253">            .titre(&quot;Véhicules&quot;)</span>
+<span class="fc" id="L254">            .contenu(vehicules)</span>
+<span class="fc" id="L255">            .build());</span>
+<span class="fc" id="L256">        sections.add(RapportResponse.RapportSection.builder()</span>
+<span class="fc" id="L257">            .titre(&quot;Trajets en Cours&quot;)</span>
+<span class="fc" id="L258">            .contenu(trajets)</span>
+<span class="fc" id="L259">            .build());</span>
+
+<span class="fc" id="L261">        String resumeIA = genererResumeIA(&quot;Voici un résumé global de toutes les opérations Logiway. Fournis un bilan général de la situation de l'entreprise:\n\n&quot; + statsGlobales);</span>
+
+<span class="fc" id="L263">        return RapportResponse.builder()</span>
+<span class="fc" id="L264">            .titre(&quot;Rapport Global - Bilan Complet&quot;)</span>
+<span class="fc" id="L265">            .dateGeneration(LocalDateTime.now())</span>
+<span class="fc" id="L266">            .sections(sections)</span>
+<span class="fc" id="L267">            .resumeIA(resumeIA)</span>
+<span class="fc" id="L268">            .build();</span>
+    }
+
+    /**
+     * Génère un résumé IA pour un rapport via Gemini
+     * Si le service est indisponible, retourne une chaîne vide
+     */
+    private String genererResumeIA(String prompt) {
+        try {
+<span class="fc" id="L277">            return geminiService.appelerServiceRAG(prompt, &quot;system&quot;, null);</span>
+<span class="fc" id="L278">        } catch (Exception e) {</span>
+<span class="fc" id="L279">            log.warn(&quot;Impossible de générer le résumé IA: {}&quot;, e.getMessage());</span>
+<span class="fc" id="L280">            return &quot;&quot;;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

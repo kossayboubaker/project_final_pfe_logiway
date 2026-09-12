@@ -1,0 +1,95 @@
+<div class="auth-page">
+    <div class="auth-card glass-card animate-fade-up">
+        <div class="auth-header">
+            <h1 class="text-gradient">Créer une Entreprise</h1>
+            <p>Configurez votre organisation logistique</p>
+        </div>
+
+        <form (ngSubmit)="onCreateCompany()" class="auth-form">
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Nom de l'entreprise</mat-label>
+                <input matInput placeholder="LogiCorp Express" [(ngModel)]="company.name" name="name" required>
+                <mat-icon matSuffix>business</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Email de l'entreprise</mat-label>
+                <input matInput placeholder="contact@logicorp.com" [(ngModel)]="company.email" name="email">
+                <mat-icon matSuffix>email</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Secteur d'activité</mat-label>
+                <mat-select [(ngModel)]="company.sector" name="sector" required>
+                    <mat-option value="transport">Transport de marchandises</mat-option>
+                    <mat-option value="delivery">Livraison dernier kilomètre</mat-option>
+                    <mat-option value="storage">Stockage & Entrepôt</mat-option>
+                </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Taille de la flotte (camions)</mat-label>
+                <input matInput type="number" placeholder="10" [(ngModel)]="company.fleetSize" name="fleetSize" required>
+                <mat-icon matSuffix>local_shipping</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Adresse du siège</mat-label>
+                <textarea matInput placeholder="123 Rue de la Logistique, Paris" [(ngModel)]="company.address" name="address"></textarea>
+                <mat-icon matSuffix>location_on</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Numéro de l'entreprise</mat-label>
+                <input matInput placeholder="+216 71 000 000" [(ngModel)]="company.number" name="number">
+                <mat-icon matSuffix>call</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Code TVA</mat-label>
+                <input matInput placeholder="TVA123456" [(ngModel)]="company.codeTVA" name="codeTVA">
+                <mat-icon matSuffix>receipt_long</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Représentant légal</mat-label>
+                <input matInput placeholder="Nom Prénom" [(ngModel)]="company.representantLegal" name="representantLegal">
+                <mat-icon matSuffix>badge</mat-icon>
+            </mat-form-field>
+
+            <div class="full-width">
+                <label>Document représentant légal (PDF/DOC)</label>
+                <input type="file" accept="application/pdf" (change)="onLegalDocSelected($event)">
+                <small *ngIf="legalDocFileName">{{ legalDocFileName }}</small>
+                <div *ngIf="isPdfDataUrl(company.documentJustificatif)">
+                    <a [href]="company.documentJustificatif" target="_blank" rel="noopener">Voir le PDF</a>
+                </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Image (URL ou base64)</mat-label>
+                <input matInput placeholder="https://..." [(ngModel)]="company.image" name="image">
+                <mat-icon matSuffix>image</mat-icon>
+            </mat-form-field>
+
+            <div class="full-width">
+                <label>Image entreprise</label>
+                <input type="file" accept="image/*" (change)="onImageSelected($event)">
+                <small *ngIf="imageFileName">{{ imageFileName }}</small>
+                <div *ngIf="isImageDataUrl(company.image)">
+                    <img [src]="company.image" alt="Aperçu logo entreprise" style="max-width: 180px; max-height: 120px; border-radius: 8px; margin-top: 8px;">
+                </div>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Statut</mat-label>
+                <input matInput value="EN_ATTENTE" disabled>
+                <mat-icon matSuffix>hourglass_top</mat-icon>
+            </mat-form-field>
+
+            <button mat-raised-button color="primary" class="full-width create-btn glow-on-hover">
+                Finaliser la Configuration
+            </button>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,5101 @@
+% ============================================================
+% RAPPORT PFE — LogiWay
+% Plateforme Intelligente de Gestion de Flotte
+% Compile avec : pdflatex rapport_logiway.tex (x2)
+% ============================================================
+
+\documentclass[12pt,a4paper]{report}
+
+% ─── Encodage & langue ────────────────────────────────────── \usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}           % Encodage des polices
+\usepackage{lmodern}               % <-- AJOUTÉ - Police Latin Modern complète
+\usepackage{textcomp}              % <-- AJOUTÉ - Symboles supplémentaires
+\usepackage[french]{babel}
+\usepackage{pdflscape}
+% ─── Mise en page ───────────────────────────────────────────
+\usepackage{geometry}
+\geometry{top=2.5cm,bottom=2.5cm,left=3cm,right=2.5cm,headheight=80pt}
+\usepackage{setspace}
+\setstretch{1.15}
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{0pt}
+
+% ─── Typographie : réduit les Overfull/Underfull \hbox ──────
+\setlength{\emergencystretch}{3em}
+\tolerance=1200
+\hbadness=2000
+
+% ─── Graphiques & couleurs ──────────────────────────────────
+\usepackage{graphicx}
+\usepackage[table,xcdraw]{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ─── Tableaux ───────────────────────────────────────────────
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% ─── Listes & énumérations ──────────────────────────────────
+\usepackage{enumitem}
+\setlist{itemsep=0.15em,topsep=0.2em}
+
+% ─── Typographie & mise en forme ────────────────────────────
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{microtype}
+\DisableLigatures{encoding = *, family = *}  % <-- AJOUTER CETTE LIGNE
+\usepackage{lmodern}
+% Correction des avertissements
+\makeatletter
+\let\old@showhyphens\showhyphens
+\def\showhyphens#1{\old@showhyphens{#1}}
+
+\makeatother
+% ─── Code source ────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{tcolorbox}
+\tcbuselibrary{listings,breakable,skins}
+
+% ─── En-têtes & pieds de page ───────────────────────────────
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{etoolbox}
+
+% ─── Liens hypertexte ───────────────────────────────────────
+\usepackage{hyperref}
+
+% ============================================================
+% COULEURS DU DOCUMENT
+% ============================================================
+
+% --- Couleur rouge pour les lignes d'en-tête et pied de page ---
+\definecolor{rougeEsprit}{RGB}{178,0,30}
+\definecolor{primary}{RGB}{178,0,30}
+
+% --- Noir professionnel pour les titres ---
+\definecolor{noir}{RGB}{0,0,0}
+\definecolor{titleColor}{RGB}{0,0,0}
+\definecolor{sectionColor}{RGB}{0,0,0}
+\definecolor{subsectionColor}{RGB}{0,0,0}
+
+% --- Couleur secondaire ---
+\definecolor{amber}{RGB}{217,119,6}
+
+% --- Couleurs des tableaux ---
+\definecolor{tablehead}{RGB}{11,31,58}      % Bleu nuit
+\definecolor{tablerow}{RGB}{241,245,249}    % Gris clair
+
+% --- Couleurs des blocs de code ---
+\definecolor{codebg}{RGB}{30,41,59}
+\definecolor{codetext}{RGB}{226,232,240}
+\definecolor{lightgray}{RGB}{248,250,252}
+
+% --- Définition des couleurs manquantes pour compatibilité ---
+\definecolor{navy}{RGB}{11,31,58}
+\definecolor{teal}{RGB}{0,128,128}
+
+% ============================================================
+% CONFIGURATION EN-TÊTES / PIEDS
+% ============================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\includegraphics[height=1.4cm]{logo_esprit.jpg}}
+\fancyhead[R]{\textcolor{rougeEsprit}{\small\nouppercase{\leftmark}}}
+\fancyfoot[C]{\textcolor{rougeEsprit}{\thepage}}
+
+% --- Lignes rouges ---
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{%
+  \hbox to\headwidth{\color{rougeEsprit}\leaders\hrule height\headrulewidth\hfill}}
+
+\renewcommand{\footrulewidth}{0.4pt}
+\renewcommand{\footrule}{%
+  \hbox to\headwidth{\color{rougeEsprit}\leaders\hrule height\footrulewidth\hfill}}
+
+% ============================================================
+% STYLE "plain" (pages d'ouverture \chapter*, ToC, LOF, LOT)
+% -> Numéro de page en ROUGE, sans en-tête ni filets, afin de
+%    ne pas dupliquer le bandeau logo sur les pages liminaires.
+%    Les titres/sous-titres ne sont pas concernés par ce style :
+%    seule la couleur du numéro de page est modifiée.
+% ============================================================
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[C]{\textcolor{rougeEsprit}{\thepage}}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0pt}
+}
+
+% ============================================================
+% TITRES DES CHAPITRES ET SECTIONS (NOIR)
+% ============================================================
+
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{noir}}
+  {\chaptertitlename~\thechapter}{18pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{30pt}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{noir}}{\thesection}{1em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{noir}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{noir}}{\thesubsubsection}{1em}{}
+
+% ============================================================
+% TABLEAUX
+% ============================================================
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\captionsetup{labelfont=bf,textfont=it,skip=6pt}
+\captionsetup[table]{position=top}
+\captionsetup[figure]{position=bottom}
+
+% Commande tableau coloré avec en-tête bleu nuit
+\newcommand{\thead}[1]{\cellcolor{tablehead}\textcolor{white}{\textbf{#1}}}
+
+% ============================================================
+% BOITES COLORÉES
+% ============================================================
+
+\tcbset{
+  ruleframe/.style={
+    enhanced,breakable,colback=lightgray,colframe=rougeEsprit,
+    boxrule=0.8pt,arc=4pt,left=6pt,right=6pt,top=4pt,bottom=4pt
+  },
+  alertbox/.style={
+    enhanced,colback=amber!10,colframe=amber,boxrule=1pt,arc=4pt,
+    left=6pt,right=6pt,top=4pt,bottom=4pt
+  },
+  keybox/.style={
+    enhanced,colback=navy!5,colframe=navy,boxrule=0.8pt,arc=4pt,
+    left=6pt,right=6pt,top=4pt,bottom=4pt
+  }
+}
+
+% ============================================================
+% CODE
+% ============================================================
+
+\lstdefinestyle{logicode}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small\color{codetext},
+  keywordstyle=\color{rougeEsprit}\bfseries,
+  commentstyle=\color{gray}\itshape,
+  stringstyle=\color{amber},
+  numbers=left,numberstyle=\tiny\color{gray},
+  stepnumber=1,numbersep=8pt,
+  breaklines=true,breakatwhitespace=true,
+  frame=none,rulecolor=\color{rougeEsprit},
+  showstringspaces=false,tabsize=2,
+  captionpos=b
+}
+\lstset{style=logicode}
+
+% ============================================================
+% HYPERLIENS
+% ============================================================
+
+\hypersetup{
+  colorlinks=true,linkcolor=noir,urlcolor=rougeEsprit,
+  citecolor=rougeEsprit,pdftitle={Rapport PFE LogiWay},
+  pdfauthor={Kossay Boubaker},
+  pdfkeywords={Spring Boot,Angular,Keycloak,GPS,IA,ML,Gestion Flotte}
+}
+
+% ============================================================
+% FORMULES
+% ============================================================
+\newcommand{\kpi}[2]{\textcolor{rougeEsprit}{\textbf{#1}} : #2}
+
+% ============================================================
+% BLOC "CHAPITRE + PLAN" -- n'incrémente le compteur chapitre
+% qu'une seule fois, ne crée AUCUN chapitre supplémentaire
+% ============================================================
+\newcounter{planitemcounter}
+
+% Une ligne du Plan : #1 = titre de la section, #2 = label de cette section
+\newcommand{\planitem}[2]{%
+  \stepcounter{planitemcounter}%
+  \noindent
+  \textcolor{navy}{\textbf{\theplanitemcounter}}\hspace{0.4cm}%
+  \textcolor{noir}{\textbf{#1}}%
+  \leavevmode\leaders\hbox to 1em{\hss.\hss}\hfill
+  \textcolor{navy}{\textbf{\pageref{#2}}}\\[0.25cm]%
+}
+
+% Le bandeau noir + filets + titre (style de la maquette fournie)
+\newcommand{\bandeauchapitre}[1]{%
+  \thispagestyle{fancy}%
+  \begin{center}
+    \rule{3.2cm}{2.6pt}\quad{\itshape\large Chapitre \thechapter}\quad\rule{3.2cm}{2.6pt}\\[0.35cm]
+    \textcolor{noir}{\rule{0.9\linewidth}{0.6pt}}\\[0.45cm]
+    {\fontsize{22}{26}\selectfont\bfseries\MakeUppercase{#1}}\\[0.35cm]
+    \textcolor{noir}{\rule{0.9\linewidth}{0.6pt}}
+  \end{center}
+  \vspace{1cm}
+}
+
+% Le bloc "Plan"
+\newenvironment{plandechapitre}{%
+  \setcounter{planitemcounter}{0}%
+  \noindent{\Large\bfseries Plan}\par\vspace{0.4cm}
+}{%
+  \vspace{0.6cm}
+  \newpage
+}
+
+% Remplace \chapter{...} : incrémente le compteur UNE fois,
+% ajoute UNE entrée au sommaire, met à jour l'en-tête (fancyhdr),
+% puis dessine le bandeau. Aucun \chapter réel n'est appelé.
+\newcommand{\chapitreavecplan}[1]{%
+  \stepcounter{chapter}%
+  \markboth{\MakeUppercase{#1}}{\MakeUppercase{#1}}%
+  \phantomsection
+  \addcontentsline{toc}{chapter}{\protect\numberline{\thechapter}#1}%
+  \pdfbookmark[0]{\thechapter\ #1}{ch:\thechapter}%
+  \bandeauchapitre{#1}%
+}
+
+% ============================================================
+% DOCUMENT
+% ============================================================
+\begin{document}
+
+% ============================================================
+% PAGINATION ROMAINE — PAGES LIMINAIRES
+% (Remerciements, Dédicaces, Résumé, Abstract, Abréviations,
+%  Table des matières, Liste des figures, Liste des tableaux)
+% Le numéro de page est affiché en ROUGE (couleur rougeEsprit),
+% sans en-tête ni filets, via le style "plain" redéfini plus haut.
+% Les couleurs des titres/sous-titres et de l'en-tête/pied des
+% chapitres principaux ne sont pas modifiées.
+% ============================================================
+\pagenumbering{roman}
+\pagestyle{plain}
+
+% ────────────────────────────────────────────────────────────
+% DÉDICACES
+% ────────────────────────────────────────────────────────────
+\chapter*{Dédicaces}
+\addcontentsline{toc}{chapter}{Dédicaces}
+
+\vspace{0.8cm}
+
+\begin{center}
+\begin{minipage}{0.85\textwidth}
+\centering
+\itshape
+
+À ma chère mère \textbf{Monia},\\[2pt]
+pour tous les sacrifices qu'elle a faits pour moi, toute la confiance\\
+qu'elle me porte et tout l'amour dont elle m'entoure.
+
+\vspace{0.9cm}
+
+À mon cher père \textbf{Lotfi},\\[2pt]
+pour ses encouragements, sa confiance et son soutien moral,\\
+et pour son amour infini.
+
+\vspace{0.9cm}
+
+Une pensée toute particulière et une sincère reconnaissance à\\
+\textbf{Monsieur Hadhri Hazem}, Chef de Projet chez ExypnoTech Engineering
+Services,\\
+pour son soutien indéfectible, sa disponibilité de chaque instant et sa
+motivation communicative\\
+qui m'ont accompagné et porté tout au long de la réalisation de ce projet.
+
+\vspace{0.9cm}
+
+Je dédie également ce travail, avec toute ma gratitude, à tout esprit libre\\
+qui a travaillé dur et a cru en lui-même.\\
+Que Dieu vous protège et vous garde.
+
+\end{minipage}
+\end{center}
+
+\vspace{1.1cm}
+{\color{rougeEsprit}\hrule height 0.6pt}
+\vspace{1cm}
+
+\begin{center}
+\begin{minipage}{0.85\textwidth}
+\centering
+\itshape
+
+To my supportive half, you have always been on my side.\\[8pt]
+To my late friend, you remain within me — I wish time could bring you back.
+
+\end{minipage}
+\end{center}
+
+% ────────────────────────────────────────────────────────────
+% REMERCIEMENTS
+% ────────────────────────────────────────────────────────────
+\chapter*{Remerciements}
+\addcontentsline{toc}{chapter}{Remerciements}
+
+Je tiens à exprimer ma profonde gratitude à mon encadrant professionnel
+\textbf{M.~Fehmi Kharroubi} et au chef de projet \textbf{M.~Hazem Hadhri}
+pour leur supervision, leurs conseils précieux et leur soutien constant tout
+au long de ce projet. Leur expertise et leur disponibilité ont été des atouts
+précieux pour la réussite de ce travail.
+
+Mes remerciements vont également à toute l'équipe d'\textbf{ExypnoTech
+Engineering Services} pour l'accueil chaleureux et l'accompagnement technique
+qui m'ont permis de progresser dans mes compétences en développement
+Full-Stack, en intelligence artificielle et en architecture logicielle.
+
+Je remercie sincèrement mes enseignants d'\textbf{ESPRIT} pour
+l'encadrement académique et les connaissances transmises durant mon cursus,
+notamment dans les domaines du génie logiciel et des systèmes d'information,
+qui ont constitué une base solide pour ce projet.
+
+Un remerciement tout particulier à \textbf{M.~Harrathi Hafedh}, mon encadrant
+académique, pour son accompagnement, ses orientations pertinentes et le temps
+qu'il m'a consacré tout au long de ce projet de fin d'études.
+
+Je suis particulièrement reconnaissant envers \textbf{ma famille} pour leur
+soutien indéfectible, leur patience et leurs encouragements tout au long de
+mes études. Leur confiance et leur soutien moral ont été une source de
+motivation constante.
+
+Un grand merci à \textbf{mes amis} et camarades de promotion pour leur
+entraide, les échanges fructueux et les moments de partage qui ont enrichi
+cette expérience académique.
+
+Enfin, je remercie tous ceux qui, de près ou de loin, ont contribué à
+la réussite de ce projet ambitieux.
+
+% ────────────────────────────────────────────────────────────
+
+% ────────────────────────────────────────────────────────────
+% RÉSUMÉ
+% ────────────────────────────────────────────────────────────
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+Ce rapport présente la conception et le développement de \textbf{LogiWay},
+une plateforme web complète dédiée à la gestion intelligente de flottes
+de véhicules poids lourds avec traçabilité GPS en temps réel.
+Le projet a été réalisé chez \textbf{ExypnoTech Engineering Services}
+à Monastir, Tunisie.
+
+La plateforme adopte une architecture multi-couches : un backend
+\textbf{Spring Boot 3.x} sécurisé par \textbf{Keycloak} (OAuth2/JWT),
+un frontend \textbf{Angular 17}, une base de données \textbf{MySQL 8},
+et trois microservices Python d'intelligence artificielle.
+
+\medskip
+Les modules réalisés couvrent :
+\begin{itemize}
+  \item La \textbf{sécurité et l'authentification} via Keycloak
+        (OIDC, JWT, RBAC, reset password, vérification email)
+  \item La \textbf{gestion multi-entreprises} avec workflow de validation
+  \item La \textbf{gestion des véhicules, secteurs et utilisateurs}
+        avec isolation par entreprise
+  \item Le \textbf{suivi GPS temps réel} via WebSocket STOMP et OSRM
+  \item La \textbf{gestion des congés et réclamations} avec circuit de validation
+  \item Un \textbf{système de notifications SSE} persistées en MySQL
+  \item La \textbf{messagerie interne} en temps réel
+  \item Un \textbf{module IA de validation des réclamations} (Python Flask,
+        système expert règles)
+  \item Un \textbf{système de pauses réglementaires} intelligent
+        (RandomForest ML, Règlement CE 561/2006)
+  \item Un \textbf{assistant chatbot RAG} et un générateur de rapports
+        automatique (LangChain, Google Gemini, FastAPI)
+  \item Des \textbf{tableaux de bord KPI} analytiques personnalisés par rôle
+\end{itemize}
+
+\medskip
+\textbf{Mots-clés :} Spring Boot, Keycloak, JWT, OAuth2, Angular 17,
+MySQL, JPA/Hibernate, WebSocket, SSE, OSRM, Leaflet, GNSS, RandomForest,
+RAG, LangChain, Gemini, Scrum, Flask, FastAPI.
+
+\newpage
+
+% ────────────────────────────────────────────────────────────
+% ABSTRACT
+% ────────────────────────────────────────────────────────────
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+This report presents the design and development of \textbf{LogiWay}, a
+comprehensive web platform for intelligent management of heavy-vehicle fleets
+with real-time GPS tracking. The project was carried out at
+\textbf{ExypnoTech Engineering Services}, Monastir, Tunisia.
+
+The platform combines a \textbf{Spring Boot 3.x} backend secured with
+\textbf{Keycloak} (OAuth2/JWT), an \textbf{Angular 17} frontend, a
+\textbf{MySQL 8} database, and three Python AI microservices. The implemented
+modules cover: authentication, multi-company management, fleet and vehicle
+management, geographic sectors, GPS trip planning and tracking,
+leave and complaint management, real-time SSE notifications, internal
+messaging, AI-powered complaint validation, an ML-based regulatory break
+detection system (RandomForest, EU Regulation 561/2006), a RAG chatbot
+(LangChain + Gemini), and role-based KPI dashboards.
+
+\medskip
+\textbf{Keywords:} Fleet management, Spring Boot, Keycloak, Angular,
+WebSocket, GPS, OSRM, Machine Learning, RandomForest, RAG, LangChain,
+Google Gemini, Scrum, AI microservices.
+
+\newpage
+
+% ────────────────────────────────────────────────────────────
+% ABRÉVIATIONS
+% ────────────────────────────────────────────────────────────
+\chapter*{Liste des abréviations}
+\addcontentsline{toc}{chapter}{Liste des abréviations}
+
+\begin{tabularx}{\textwidth}{lX}
+  \textbf{API}     & Application Programming Interface \\
+  \textbf{CRUD}    & Create, Read, Update, Delete \\
+  \textbf{DTO}     & Data Transfer Object \\
+  \textbf{GNSS}    & Global Navigation Satellite System \\
+  \textbf{GPS}     & Global Positioning System \\
+  \textbf{HTTP}    & HyperText Transfer Protocol \\
+  \textbf{IAM}     & Identity and Access Management \\
+  \textbf{JWT}     & JSON Web Token \\
+  \textbf{KPI}     & Key Performance Indicator \\
+  \textbf{LLM}     & Large Language Model \\
+  \textbf{MAE}     & Mean Absolute Error \\
+  \textbf{ML}      & Machine Learning \\
+  \textbf{MVC}     & Model-View-Controller \\
+  \textbf{NLU}     & Natural Language Understanding \\
+  \textbf{OIDC}    & OpenID Connect \\
+  \textbf{OSRM}    & Open Source Routing Machine \\
+  \textbf{RAG}     & Retrieval-Augmented Generation \\
+  \textbf{RBAC}    & Role-Based Access Control \\
+  \textbf{REST}    & Representational State Transfer \\
+  \textbf{RF}      & RandomForest \\
+  \textbf{ROPC}    & Resource Owner Password Credentials \\
+  \textbf{SPA}     & Single Page Application \\
+  \textbf{SQL}     & Structured Query Language \\
+  \textbf{SSE}     & Server-Sent Events \\
+  \textbf{STOMP}   & Simple Text Oriented Messaging Protocol \\
+  \textbf{SMTP}    & Simple Mail Transfer Protocol \\
+  \textbf{UML}     & Unified Modeling Language \\
+  \textbf{VRP}     & Vehicle Routing Problem \\
+\end{tabularx}
+
+\newpage
+
+% ────────────────────────────────────────────────────────────
+% TABLES
+% ────────────────────────────────────────────────────────────
+\tableofcontents\newpage
+\listoffigures\newpage
+\listoftables\newpage
+
+% ============================================================
+% BASCULE VERS LA PAGINATION ARABE — CORPS DU RAPPORT
+% Le corps du rapport reprend le style "fancy" (en-tête logo +
+% filets rouges déjà en place, numéro de page en rouge).
+% ============================================================
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\pagestyle{fancy}
+
+
+% ============================================================
+% CHAPITRE 1 — PRÉSENTATION GÉNÉRALE
+% ============================================================
+\chapitreavecplan{Présentation générale du projet}
+\begin{plandechapitre}
+  \planitem{Introduction}{sec:ch1-introduction}
+  \planitem{Présentation de l'organisme d'accueil}{sec:ch1-organisme}
+  \planitem{Contexte du secteur du transport routier tunisien}{sec:ch1-contexte}
+  \planitem{Problématique}{sec:ch1-problematique}
+  \planitem{Étude de l'existant}{sec:ch1-existant}
+  \planitem{Solution proposée : LogiWay}{sec:ch1-solution}
+  \planitem{Méthodologie : Agile Scrum}{sec:ch1-methodologie}
+\end{plandechapitre}
+
+\section{Introduction}
+\label{sec:ch1-introduction}
+
+Ce premier chapitre présente l'organisme d'accueil, le contexte du secteur
+du transport routier tunisien, la problématique identifiée, les solutions
+existantes sur le marché, la solution proposée LogiWay et la méthodologie
+Agile Scrum retenue pour piloter le développement.
+
+\section{Présentation de l'organisme d'accueil}
+\label{sec:ch1-organisme}
+
+\subsection{ExypnoTech Engineering Services}
+
+ExypnoTech Engineering Services, fondée en mars 2023 par
+\textbf{M.~Wajih El~Hadj Youssef} (PDG) et \textbf{M.~Fehmi Kharroubi}
+(Directeur Technique), est une entreprise innovante basée à Monastir, Tunisie.
+Initialement spécialisée dans les solutions avancées pour l'aquaculture
+(caméras sous-marines, surveillance temps réel), la société élargit aujourd'hui
+son champ d'action à divers projets d'ingénierie logicielle, dont ce projet
+de gestion de flotte et de suivi GPS pour le transport routier.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.35\textwidth]{log_exy.jpg}
+  \caption{Logo ExypnoTech Engineering Services}
+  \label{fig:logo_exy}
+\end{figure}
+
+En tant que participant actif du programme \textbf{ACTincube}, dirigé par
+Actia Engineering Services, ExypnoTech bénéficie d'un mentorat de 24 mois
+couvrant le conseil stratégique, l'expertise technique et le développement
+commercial.
+
+\subsection{Domaines d'activité}
+
+ExypnoTech intervient dans trois domaines complémentaires :
+\begin{itemize}
+  \item \textbf{Solutions numériques innovantes} : plateformes web et mobiles,
+        systèmes embarqués, traitement de données en temps réel.
+  \item \textbf{Engagement pour la durabilité} : pratiques responsables,
+        contribution aux enjeux de sécurité et de résilience opérationnelle.
+  \item \textbf{Impact global} : activités dépassant les frontières régionales
+        avec des solutions à visée internationale.
+\end{itemize}
+
+\section{Contexte du secteur du transport routier tunisien}
+\label{sec:ch1-contexte}
+
+Le transport routier constitue \textbf{l'épine dorsale de l'économie 
+ tunisienne}, assurant plus de 80\% du fret domestique. Pourtant, la majorité 
+ des opérateurs de flottes continuent de gérer leurs véhicules au moyen 
+ d'outils rudimentaires : journaux papier, appels téléphoniques, tableurs. 
+
+ Cette situation génère des pertes opérationnelles considérables : 
+ retards non détectés en temps réel, surcoûts carburant par absence 
+ d'optimisation des itinéraires, accidents liés à la fatigue des chauffeurs 
+ faute de suivi des temps de conduite, et incapacité à produire des analyses 
+ de performance fiables pour la direction. 
+
+ Le cadre réglementaire européen CE~561/2006, appliqué aux transporteurs 
+ tunisiens travaillant avec des donneurs d'ordre européens, impose des 
+ contraintes strictes sur les temps de conduite et de repos. Une infraction 
+ peut entraîner des amendes allant jusqu'à \textbf{15~000~€}. 
+
+\section{Problématique}
+\label{sec:ch1-problematique}
+
+\begin{tcolorbox}[keybox]
+  \textbf{Problématique centrale :} Comment concevoir et développer une
+  plateforme numérique intégrée permettant aux opérateurs de flottes
+  tunisiennes de gérer en temps réel leurs véhicules, chauffeurs et missions,
+  tout en garantissant la conformité réglementaire, la sécurité des conducteurs
+  et la traçabilité complète des opérations~-- à coût maîtrisé et sans
+  dépendance à des solutions propriétaires étrangères~?
+\end{tcolorbox}
+
+\medskip
+Six problèmes majeurs ont été identifiés :
+
+\begin{enumerate}
+  \item \textbf{Absence de traçabilité GPS adaptée} : les systèmes disponibles
+        ignorent les contraintes poids lourds (hauteur, poids, zones interdites).
+  \item \textbf{Gestion dispersée et manuelle} : aucune centralisation des
+        chauffeurs, véhicules, missions, congés et réclamations.
+  \item \textbf{Non-respect des pauses réglementaires} : risques d'amendes et
+        d'accidents, aucun outil de suivi des temps de conduite.
+  \item \textbf{Absence d'analyse prédictive} : impossible d'anticiper les
+        retards, pannes ou pics d'activité.
+  \item \textbf{Communication défaillante} : pas de canal unifié entre
+        direction, managers et chauffeurs.
+  \item \textbf{Empreinte carbone non maîtrisée} : aucune mesure fiable
+        des consommations et émissions CO\textsubscript{2}.
+\end{enumerate}
+
+\section{Étude de l'existant}
+\label{sec:ch1-existant}
+
+\subsection{Analyse des solutions du marché}
+
+\begin{table}[H]
+  \centering
+  \caption{Benchmark des solutions de gestion de flotte existantes}
+  \label{tab:benchmark}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|Y|}
+    \hline
+    \thead{Solution} & \thead{Points forts} & \thead{Limites principales} \\
+    \hline
+    \textbf{Webfleet / TomTom} &
+      GPS temps réel, trafic live, terminaux embarqués &
+      26~€/véhicule/mois, peu adapté au contexte tunisien \\
+    \textbf{Geotab} &
+      Télématique OBD avancée, API ouverte, benchmarking sectoriel &
+      Tarification sur devis, intégration complexe \\
+    \textbf{Teksat} &
+      Géolocalisation flottes françaises, alertes PDF &
+      Pas de module HR, pas de chatbot IA \\
+    \textbf{Samsara} &
+      Caméras IoT, alertes comportementales temps réel &
+      Abonnement très élevé, données hébergées aux USA \\
+    \textbf{FleetComplete} &
+      Optimisation itinéraires, conformité réglementaire &
+      Interface complexe, API fermée \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Lacunes identifiées}
+
+\begin{itemize}
+  \item Coûts prohibitifs par abonnement par véhicule, inaccessibles aux PME.
+  \item Interfaces non adaptées à la langue et au contexte tunisien.
+  \item Aucune gestion RH intégrée (congés, réclamations, scores de performance).
+  \item Données hébergées à l'étranger : problèmes de souveraineté numérique.
+  \item Pas de chatbot IA ni de génération automatique de rapports.
+  \item Pas de gestion multi-entreprises avec hiérarchie de rôles.
+\end{itemize}
+
+\subsection{Analyse SWOT}
+
+\begin{table}[H]
+  \centering
+  \caption{Analyse SWOT de la solution LogiWay}
+  \label{tab:swot}
+  \begin{tabularx}{\textwidth}{|Y|Y|}
+    \hline
+    \multicolumn{2}{|c|}{\cellcolor{tablehead}\textcolor{white}{\textbf{Facteurs internes}}} \\
+    \hline
+    \cellcolor{green!10}\textbf{Forces} &
+    \cellcolor{red!10}\textbf{Faiblesses} \\
+    \hline
+    \begin{itemize}
+      \item Solution open-source, auto-hébergée
+      \item Sécurité OAuth2/JWT centralisée
+      \item IA intégrée (ML, RAG, expert system)
+      \item Architecture multi-rôles évolutive
+    \end{itemize}
+    &
+    \begin{itemize}
+      \item Nécessite une connexion réseau stable
+      \item Dépendance Keycloak pour l'IAM
+      \item Service Flask/FastAPI IA à démarrer séparément
+    \end{itemize}
+    \\
+    \hline
+    \multicolumn{2}{|c|}{\cellcolor{tablehead}\textcolor{white}{\textbf{Facteurs externes}}} \\
+    \hline
+    \cellcolor{blue!10}\textbf{Opportunités} &
+    \cellcolor{orange!10}\textbf{Menaces} \\
+    \hline
+    \begin{itemize}
+      \item Fort besoin numérique du transport TN
+      \item Réduction des coûts opérationnels
+      \item Expansion des modules IA (Phase~2)
+    \end{itemize}
+    &
+    \begin{itemize}
+      \item Concurrence solutions établies
+      \item Évolution des réglementations
+      \item Dépendance API externe Gemini
+    \end{itemize}
+    \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Solution proposée : LogiWay}
+\label{sec:ch1-solution}
+
+LogiWay répond à l'ensemble des lacunes identifiées en proposant :
+
+\begin{itemize}
+  \item \textbf{Plateforme open-source, auto-hébergée} : coûts maîtrisés,
+        données stockées localement.
+  \item \textbf{Authentification Keycloak OAuth2/JWT} avec trois rôles
+        (SuperAdmin, Manager, Chauffeur) et cookies HttpOnly.
+  \item \textbf{Gestion multi-entreprises} avec workflow de validation et
+        isolation stricte des données par entreprise.
+  \item \textbf{Suivi GPS temps réel} Multi-GNSS avec OSRM poids lourds
+        et cartographie Leaflet.
+  \item \textbf{Gestion RH complète} : congés, réclamations, messagerie,
+        scoring de performance.
+  \item \textbf{Trois Modèles} : validation des réclamations
+        (système expert), pauses réglementaires (RandomForest ML),
+        chatbot RAG et génération de rapports (Gemini + LangChain).
+  \item \textbf{Notifications SSE et WebSocket} temps réel, persistées
+        en MySQL.
+  \item \textbf{Tableaux de bord KPI} personnalisés par rôle.
+\end{itemize}
+
+\section{Méthodologie : Agile Scrum}
+\label{sec:ch1-methodologie}
+
+\subsection{Justification du choix}
+
+La méthodologie \textbf{Agile Scrum} a été choisie pour plusieurs raisons :
+
+\begin{itemize}
+  \item \textbf{Itérations courtes} (sprints 1--2 semaines) permettant des
+        validations fréquentes avec l'encadrant.
+  \item \textbf{Backlog priorisé} : modules critiques (authentification,
+        GPS) développés en premier.
+  \item \textbf{Livraisons progressives} : chaque sprint produit un module
+        testable et fonctionnel.
+  \item \textbf{Adaptabilité} aux spécifications évolutives du projet.
+\end{itemize}
+
+\subsection{Planification en 6 sprints}
+
+Les deux sections de \texttt{SPRINTS\_LOGIWAY.txt} (S0), puis les sprints
+de développement :
+
+\begin{itemize}
+  \item \textbf{Sprint 0} : analyse, conception et modélisation UML -- 1 semaine.
+  \item \textbf{Sprint 1 -- Fondations} : authentification, utilisateurs,
+  entreprises, véhicules, secteurs.
+  \item \textbf{Sprint 2 -- Opérations RH} : congés, notifications SSE.
+  \item \textbf{Sprint 3 -- Communication} : messagerie WebSocket, chatbot RAG.
+  \item \textbf{Sprint 4 -- Cœur métier} : trajets GPS, pauses ML, réclamations IA.
+  \item \textbf{Sprint 5 -- Intelligence} : dashboards KPI et analytique.
+  \item \textbf{Sprint 6 -- Qualité et déploiement} : tests, DevOps, Docker.
+\end{itemize}
+
+\begin{table}[H]
+  \centering
+  \caption{Planification des 6 sprints du projet LogiWay}
+  \label{tab:sprints}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{0.95\textwidth}{|c|Y|c|c|}
+    \hline
+    \thead{Sprint} & \thead{Objectif principal} & \thead{Durée} & \thead{État} \\
+    \hline
+    S0 & Analyse, conception et modélisation UML & 1 semaine & 100\% \\
+    S1 & Fondations : auth, utilisateurs, entreprises, véhicules, secteurs & 2 semaines & 100\% \\
+    S2 & Opérations RH : congés + notifications SSE & 2 semaines & 100\% \\
+    S3 & Communication : messagerie + chatbot RAG & 2 semaines & 100\% \\
+    S4 & Cœur métier : trajets, pauses ML, réclamations IA & 2 semaines & 100\% \\
+    S5 & Intelligence : dashboards KPI et analytique & 2 semaines & 100\% \\
+    S6 & Qualité et déploiement : tests, DevOps, Docker & 2 semaines & 100\% \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Conclusion}
+
+Ce chapitre a posé le cadre général du projet LogiWay : le contexte du
+transport routier tunisien, les lacunes des solutions existantes, la solution
+proposée et la méthodologie Scrum adoptée. Les chapitres suivants détaillent
+l'étude technique puis chaque sprint réalisé.
+
+\newpage
+
+% ============================================================
+% CHAPITRE 2 — ÉTUDE TECHNIQUE ET ARCHITECTURE
+% ============================================================
+
+\chapitreavecplan{Étude technique et architecture}
+\begin{plandechapitre}
+  \planitem{Introduction}{sec:ch2-introduction}
+  \planitem{Architecture globale de LogiWay}{sec:ch2-archi-globale}
+  \planitem{Architecture logique}{sec:ch2-archi-logique}
+  \planitem{Architecture physique}{sec:ch2-archi-physique}
+  \planitem{Comparaison entre l'architecture logique et physique}{sec:ch2-comparaison}
+  \planitem{Technologies utilisées}{sec:ch2-technologies}
+  \planitem{Outils et services d'infrastructure}{sec:ch2-outils}
+  \planitem{Modèle de données}{sec:ch2-modele-donnees}
+  \planitem{Diagramme de classes}{sec:ch2-diagramme-classes}
+  \planitem{Synthèse de l'architecture}{sec:ch2-synthese}
+\end{plandechapitre}
+
+\section{Introduction}
+\label{sec:ch2-introduction}
+
+Ce chapitre présente l'étude technique et l'architecture globale de la
+plateforme LogiWay. L'objectif est de définir la structure générale de la
+solution, les différentes couches logicielles, les composants techniques,
+les services externes ainsi que les technologies utilisées pour assurer le
+fonctionnement de la plateforme.
+
+LogiWay repose sur une architecture logicielle principalement monolithique
+basée sur le framework Spring Boot. Cette architecture est complétée par une
+application cliente développée avec Angular, un système de gestion des
+identités basé sur Keycloak, une base de données relationnelle MySQL ainsi que
+plusieurs services indépendants dédiés aux fonctionnalités d'intelligence
+artificielle et d'apprentissage automatique.
+
+L'architecture globale est organisée de manière à séparer clairement les
+responsabilités entre la présentation, la logique métier, la persistance des
+données, la sécurité et les services externes. Cette organisation facilite la
+maintenance, l'évolution et le déploiement de la plateforme.
+
+Dans ce chapitre, deux niveaux d'architecture sont présentés : l'architecture
+logique et l'architecture physique. L'architecture logique décrit
+l'organisation interne de l'application et les interactions entre ses
+différentes couches, tandis que l'architecture physique présente les
+composants réellement déployés, leurs ports de communication et leurs
+interactions réseau.
+
+% ============================================================
+\section{Architecture globale de LogiWay}
+\label{sec:ch2-archi-globale}
+% ============================================================
+
+La plateforme LogiWay adopte une architecture globale composée de plusieurs
+éléments complémentaires. Le système principal est constitué d'une
+application frontend Angular communiquant avec un backend monolithique
+Spring Boot via des API REST.
+
+Le backend constitue le cœur fonctionnel de la plateforme. Il assure la
+gestion des utilisateurs, des entreprises, des chauffeurs, des véhicules,
+des missions, des trajets, des pauses, des congés, des réclamations, des
+notifications et de la messagerie.
+
+La sécurité et la gestion des identités sont assurées par Keycloak. La
+persistance des données est réalisée avec MySQL. Des services externes et des
+services spécialisés en intelligence artificielle complètent l'architecture
+afin d'apporter des fonctionnalités avancées telles que la prédiction des
+pauses, l'analyse des réclamations et le chatbot intelligent.
+
+L'architecture globale peut ainsi être résumée comme suit :
+
+\begin{itemize}
+    \item \textbf{Frontend Angular} : interface utilisateur de la plateforme ;
+    \item \textbf{Backend Spring Boot} : cœur métier et API REST principale ;
+    \item \textbf{Keycloak} : authentification et autorisation ;
+    \item \textbf{MySQL} : stockage persistant des données ;
+    \item \textbf{Services IA et ML} : fonctionnalités intelligentes ;
+    \item \textbf{OSRM} : calcul des itinéraires via une API publique HTTPS ;
+    \item \textbf{Leaflet et OpenStreetMap} : affichage et interaction avec les cartes ;
+    \item \textbf{Simulateur GPS Python} : génération et transmission de positions GPS ;
+    \item \textbf{Outils de développement et d'exploitation} : Git, GitHub,
+    Maven, Docker, CI/CD, Monitoring et Swagger/OpenAPI.
+\end{itemize}
+
+% ============================================================
+\section{Architecture logique}
+\label{sec:ch2-archi-logique}
+% ============================================================
+
+\subsection{Présentation de l'architecture logique}
+
+L'architecture logique représente l'organisation interne des composants
+logiciels de LogiWay indépendamment de leur emplacement physique ou de leur
+machine d'exécution.
+
+Elle permet de visualiser les différentes couches fonctionnelles du système,
+les responsabilités de chaque composant ainsi que les relations entre le
+frontend, le backend, la base de données, la sécurité et les services
+externes.
+
+Dans LogiWay, l'architecture logique est principalement organisée autour
+d'une architecture en couches au niveau du backend Spring Boot. Le frontend
+Angular possède également une organisation interne permettant de séparer les
+composants d'interface, les services HTTP, la sécurité et les modèles.
+
+\subsection{Architecture logique du frontend}
+
+L'application frontend est développée avec Angular. Elle est organisée
+selon plusieurs responsabilités :
+
+\begin{itemize}
+    \item \textbf{Components (UI)} : affichage des interfaces utilisateur et
+    interaction avec les utilisateurs ;
+    \item \textbf{Services HTTP} : communication avec les API REST du backend ;
+    \item \textbf{Guards} : protection des routes selon l'authentification et
+    les permissions ;
+    \item \textbf{Interceptor JWT} : ajout automatique du token JWT dans les
+    requêtes HTTP sécurisées ;
+    \item \textbf{Models (TypeScript)} : représentation des données échangées
+    avec le backend ;
+    \item \textbf{Chatbot} : interface permettant aux utilisateurs
+    d'interagir avec l'assistant intelligent.
+\end{itemize}
+
+\subsection{Architecture logique du backend}
+
+Le backend Spring Boot constitue le cœur de la plateforme. Il adopte une
+organisation en couches permettant de séparer les responsabilités.
+
+\subsubsection{Couche de présentation}
+
+Cette couche contient les contrôleurs REST responsables de l'exposition des
+API utilisées par le frontend Angular et par les services externes.
+
+
+\subsubsection{Couche métier}
+
+La couche métier contient les services Spring responsables de l'implémentation
+des règles fonctionnelles de la plateforme.
+
+
+\subsubsection{Couche d'accès aux données}
+
+Cette couche est basée sur Spring Data JPA et Hibernate. Elle permet au
+backend d'interagir avec la base de données MySQL à travers les repositories.
+
+Les repositories permettent notamment l'accès aux données relatives.
+
+\subsubsection{DTO et Mapper}
+
+Les DTO permettent de contrôler les données échangées entre les différentes
+couches de l'application. Les Mapper assurent la conversion entre les
+entités JPA et les objets DTO.
+
+Cette séparation permet notamment d'éviter d'exposer directement les entités
+de persistance dans les API REST et améliore la sécurité ainsi que la
+maintenabilité du système.
+
+\subsubsection{Sécurité et gestion des exceptions}
+
+La sécurité du backend est assurée par Spring Security et intégrée avec
+Keycloak. Les tokens JWT sont vérifiés afin de contrôler l'identité et les
+permissions des utilisateurs.
+
+La gestion centralisée des exceptions permet de retourner des réponses
+standardisées aux clients et de faciliter la maintenance du système.
+
+% ============================================================
+\subsection{Figure de l'architecture logique}
+% ============================================================
+
+La figure suivante présente l'organisation logique de la plateforme LogiWay.
+Elle met en évidence les différentes couches du frontend Angular, les couches
+du backend Spring Boot, les composants de sécurité, les repositories et les
+services externes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{architecture_logique_final_corrige.png}
+    \caption{Architecture logique de la plateforme LogiWay}
+    \label{fig:architecture_logique}
+\end{figure}
+
+\subsection{Utilité de l'architecture logique}
+
+L'architecture logique permet de comprendre le fonctionnement interne de la
+solution sans dépendre de l'infrastructure matérielle ou des machines sur
+lesquelles les composants sont déployés.
+
+Elle permet notamment :
+
+\begin{itemize}
+    \item de visualiser l'organisation des différentes couches logicielles ;
+    \item de comprendre la circulation des données entre les composants ;
+    \item d'identifier clairement les responsabilités de chaque couche ;
+    \item de faciliter la maintenance et l'évolution du code source ;
+    \item de favoriser la séparation des responsabilités ;
+    \item de faciliter l'intégration de nouvelles fonctionnalités ;
+    \item de comprendre les interactions entre le frontend, le backend et
+    les services externes.
+\end{itemize}
+
+L'architecture logique constitue ainsi une vue fonctionnelle et logicielle
+du système.
+
+% ============================================================
+\section{Architecture physique}
+\label{sec:ch2-archi-physique}
+% ============================================================
+
+\subsection{Présentation de l'architecture physique}
+
+L'architecture physique décrit le déploiement réel des composants de la
+plateforme LogiWay. Contrairement à l'architecture logique, elle s'intéresse
+aux serveurs, aux services exécutés, aux ports réseau et aux communications
+entre les différents composants.
+
+La plateforme utilise plusieurs processus et services indépendants. Le
+backend principal fonctionne sur le port 8080, tandis que le frontend Angular
+est accessible sur le port 4200. Keycloak utilise le port 8180 et MySQL le
+port 3306.
+
+Les fonctionnalités d'intelligence artificielle sont exposées à travers
+plusieurs services Python indépendants.
+
+\subsection{Composants physiques et ports}
+
+\begin{table}[H]
+  \centering
+  \caption{Déploiement physique des composants de LogiWay}
+  \label{tab:archi_physique}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|Y|}
+    \hline
+    \thead{Composant} & \thead{Port} & \thead{Description} \\
+    \hline
+    Frontend Angular & 4200 &
+    Interface utilisateur de la plateforme Web \\
+    \hline
+    Backend Spring Boot & 8080 &
+    API REST principale et logique métier \\
+    \hline
+    Keycloak & 8180 &
+    Authentification, autorisation et gestion des identités \\
+    \hline
+    MySQL & 3306 &
+    Base de données relationnelle principale \\
+    \hline
+    Service ML Pauses & 5000 &
+    Service Flask utilisant un modèle RandomForest pour l'analyse et la
+    prédiction des pauses \\
+    \hline
+    Service IA Réclamations & 5001 &
+    Service Flask basé sur les Transformers pour l'analyse et la validation
+    intelligente des réclamations \\
+    \hline
+    Service RAG Chatbot & 5003 &
+    Service FastAPI destiné au chatbot intelligent, au RAG et à la génération
+    de rapports avec Gemini \\
+    \hline
+    OSRM Public API & 443 HTTPS &
+    Service public de calcul d'itinéraires accessible via HTTPS ; aucun
+    serveur OSRM local n'est déployé dans LogiWay \\
+    \hline
+    Simulateur GPS Python & Aucun &
+    Client Python générant des positions GPS et les transmettant au backend
+    via HTTP/REST \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Architecture physique de LogiWay}
+
+La figure suivante présente le déploiement physique de la plateforme. Elle
+met en évidence les utilisateurs, le navigateur Web, le frontend Angular,
+le backend Spring Boot, la base de données MySQL, Keycloak, les services IA,
+le simulateur GPS ainsi que les services externes.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{architecture_pysique_final_corrige.png}
+    \caption{Architecture physique de la plateforme LogiWay}
+    \label{fig:architecture_physique}
+\end{figure}
+
+
+\subsection{Utilité de l'architecture physique}
+
+L'architecture physique permet de comprendre comment les composants de la
+solution sont réellement déployés et comment ils communiquent entre eux.
+
+Elle permet notamment :
+
+\begin{itemize}
+    \item d'identifier les serveurs et services exécutés ;
+    \item de connaître les ports utilisés par chaque composant ;
+    \item de visualiser les communications HTTP ;
+    \item de distinguer les services internes des services externes ;
+    \item de comprendre le déploiement des services IA indépendants ;
+    \item de faciliter la configuration réseau et le déploiement ;
+    \item d'identifier les dépendances entre les différents composants.
+\end{itemize}
+
+Dans le cas de LogiWay, cette architecture permet également de montrer que
+le backend Spring Boot reste le point central de la plateforme, tandis que
+les services IA sont déployés séparément afin de bénéficier de
+l'environnement Python et des bibliothèques spécialisées en intelligence
+artificielle.
+
+Il est important de préciser que le service OSRM utilisé par LogiWay est
+accessible via une API publique HTTPS sur le port 443. Aucun serveur OSRM
+local n'est donc nécessaire dans l'architecture physique de la plateforme.
+
+% ============================================================
+\section{Comparaison entre l'architecture logique et physique}
+\label{sec:ch2-comparaison}
+% ============================================================
+
+Les deux architectures sont complémentaires.
+
+\begin{table}[H]
+  \centering
+  \caption{Comparaison entre l'architecture logique et l'architecture physique}
+  \label{tab:comparaison_architectures}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|Y|}
+    \hline
+    \thead{Élément} &
+    \thead{Architecture logique} &
+    \thead{Architecture physique} \\
+    \hline
+    Objectif &
+    Décrire l'organisation interne du logiciel &
+    Décrire le déploiement réel du système \\
+    \hline
+    Niveau &
+    Fonctionnel et logiciel &
+    Infrastructure et réseau \\
+    \hline
+    Principaux éléments &
+    Couches, composants, services, repositories &
+    Serveurs, ports, processus et services \\
+    \hline
+    Exemple &
+    Controller $\rightarrow$ Service $\rightarrow$ Repository &
+    Angular:4200 $\rightarrow$ Spring Boot:8080 \\
+    \hline
+    Utilité &
+    Comprendre la structure du code et les responsabilités &
+    Comprendre le déploiement et les communications réseau \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+L'architecture logique répond donc à la question \textit{« Comment le
+logiciel est-il organisé ? »}, tandis que l'architecture physique répond à la
+question \textit{« Où et comment les composants sont-ils exécutés et
+communiquent-ils ? »}.
+
+\section{Technologies utilisées}
+\label{sec:ch2-technologies}
+% ============================================================
+
+Cette section présente les principales technologies, frameworks, bibliothèques
+et outils utilisés pour la conception, le développement, le test et le
+déploiement de la plateforme LogiWay. Le choix de ces technologies répond aux
+besoins de performance, de sécurité, de maintenabilité et d'évolutivité de la
+solution.
+
+\subsection{Technologies Frontend}
+
+Le frontend de LogiWay est développé avec les technologies suivantes :
+
+\begin{itemize}
+    \item \textbf{Angular 17+} : framework principal utilisé pour développer
+    l'application web monopage (SPA), organiser les composants et gérer la
+    navigation ainsi que les interactions avec le backend.
+
+    \item \textbf{Kendo UI for Angular} : bibliothèque de composants
+    d'interface utilisateur utilisée pour construire une interface moderne,
+    professionnelle et responsive. Elle fournit notamment des composants
+    avancés pour les tableaux, formulaires, fenêtres, menus et autres éléments
+    graphiques.
+
+    \item \textbf{Leaflet} : bibliothèque JavaScript open source utilisée pour
+    intégrer la cartographie interactive, afficher les véhicules, représenter
+    les itinéraires et visualiser les positions GPS.
+
+    \item \textbf{JavaScript (ES6+)} : langage utilisé pour les fonctionnalités
+    dynamiques et les interactions côté client.
+
+    \item \textbf{TypeScript} : langage principal utilisé par Angular pour
+    bénéficier du typage statique, d'une meilleure organisation du code et
+    d'une maintenance facilitée.
+\end{itemize}
+
+\subsection{Technologies Backend}
+
+Le backend de LogiWay repose principalement sur une architecture monolithique
+développée avec Spring Boot. Les technologies utilisées sont :
+
+\begin{itemize}
+    \item \textbf{Java 21} : langage principal utilisé pour le développement
+    du backend et l'implémentation de la logique métier.
+
+    \item \textbf{Spring Boot 3.x} : framework principal du backend permettant
+    de développer les API REST, gérer les services métier, les contrôleurs et
+    la configuration de l'application.
+
+    \item \textbf{Spring Data JPA / Hibernate} : technologies utilisées pour
+    assurer la persistance des données et la communication entre l'application
+    Java et la base de données MySQL.
+
+    \item \textbf{Spring Security} : framework utilisé pour sécuriser les API
+    et contrôler l'accès aux différentes ressources de l'application.
+
+    \item \textbf{Swagger / OpenAPI} : outil utilisé pour documenter,
+    visualiser et tester les API REST exposées par le backend Spring Boot.
+
+    \item \textbf{Python} : langage utilisé pour le développement des services
+    d'intelligence artificielle et de machine learning intégrés à la plateforme.
+
+    \item \textbf{Flask} : framework Python léger utilisé pour développer les
+    services IA dédiés notamment à la prédiction des pauses réglementaires et
+    au traitement intelligent des réclamations.
+
+    \item \textbf{FastAPI} : framework Python utilisé pour développer le
+    service de chatbot RAG et les fonctionnalités de génération de rapports
+    assistées par l'intelligence artificielle.
+\end{itemize}
+
+\subsection{Technologies d'intelligence artificielle et de routage}
+
+Les fonctionnalités intelligentes et de géolocalisation de LogiWay reposent
+sur plusieurs technologies complémentaires :
+
+\begin{itemize}
+    \item \textbf{scikit-learn} : bibliothèque Python utilisée pour
+    l'entraînement et l'exécution du modèle de Machine Learning basé sur
+    Random Forest pour la prédiction des pauses.
+
+    \item \textbf{Hugging Face Transformers} : bibliothèque utilisée pour
+    l'analyse et le traitement automatique du langage naturel dans le service
+    intelligent de traitement des réclamations.
+
+    \item \textbf{Google Gemini} : modèle d'intelligence artificielle
+    générative utilisé dans le chatbot RAG pour fournir des réponses
+    contextuelles et contribuer à la génération de rapports.
+
+    \item \textbf{RAG (Retrieval-Augmented Generation)} : approche utilisée
+    pour permettre au chatbot d'exploiter des informations pertinentes issues
+    des données disponibles dans le système avant de générer une réponse.
+
+    \item \textbf{OSRM (Open Source Routing Machine)} : service de routage
+    utilisé pour calculer les itinéraires, les distances et les durées de
+    déplacement. Le projet utilise une API publique OSRM accessible via
+    HTTPS, sans déploiement d'un serveur OSRM local.
+
+    \item \textbf{OpenStreetMap} : source de données cartographiques utilisée
+    avec Leaflet pour l'affichage des cartes et des informations
+    géographiques.
+\end{itemize}
+
+\subsection{Base de données et gestion des données}
+
+La gestion des données de la plateforme est assurée par :
+
+\begin{itemize}
+    \item \textbf{MySQL 8.0} : système de gestion de base de données
+    relationnelle utilisé pour stocker les informations relatives aux
+    utilisateurs, entreprises, véhicules, chauffeurs, trajets, pauses,
+    réclamations, notifications et autres entités métier.
+
+    \item \textbf{JPA / Hibernate} : couche de persistance permettant de
+    mapper les entités Java vers les tables relationnelles de la base MySQL.
+\end{itemize}
+
+\subsection{Sécurité et authentification}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{3d518737-fcef-4988-a684-fe9790ca3aeb.png}
+\caption{Flux complet du processus d'authentification utilisant Angular, Keycloak et Spring Boot}
+\label{fig:auth_flow}
+\end{figure}
+La sécurité de la plateforme repose sur les mécanismes suivants :
+
+\begin{itemize}
+    \item \textbf{Keycloak} : solution de gestion des identités et des accès utilisée pour l'authentification des utilisateurs ainsi que la gestion centralisée des rôles et des permissions.
+
+    \item \textbf{OAuth 2.0 / OpenID Connect (OIDC)} : protocoles standards assurant un processus d'authentification sécurisé entre le client Angular, le serveur Keycloak et le backend Spring Boot.
+
+    \item \textbf{JWT (JSON Web Token)} : jeton signé numériquement contenant les informations d'identification de l'utilisateur, ses rôles et ses autorisations. Ce jeton est transmis dans chaque requête HTTP afin d'autoriser l'accès aux ressources protégées.
+\end{itemize}
+
+Le processus d'authentification adopté dans LogiWay repose sur une architecture centralisée utilisant Keycloak comme fournisseur d'identité (Identity Provider). Après l'authentification de l'utilisateur, un jeton JWT est généré puis utilisé par le frontend Angular pour accéder de manière sécurisée aux services REST du backend Spring Boot. Chaque requête est contrôlée afin de vérifier la validité du jeton ainsi que les rôles de l'utilisateur avant l'exécution de la logique métier.
+
+
+\subsection{Outils de développement et de gestion du projet}
+
+Plusieurs outils sont utilisés pour faciliter le développement, le test et la
+maintenance de la plateforme :
+
+\begin{itemize}
+    \item \textbf{IntelliJ IDEA} : environnement de développement intégré
+    (IDE) principalement utilisé pour le développement du backend Java et
+    Spring Boot.
+
+    \item \textbf{Visual Studio Code} : éditeur de code utilisé notamment
+    pour le développement frontend Angular et les services Python.
+
+    \item \textbf{Git} : système de gestion de versions utilisé pour suivre
+    l'évolution du code source et gérer les différentes versions du projet.
+
+    \item \textbf{GitHub} : plateforme utilisée pour l'hébergement du code
+    source, la collaboration et la gestion du dépôt du projet.
+
+    \item \textbf{Maven} : outil de gestion et d'automatisation du cycle de
+    construction du projet Spring Boot ainsi que de la gestion de ses
+    dépendances.
+
+    \item \textbf{npm} : gestionnaire de paquets utilisé pour installer et
+    gérer les dépendances du frontend Angular.
+
+    \item \textbf{Docker} : outil de conteneurisation pouvant être utilisé
+    pour faciliter le déploiement et l'isolation des différents composants
+    de la plateforme.
+\end{itemize}
+
+\subsection{Outils de test et de validation}
+
+Les outils suivants sont utilisés pour vérifier le bon fonctionnement des
+différents composants de la plateforme :
+
+\begin{itemize}
+    \item \textbf{Swagger / OpenAPI} : permet de tester directement les
+    endpoints REST du backend, de vérifier les paramètres des requêtes et
+    d'observer les réponses retournées par les API.
+
+    \item \textbf{Postman} : outil utilisé pour effectuer des tests manuels
+    des API REST, notamment pour tester les requêtes HTTP, les paramètres,
+    les corps JSON et les mécanismes d'authentification.
+
+    \item \textbf{Chrome DevTools} : ensemble d'outils intégré au navigateur
+    permettant d'analyser le frontend, déboguer le code JavaScript,
+    inspecter les requêtes HTTP et surveiller les performances de
+    l'application.
+\end{itemize}
+
+\subsection{Outils de déploiement et d'intégration}
+
+Pour faciliter le cycle de développement et le déploiement, les outils
+suivants peuvent être utilisés :
+
+\begin{itemize}
+    \item \textbf{GitHub Actions} : outil d'intégration et de déploiement
+    continu (CI/CD) permettant d'automatiser les étapes de build, de test et
+    de déploiement du projet.
+
+    \item \textbf{Docker} : permet de créer des environnements reproductibles
+    et d'isoler les composants de l'application dans des conteneurs.
+
+    \item \textbf{Maven} : utilisé dans le pipeline de build pour compiler
+    et empaqueter l'application Spring Boot.
+
+    \item \textbf{npm} : utilisé pour installer les dépendances et construire
+    l'application Angular destinée à la production.
+\end{itemize}
+
+\subsection{Synthèse des technologies utilisées}
+
+Le tableau suivant résume les principales technologies et outils utilisés
+dans le projet LogiWay.
+
+\begin{table}[H]
+    \centering
+    \caption{Synthèse des technologies et outils utilisés dans LogiWay}
+    \label{tab:technologies_logiway}
+    \rowcolors{2}{tablerow}{white}
+    \begin{tabularx}{\textwidth}{|l|l|Y|}
+        \hline
+        \thead{Catégorie} & \thead{Technologie / Outil} & \thead{Utilisation} \\
+        \hline
+        Frontend & Angular & Développement de l'application web SPA \\
+        Frontend & Kendo UI & Composants d'interface utilisateur \\
+        Frontend & Leaflet & Cartographie interactive \\
+        Frontend & JavaScript / TypeScript & Développement côté client \\
+        Backend & Java / Spring Boot & API REST et logique métier \\
+        Backend & Spring Data JPA / Hibernate & Persistance des données \\
+        Backend & Spring Security & Sécurisation des API \\
+        IA & Python / Flask & Services IA et Machine Learning \\
+        IA & FastAPI & Service chatbot RAG \\
+        IA/ML & scikit-learn & Modèle Random Forest \\
+        IA & Hugging Face Transformers & Traitement intelligent des réclamations \\
+        IA & Google Gemini & Génération de réponses et rapports IA \\
+        Routage & OSRM & Calcul des itinéraires et distances \\
+        Cartographie & OpenStreetMap & Données cartographiques \\
+        Base de données & MySQL & Stockage des données métier \\
+        Authentification & Keycloak & Gestion des identités et des rôles \\
+        Documentation API & Swagger / OpenAPI & Documentation et test des API REST \\
+        Tests API & Postman & Tests manuels des endpoints \\
+        Développement & IntelliJ IDEA / VS Code & Environnements de développement \\
+        Versioning & Git / GitHub & Gestion et hébergement du code source \\
+        Build & Maven / npm & Gestion des dépendances et compilation \\
+        Déploiement & Docker & Conteneurisation des applications \\
+        \hline
+    \end{tabularx}
+\end{table}
+\begin{figure}[H]
+    \centering
+
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{outils_technologie.png}
+    \caption{Vue d'ensemble des technologies et outils utilisés dans le projet LogiWay}
+    \label{fig:technologies_logiway}
+\end{figure}
+
+\subsection{Service ML de prédiction des pauses}
+
+Le service ML Pauses est développé avec Flask et utilise un modèle
+RandomForest basé sur la bibliothèque scikit-learn.
+
+Il permet notamment d'analyser les données liées aux trajets et de fournir
+des prédictions ou recommandations concernant les pauses réglementaires.
+
+Le service est accessible sur le port \textbf{5000}.
+
+\subsection{Service IA de traitement des réclamations}
+
+Le service de réclamations est développé avec Flask et utilise des modèles
+issus de l'écosystème Transformers de Hugging Face.
+
+Il permet d'apporter une analyse intelligente des réclamations et d'assister
+le système dans leur traitement et leur classification.
+
+Le service est accessible sur le port \textbf{5001}.
+
+\subsection{Service RAG Chatbot}
+
+Le chatbot intelligent est implémenté avec FastAPI et utilise une approche
+RAG (Retrieval-Augmented Generation) associée à Google Gemini.
+
+Ce service permet notamment :
+
+\begin{itemize}
+    \item de répondre aux questions des utilisateurs ;
+    \item d'exploiter les données disponibles dans le système ;
+    \item de fournir une assistance conversationnelle ;
+    \item de générer des réponses contextualisées ;
+    \item de contribuer à la génération de rapports intelligents.
+\end{itemize}
+
+Le service est accessible sur le port \textbf{5003}.
+
+% ============================================================
+\section{Outils et services d'infrastructure}
+\label{sec:ch2-outils}
+% ============================================================
+
+La plateforme utilise également plusieurs outils permettant d'améliorer le
+développement, la documentation, le déploiement et la supervision.
+
+\begin{table}[H]
+  \centering
+  \caption{Outils et services utilisés dans le projet}
+  \label{tab:outils_services}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Outil / Service} & \thead{Utilisation} \\
+    \hline
+    Git / GitHub &
+    Gestion du code source et collaboration \\
+    \hline
+    Maven &
+    Gestion des dépendances et construction du backend Spring Boot \\
+    \hline
+    Docker &
+    Conteneurisation et simplification du déploiement \\
+    \hline
+    GitHub Actions &
+    Automatisation des processus CI/CD, tests et déploiement \\
+    \hline
+    Swagger / OpenAPI &
+    Documentation et test des API REST \\
+    \hline
+    Monitoring &
+    Surveillance de l'état des services et des métriques \\
+    \hline
+    Leaflet / OpenStreetMap &
+    Affichage cartographique et visualisation des positions \\
+    \hline
+    OSRM Public API &
+    Calcul des itinéraires via API publique HTTPS \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+Une représentation visuelle de ces outils et services peut être intégrée
+dans la figure suivante.
+
+
+
+% ============================================================
+\section{Modèle de données}
+\label{sec:ch2-modele-donnees}
+% ============================================================
+
+Le modèle de données de LogiWay est basé sur une base de données relationnelle
+MySQL. Les entités métier sont représentées sous forme de classes Java et
+persistées à l'aide de JPA/Hibernate.
+
+Les principales entités du système sont présentées dans le tableau
+suivant.
+
+\begin{table}[H]
+  \centering
+  \caption{Entités principales du modèle de données LogiWay}
+  \label{tab:entites}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Entité} & \thead{Relations principales} \\
+    \hline
+    \textbf{Utilisateur} &
+    Classe de base pour les utilisateurs du système \\
+    \hline
+    \textbf{SuperAdmin} &
+    Gestion globale de la plateforme \\
+    \hline
+    \textbf{Manager} &
+    Gestion des chauffeurs, véhicules, missions et congés \\
+    \hline
+    \textbf{Entreprise} &
+    Gestion des informations de l'entreprise \\
+    \hline
+    \textbf{Chauffeur} &
+    Association avec Manager et Véhicule \\
+    \hline
+    \textbf{Vehicule} &
+    Association avec Chauffeur et Trajet \\
+    \hline
+    \textbf{Mission} &
+    Gestion des missions affectées aux chauffeurs \\
+    \hline
+    \textbf{Trajet} &
+    Gestion des déplacements et des itinéraires \\
+    \hline
+    \textbf{Pause} &
+    Association avec les trajets et les données de pause \\
+    \hline
+    \textbf{Conge} &
+    Gestion des congés des chauffeurs \\
+    \hline
+    \textbf{Reclamation} &
+    Gestion et traitement des réclamations \\
+    \hline
+    \textbf{Notification} &
+    Notifications destinées aux utilisateurs \\
+    \hline
+    \textbf{MessengerMessage} &
+    Gestion des échanges de messages entre utilisateurs \\
+    \hline
+    \textbf{Incident} &
+    Gestion des incidents liés à l'activité de transport \\
+    \hline
+    \textbf{Parametres} &
+    Configuration des paramètres de la plateforme \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+% ============================================================
+\section{Diagramme de classes}
+\label{sec:ch2-diagramme-classes}
+% ============================================================
+
+Le diagramme de classes UML présente la structure statique du système et
+permet de visualiser les principales entités métier ainsi que leurs
+relations.
+
+Il constitue un complément à l'architecture logique et au modèle de données.
+Alors que l'architecture logique décrit l'organisation des couches
+logicielles, le diagramme de classes décrit plus précisément la structure
+interne des données et les associations entre les objets métier.
+
+\begin{figure}[H]
+    \centering
+      \includegraphics[width=1\textwidth]{classe1.png}
+    \caption{Diagramme de classes UML -- principales entités de LogiWay}
+    \label{fig:class_diagram}
+\end{figure}
+
+Le diagramme met notamment en évidence les relations entre les utilisateurs,
+les managers, les chauffeurs, les véhicules, les trajets, les pauses, les
+congés, les réclamations et les autres entités métier.
+
+% ============================================================
+\section{Synthèse de l'architecture}
+\label{sec:ch2-synthese}
+% ============================================================
+
+L'architecture de LogiWay repose sur une organisation centralisée autour du
+backend monolithique Spring Boot. Le frontend Angular constitue le point
+d'interaction principal avec les utilisateurs, tandis que Spring Boot assure
+la logique métier et l'accès aux données.
+
+Keycloak est responsable de la sécurité et de la gestion des identités.
+MySQL assure la persistance des données. Les services IA développés en Python
+sont exécutés indépendamment et communiquent avec le backend via des API
+HTTP/REST.
+
+L'utilisation de l'API publique OSRM via HTTPS permet de bénéficier du
+calcul d'itinéraires sans déployer localement un serveur OSRM. Leaflet et
+OpenStreetMap assurent quant à eux la visualisation cartographique.
+
+Cette organisation permet de conserver un backend métier monolithique tout
+en isolant les fonctionnalités spécialisées d'intelligence artificielle.
+L'approche facilite ainsi l'évolution de la plateforme et permet d'utiliser
+des technologies adaptées à chaque besoin.
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+Ce chapitre a présenté l'étude technique et l'architecture de la plateforme
+LogiWay. L'architecture logique a permis de décrire l'organisation interne
+des composants logiciels et la séparation des responsabilités entre les
+différentes couches. L'architecture physique a permis de présenter le
+déploiement des différents composants, leurs ports et leurs interactions.
+
+L'étude a également présenté les principales technologies utilisées,
+notamment Angular, Spring Boot, MySQL, Keycloak, Python, Flask, FastAPI,
+scikit-learn, Gemini, Leaflet et l'API publique OSRM.
+
+Enfin, le modèle de données et le diagramme de classes ont permis de présenter
+la structure des principales entités métier de la plateforme.
+
+Cette architecture fournit ainsi une base technique cohérente pour le
+développement et le déploiement de LogiWay, tout en permettant l'intégration
+de fonctionnalités avancées d'intelligence artificielle et de services
+externes spécialisés.
+
+\newpage
+
+
+% ============================================================
+% CHAPITRE 3 — SPRINTS 1 À 3 : MODULES FONDAMENTAUX
+% ============================================================
+
+\chapitreavecplan{Modules fondamentaux -- Sprints 1 à 3}
+\begin{plandechapitre}
+  \planitem{Introduction}{sec:ch3-introduction}
+  \planitem{Sprint 1 -- Fondations : Authentification, utilisateurs, entreprises, véhicules et secteurs}{sec:ch3-sprint1}
+  \planitem{Sprint 2 -- Opérations RH : Congés et notifications SSE}{sec:ch3-sprint2-notif}
+  \planitem{Sprint 3 -- Communication : Messagerie et chatbot RAG}{sec:ch3-sprint3-comm}
+\end{plandechapitre}
+
+\section{Introduction}
+\label{sec:ch3-introduction}
+
+Ce chapitre présente les trois premiers sprints du projet LogiWay, organisés
+selon une méthodologie Agile Scrum avec des sprints de deux semaines chacun.
+Ces sprints constituent le socle fonctionnel et technique de la plateforme
+et mettent en place l'ensemble des modules opérationnels fondamentaux.
+
+\begin{itemize}
+    \item \textbf{Sprint 1 -- Fondations} (2 semaines) : authentification
+    sécurisée via Keycloak, gestion des utilisateurs, des entreprises, des
+    véhicules et des secteurs géographiques.
+    \item \textbf{Sprint 2 -- Opérations RH} (2 semaines) : gestion des
+    congés des chauffeurs et système de notifications en temps réel basé
+    sur les Server-Sent Events (SSE).
+    \item \textbf{Sprint 3 -- Communication} (2 semaines) : messagerie
+    interne via WebSocket STOMP et chatbot intelligent basé sur le
+    RAG (Retrieval-Augmented Generation) avec Google Gemini.
+\end{itemize}
+
+Afin de représenter le fonctionnement et les interactions de chaque module,
+deux types de diagrammes UML sont présentés pour chaque sprint :
+\begin{itemize}
+    \item \textbf{le diagramme de séquence}, qui décrit les interactions
+    temporelles entre les utilisateurs et les différents composants du système ;
+    \item \textbf{le diagramme d'activité}, qui représente le déroulement
+    logique et les différentes décisions intervenant dans le processus métier.
+\end{itemize}
+
+Ces diagrammes permettent ainsi de compléter la description fonctionnelle
+et technique des modules développés et de faciliter la compréhension de
+l'architecture applicative de LogiWay.
+
+% ============================================================
+% SPRINT 1
+% ============================================================
+
+\section{Sprint 1 -- Fondations : Authentification, utilisateurs, entreprises, véhicules et secteurs}
+\label{sec:ch3-sprint1}
+
+\subsection{Présentation du module}
+
+Le premier sprint est consacré à la mise en place du système
+d'authentification et de gestion des utilisateurs. La solution repose sur
+Keycloak pour la gestion de l'identité et des rôles, tandis que Spring Boot
+assure la sécurisation des ressources et la gestion des règles métier.
+
+Les principaux acteurs de la plateforme sont le SuperAdmin, le Manager et
+le Chauffeur. Chaque utilisateur dispose d'un compte associé à une identité
+Keycloak et à un enregistrement correspondant dans la base de données MySQL.
+
+\subsection{Flux d'authentification Keycloak}
+
+Le flux d'authentification repose sur une architecture OAuth2/OIDC intégrant
+Keycloak comme fournisseur d'identité. L'utilisateur saisit ses identifiants
+depuis l'application Angular. La requête d'authentification est traitée par
+le backend Spring Boot et validée auprès de Keycloak.
+
+Une fois l'authentification réussie, un token JWT est délivré et utilisé
+pour sécuriser les échanges avec l'API REST. Spring Boot joue le rôle de
+\textbf{Resource Server OAuth2} et vérifie la validité du JWT à partir des
+clés publiques exposées par Keycloak.
+
+Les rôles de l'utilisateur sont ensuite récupérés à partir des informations
+contenues dans le token afin d'appliquer les règles d'autorisation et de
+contrôle d'accès.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{diagramme_sequence_authentification.png}
+  \caption{Diagramme de séquence du processus d'authentification avec Keycloak}
+  \label{fig:seq_auth}
+\end{figure}
+
+\subsection{Diagramme d'activité de l'authentification}
+
+Le diagramme d'activité présente le déroulement du processus
+d'authentification depuis la saisie des identifiants jusqu'à l'accès à
+l'application. Il met également en évidence les différents scénarios
+possibles en cas d'identifiants invalides ou de compte désactivé.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.95\textwidth]{diagramme-activite-athentification.png}
+  \caption{Diagramme d'activité du processus d'authentification}
+  \label{fig:activite_auth}
+\end{figure}
+
+\subsection{Fonctionnalités d'authentification}
+
+\begin{table}[H]
+  \centering
+  \caption{Fonctionnalités d'authentification et de gestion des comptes}
+  \label{tab:auth_features}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|Y|}
+    \hline
+    \thead{Fonctionnalité} & \thead{Rôle} & \thead{Description} \\
+    \hline
+    Login / Logout & Tous &
+    Authentification et déconnexion sécurisées via Keycloak OAuth2/OIDC \\
+    
+
+    Forgot password & Tous &
+    Génération d'un code de réinitialisation envoyé par email avec une durée de validité limitée \\
+    
+
+    Reset password & Tous &
+    Validation du code et mise à jour du mot de passe \\
+    
+
+    Vérification email & Manager &
+    Confirmation de l'adresse email lors de la création du compte \\
+    
+
+    Refresh token & Tous &
+    Renouvellement du token d'accès lorsque cela est nécessaire \\
+    
+
+    Créer Manager & SuperAdmin &
+    Création et synchronisation du compte entre MySQL et Keycloak \\
+    
+
+    Créer Chauffeur & SuperAdmin/Manager &
+    Création et assignation d'un chauffeur à son Manager \\
+    
+
+    Modifier utilisateur & SuperAdmin &
+    Mise à jour des informations du compte utilisateur \\
+    
+
+    Activer/Désactiver & SuperAdmin &
+    Gestion du statut du compte et de son accès à la plateforme \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Règles métier clés}
+
+\begin{itemize}
+  \item Le \texttt{managerId} est déterminé côté backend à partir de
+  l'identité authentifiée et n'est pas fourni directement par le client.
+  
+  \item La synchronisation entre Keycloak et MySQL est assurée par
+  l'identifiant unique \texttt{keycloakId}.
+  
+  \item Un Manager dont l'entreprise n'est pas encore validée dispose
+  d'un accès limité à son profil.
+  
+  \item Un compte désactivé ne peut plus accéder aux fonctionnalités
+  protégées de la plateforme.
+\end{itemize}
+
+
+% ============================================================
+% SPRINT 1 — SOUS-MODULE : GESTION DES ENTREPRISES
+% ============================================================
+
+\subsection{Gestion des entreprises}
+\label{sec:ch3-sprint2}
+
+\subsubsection{Présentation du module}
+
+Ce module concerne la gestion des entreprises. Il permet
+au Manager de créer et de gérer les informations relatives à son entreprise.
+Le SuperAdmin assure ensuite le contrôle et la validation de l'entreprise
+avant d'autoriser l'accès complet aux fonctionnalités opérationnelles.
+
+\subsubsection{Workflow de validation}
+
+Le workflow d'une entreprise suit plusieurs états :
+
+\[
+\texttt{EN\_ATTENTE}
+\rightarrow
+\texttt{ACTIF}
+\]
+
+ou
+
+\[
+\texttt{EN\_ATTENTE}
+\rightarrow
+\texttt{REJETE}
+\]
+
+Une entreprise active peut ultérieurement être placée en état
+\texttt{SUSPENDU} en fonction des règles de gestion de la plateforme.
+
+Le Manager crée son entreprise lors de son inscription. Le SuperAdmin
+peut ensuite examiner les informations fournies, valider l'entreprise
+ou la rejeter en indiquant un motif.
+
+\subsubsection{Diagramme de séquence de validation d'une entreprise}
+
+Le diagramme de séquence présente les interactions entre le Manager,
+l'application Angular, le backend Spring Boot, la base de données MySQL,
+Keycloak et le SuperAdmin lors de la création et de la validation d'une
+entreprise.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{sequence_Créer une Entreprise.png}
+  \caption{Diagramme de séquence de création et validation d'une entreprise}
+  \label{fig:seq_entreprise}
+\end{figure}
+
+\subsubsection{Diagramme d'activité du workflow de validation}
+
+Le diagramme d'activité décrit les différentes étapes du processus de
+validation d'une entreprise, depuis sa création jusqu'à la décision finale
+du SuperAdmin.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.75\textwidth]{diagramme_activite_vie entreprise.png}
+  \caption{Diagramme d'activité du workflow d'une entreprise}
+  \label{fig:activite_entreprise}
+\end{figure}
+
+\subsubsection{Règles métier}
+
+\begin{itemize}
+  \item Un Manager ne peut posséder qu'une seule entreprise.
+  
+  \item Une entreprise appartient à un seul Manager propriétaire.
+  
+  \item La validation, le rejet ou la suspension d'une entreprise
+  déclenche une notification destinée et un mail aux utilisateurs concernés.
+  
+  \item Un Manager dont l'entreprise est en état \texttt{SUSPENDU}
+  ne peut plus accéder aux modules opérationnels.
+\end{itemize}
+
+
+% ============================================================
+% SPRINT 1 — SOUS-MODULE : GESTION DES VÉHICULES ET DE LA FLOTTE
+% ============================================================
+
+\subsection{Gestion des véhicules et de la flotte}
+\label{sec:ch3-sprint3}
+
+\subsubsection{Présentation du module}
+
+Ce module concerne la gestion de la flotte de véhicules.
+Le module permet aux Managers de gérer les véhicules appartenant à leur
+entreprise et d'assurer leur affectation aux chauffeurs.
+
+\subsubsection{Isolation par entreprise}
+
+Le backend vérifie systématiquement que le chauffeur et le véhicule
+appartiennent à la même entreprise avant toute affectation.
+
+Cette vérification permet d'éviter qu'un chauffeur appartenant à une
+entreprise soit affecté à un véhicule appartenant à une autre entreprise.
+
+En cas d'incohérence, le backend retourne une erreur de type
+\texttt{HTTP 409 Conflict}.
+
+\subsubsection{Diagramme de séquence d'affectation d'un véhicule}
+
+Le diagramme de séquence présente les échanges entre le Manager,
+l'application Angular, le backend Spring Boot et la base de données lors
+de l'affectation d'un véhicule à un chauffeur.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{diagramme_Séquence — Planification & Assignation chauffeur_vehicul.png}
+  \caption{Diagramme de séquence d'affectation d'un véhicule à un chauffeur}
+  \label{fig:seq_vehicule}
+\end{figure}
+
+\subsubsection{Diagramme d'activité de gestion de la flotte}
+
+Le diagramme d'activité décrit le cycle de gestion d'un véhicule depuis
+sa création jusqu'à son affectation ou sa modification.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{activite_vehicule1.png}
+  \caption{Diagramme d'activité de gestion d'un véhicule}
+  \label{fig:activite_vehicule}
+\end{figure}
+
+\subsubsection{Entité Véhicule -- attributs principaux}
+
+\begin{table}[H]
+  \centering
+  \caption{Entité Véhicule -- attributs principaux}
+  \label{tab:vehicule}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|Y|}
+    \hline
+    \thead{Attribut} & \thead{Type} & \thead{Description} \\
+    \hline
+    matricule & String (UNIQUE) &
+    Immatriculation unique dans le système \\
+    
+
+    marque / modele & String &
+    Marque et modèle du véhicule \\
+    
+
+    capacite & Double &
+    Capacité de charge du véhicule \\
+    
+
+    kilometrage & Integer &
+    Kilométrage total enregistré \\
+    
+
+    statut & Enum &
+    EN\_SERVICE, EN\_MAINTENANCE, HORS\_SERVICE \\
+    
+
+    chauffeurActuel & Chauffeur (FK) &
+    Chauffeur actuellement affecté au véhicule \\
+    
+
+    entreprise & Entreprise (FK) &
+    Entreprise propriétaire du véhicule \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+
+% ============================================================
+% SPRINT 1 — SOUS-MODULE : GESTION DES SECTEURS GÉOGRAPHIQUES
+% ============================================================
+
+\subsection{Gestion des secteurs géographiques}
+\label{sec:ch3-sprint4}
+
+\subsubsection{Présentation du module}
+
+Un secteur représente une zone géographique opérationnelle utilisée
+pour organiser les activités de l'entreprise et faciliter l'affectation
+des Managers et des Chauffeurs.
+
+\subsubsection{Règles métier}
+
+\begin{itemize}
+  \item Un secteur est associé à une seule entreprise.
+  
+  \item Une zone géographique ne peut pas être dupliquée dans le système.
+  
+  \item Un Manager ne peut être assigné qu'à un seul secteur.
+  
+  \item L'assignation d'un Manager à un secteur déclenche des notifications
+  destinées aux utilisateurs concernés.
+\end{itemize}
+
+\subsubsection{Diagramme de séquence d'assignation d'un secteur}
+
+Le diagramme de séquence représente les interactions intervenant lors de
+l'assignation d'un Manager à un secteur géographique.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{sequene_Créer un Secteur.png}
+  \caption{Diagramme de séquence d'assignation d'un Manager à un secteur}
+  \label{fig:seq_secteur}
+\end{figure}
+
+\subsubsection{Diagramme d'activité de gestion des secteurs}
+
+Le diagramme d'activité décrit le processus de création et de gestion
+d'un secteur ainsi que l'affectation d'un Manager.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{activite_secteur.png}
+  \caption{Diagramme d'activité de gestion des secteurs géographiques}
+  \label{fig:activite_secteur}
+\end{figure}
+
+
+% ============================================================
+% SPRINT 2 — SOUS-MODULE : SYSTÈME DE NOTIFICATIONS SSE
+% ============================================================
+
+\section{Sprint 2 -- Opérations RH : Congés et notifications SSE}
+\label{sec:ch3-sprint2-notif}
+
+\subsection{Système de notifications SSE}
+\label{sec:ch3-sprint5}
+
+\subsubsection{Présentation du module}
+
+Ce module est consacré à la mise en place d'un système de
+notifications en temps réel basé sur la technologie
+\textbf{Server-Sent Events (SSE)}.
+
+SSE permet au serveur d'envoyer des événements au client à travers une
+connexion HTTP persistante. Cette approche est particulièrement adaptée
+aux notifications, car les informations sont principalement transmises
+du serveur vers les utilisateurs.
+
+\subsubsection{Architecture}
+
+Le backend maintient une structure de connexions SSE actives associant
+chaque utilisateur authentifié à son canal de communication.
+
+\begin{tcolorbox}[alertbox]
+  \textbf{Règle absolue :} Toute notification est d'abord persistée
+  dans MySQL avant d'être diffusée via SSE. Si l'utilisateur n'est pas
+  connecté au moment de l'événement, la notification reste disponible
+  en base de données et pourra être récupérée ultérieurement.
+\end{tcolorbox}
+
+\subsubsection{Diagramme de séquence d'une notification SSE}
+
+Le diagramme de séquence décrit le traitement d'une notification depuis
+le déclenchement d'un événement métier jusqu'à sa diffusion en temps réel
+vers l'utilisateur concerné.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{diagramme_ Séquence —gestion_Notification.png}
+  \caption{Diagramme de séquence de diffusion d'une notification SSE}
+  \label{fig:seq_sse}
+\end{figure}
+
+\subsubsection{Diagramme d'activité du traitement des notifications}
+
+Le diagramme d'activité présente le cycle de traitement d'une notification,
+depuis la génération de l'événement métier jusqu'à la persistance et la
+diffusion éventuelle au destinataire.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{diagramme_ Activité — Traitement d'une Alerte.png}
+  \caption{Diagramme d'activité du traitement d'une notification SSE}
+  \label{fig:activite_sse}
+\end{figure}
+
+\subsubsection{Événements déclencheurs}
+
+\begin{table}[H]
+  \centering
+  \caption{Événements SSE et destinataires}
+  \label{tab:sse_events}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|Y|l|l|}
+    \hline
+    \thead{Événement} & \thead{Destinataire(s)} & \thead{Type} \\
+    \hline
+    Nouvelle entreprise EN\_ATTENTE &
+    SuperAdmins & NOTIF\_ENTREPRISE \\
+    
+
+    Validation / rejet entreprise &
+    Manager propriétaire & NOTIF\_ENTREPRISE \\
+    
+
+    Trajet planifié et assigné &
+    Chauffeur concerné & NOTIF\_TRAJET \\
+    
+
+    Trajet démarré / terminé &
+    Manager planificateur & NOTIF\_TRAJET \\
+    
+
+    Demande de congé soumise &
+    Manager du chauffeur & NOTIF\_CONGE \\
+    
+
+    Congé approuvé ou rejeté &
+    Chauffeur demandeur & NOTIF\_CONGE \\
+    
+
+    Réclamation urgente &
+    SuperAdmins + Manager & NOTIF\_RECLAMATION \\
+    
+
+    Affectation véhicule &
+    Chauffeur concerné & NOTIF\_VEHICULE \\
+    
+
+    Assignation Manager à secteur &
+    Manager assigné & NOTIF\_SECTEUR \\
+    
+
+    Pauses IA générées &
+    Manager du trajet & NOTIF\_TRAJET \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+
+% ============================================================
+% SPRINT 2 — SOUS-MODULE : GESTION DES CONGÉS
+% ============================================================
+
+\subsection{Gestion des congés}
+\label{sec:ch3-sprint6-conges}
+
+Le circuit de validation d'une demande de congé suit le processus suivant :
+
+\[
+\texttt{EN\_ATTENTE}
+\rightarrow
+\texttt{APPROUVE}
+\]
+
+ou
+
+\[
+\texttt{EN\_ATTENTE}
+\rightarrow
+\texttt{REJETE}
+\]
+
+Une demande peut également être annulée selon les règles métier définies
+par la plateforme.
+
+Les types de congé disponibles comprennent notamment
+\texttt{MALADIE}, \texttt{MARIAGE} et \texttt{VACANCES}.
+
+Un chauffeur actuellement en mission, identifié par le statut
+\texttt{EN\_SERVICE}, ne peut pas soumettre une nouvelle demande de congé.
+
+\subsubsection{Diagramme de séquence de gestion d'une demande de congé}
+
+Le diagramme de séquence représente les interactions entre le utilisateurs,
+Angular, Spring Boot, MySQL et les admins lors de la demande et du
+validation d'une demande de congé.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.90\textwidth]{diagramme_Séquence — Demande et Validation de Congé2.png}
+  \caption{Diagramme de séquence de Demande et Validation de congé}
+  \label{fig:seq_conge}
+\end{figure}
+
+\subsubsection{Diagramme d'activité du workflow des congés}
+
+Le diagramme d'activité décrit le cycle complet d'une demande de congé,
+depuis sa création par le Chauffeur jusqu'à la décision du Superadmin ou Manager.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.98\textwidth]{diagramme_Activité — Circuit de Gestion des Congés.png}
+  \caption{Diagramme d'activité du workflow de validation d'un congé}
+  \label{fig:activite_conge}
+\end{figure}
+
+% ------------------------------------------------------------
+% RECLAMATIONS
+% ------------------------------------------------------------
+
+\subsection{Gestion des réclamations}
+
+\begin{tcolorbox}[keybox]
+  \textbf{Note :} Le traitement des réclamations avec validation IA
+  (toxicité + sémantique) est détaillé de manière complète dans le
+  Chapitre~5 dédié au Module de Validation Intelligente des Réclamations.
+  La section suivante présente uniquement le workflow de gestion côté
+  Spring Boot.
+\end{tcolorbox}
+
+Les réclamations suivent le workflow :
+
+\[
+\texttt{EN\_COURS}
+\rightarrow
+\texttt{RESOLU}
+\]
+
+ou
+
+\[
+\texttt{EN\_COURS}
+\rightarrow
+\texttt{REJETE}
+\]
+
+Les réclamations ayant une priorité \texttt{URGENT} déclenchent une
+notification spécifique destinée aux SuperAdmins et aux Managers concernés.
+
+\subsubsection{Diagramme de séquence de traitement d'une réclamation}
+
+Le diagramme de séquence décrit le processus de création d'une réclamation
+et son traitement par le backend. La demande peut être soumise à un service
+d'intelligence artificielle chargé d'effectuer une analyse sémantique et
+une détection de toxicité avant sa persistance.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{diagramme_Séquence —Soumettre une Réclamation1.png}
+  \caption{Diagramme de séquence Soumettre une réclamation}
+  \label{fig:seq_reclamation}
+\end{figure}
+
+\subsubsection{Diagramme d'activité du traitement des réclamations}
+
+Le diagramme d'activité présente le cycle de traitement d'une réclamation,
+depuis sa création jusqu'à son analyse, sa validation et son traitement.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{diagramme_Activité 1— Traitement d'une Réclamation.png}
+  \caption{Diagramme d'activité du traitement d'une réclamation}
+  \label{fig:activite_reclamation}
+\end{figure}
+
+\begin{tcolorbox}[ruleframe]
+  \textbf{Innovation Sprint~4 :} La création d'une réclamation peut être
+  soumise à un service Python d'intelligence artificielle chargé de réaliser
+  une analyse sémantique et une détection de toxicité avant la persistance
+  définitive de la réclamation. Ce module est détaillé dans le chapitre
+  consacré aux fonctionnalités d'intelligence artificielle.
+\end{tcolorbox}
+
+
+% ============================================================
+% SPRINT 3 — SOUS-MODULE : MESSAGERIE INTERNE WEBSOCKET
+% ============================================================
+
+\section{Sprint 3 -- Communication : Messagerie et chatbot RAG}
+\label{sec:ch3-sprint3-comm}
+
+\subsection{Messagerie interne WebSocket}
+\label{sec:ch3-sprint7}
+
+\subsubsection{Présentation du module}
+
+Ce module est consacré à la mise en place d'un système de
+messagerie interne permettant aux utilisateurs de communiquer en temps
+réel au sein de la plateforme LogiWay.
+
+La communication temps réel repose sur \textbf{WebSocket STOMP}, tandis
+que les messages et l'historique des conversations sont persistés dans
+la base de données MySQL.
+
+\subsubsection{Fonctionnalités principales}
+
+\begin{itemize}
+  \item Persistance des messages et des conversations dans MySQL.
+  
+  \item Conservation de l'historique complet des échanges.
+  
+  \item Gestion des statuts de lecture des messages.
+  
+  \item Affichage d'un compteur de messages non lus.
+  
+  \item Contrôle des communications selon les rôles des utilisateurs.
+  
+  \item Réception d'une notification SSE lorsqu'un nouveau message
+  est disponible.
+\end{itemize}
+
+\subsubsection{Diagramme de séquence d'envoi d'un message}
+
+Le diagramme de séquence présente le processus d'envoi et de réception
+d'un message entre deux utilisateurs. Le message est transmis via
+WebSocket STOMP, traité par le backend Spring Boot et sauvegardé dans
+MySQL afin de conserver l'historique des conversations.
+
+Une notification SSE peut également être générée afin d'informer le
+destinataire de la réception d'un nouveau message.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{diagramme_ Séquence —Envoyer un Message Messenger.png}
+  \caption{Diagramme de séquence d'envoi et de réception d'un message}
+  \label{fig:seq_messagerie}
+\end{figure}
+
+\subsubsection{Diagramme d'activité de la messagerie}
+
+Le diagramme d'activité décrit le cycle de traitement d'un message,
+depuis sa rédaction par l'expéditeur jusqu'à sa réception par le
+destinataire, sa persistance dans la base de données et la mise à jour
+de son statut de lecture.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1\textwidth]{diagramme_ Activité — traitement_messenger.png}
+  \caption{Diagramme d'activité du fonctionnement de la messagerie interne}
+  \label{fig:activite_messagerie}
+\end{figure}
+
+
+% ============================================================
+% CONCLUSION
+% ============================================================
+
+\section{Conclusion}
+
+Les Sprints~1 à~3 couvrent le socle opérationnel principal de la plateforme
+LogiWay. Le Sprint~1 met en place les fondations essentielles --
+authentification, gestion des utilisateurs, des entreprises, des véhicules
+et des secteurs géographiques. Le Sprint~2 ajoute les fonctionnalités
+RH avec la gestion des congés et les notifications en temps réel via SSE.
+Le Sprint~3 complète avec la communication interne par messagerie WebSocket
+et l'assistant intelligent basé sur le RAG.
+
+L'utilisation conjointe des diagrammes de séquence et des diagrammes
+d'activité permet de représenter les différents niveaux de fonctionnement
+des modules. Les diagrammes de séquence mettent en évidence les échanges
+entre les acteurs et les composants logiciels, tandis que les diagrammes
+d'activité permettent de visualiser les workflows métier et les différentes
+conditions de traitement.
+
+Ces modules constituent ainsi la base fonctionnelle et technique sur
+laquelle reposent les fonctionnalités avancées de LogiWay, notamment la
+gestion des trajets, la planification intelligente des pauses,
+les fonctionnalités d'intelligence artificielle, le chatbot RAG et
+la génération automatisée de rapports.
+
+\newpage
+
+% ============================================================
+
+% CHAPITRE 4 — SPRINT 4 : TRAJETS, GPS ET CARTOGRAPHIE
+% ============================================================
+\chapitreavecplan{Sprint 4 -- Cœur métier : Trajets, GPS et cartographie}
+\begin{plandechapitre}
+  \planitem{Introduction}{sec:ch4-introduction}
+  \planitem{Systèmes de géolocalisation Multi-GNSS}{sec:ch4-gnss}
+  \planitem{Calcul d'itinéraire OSRM}{sec:ch4-osrm}
+  \planitem{Exécution et suivi GPS en temps réel}{sec:ch4-suivi}
+  \planitem{Cartographie Leaflet}{sec:ch4-leaflet}
+  \planitem{Modèle de données -- trajets et GPS}{sec:ch4-modele}
+\end{plandechapitre}
+
+\section{Introduction}
+\label{sec:ch4-introduction}
+
+Le Sprint~4 constitue le cœur métier de LogiWay. Il regroupe les
+fonctionnalités opérationnelles les plus critiques de la plateforme : la
+gestion des trajets avec calcul d'itinéraire OSRM (ce chapitre), la
+prédiction ML des pauses réglementaires CE~561/2006 et la validation
+intelligente des réclamations par IA (chapitres suivants). Ce sprint
+dépend des véhicules, des chauffeurs et des secteurs du Sprint~1 ainsi
+que du système de notifications du Sprint~2.
+
+Ce chapitre présente le module central de LogiWay : la planification et le
+suivi temps réel des trajets de poids lourds, intégrant OSRM, Multi-GNSS
+et Leaflet.
+
+\section{Systèmes de géolocalisation Multi-GNSS}
+\label{sec:ch4-gnss}
+
+\begin{table}[H]
+  \centering
+  \caption{Systèmes GNSS intégrés et avantages pour LogiWay}
+  \label{tab:gnss}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|c|Y|}
+    \hline
+    \thead{Système} & \thead{Opérateur} & \thead{Précision} & \thead{Avantages} \\
+    \hline
+    GPS     & USA            & 3--5 m  & Couverture mondiale, fiabilité maximale \\
+    Galileo & Union Européenne & 1 m   & Meilleure précision civile.\\
+    GLONASS & Russie         & 3--5 m  & Performant en relief montagneux \\
+    BeiDou  & Chine          & 5--10 m & Bonne couverture Afrique du Nord \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+L'API HTML5 \texttt{navigator.geolocation.watchPosition()} avec
+\texttt{enableHighAccuracy:~true} exploite automatiquement la meilleure
+combinaison GNSS disponible. Stratégie d'envoi : toutes les \textbf{5 s}
+en mouvement~; toutes les \textbf{30 s} à l'arrêt~; immédiatement si
+changement de cap $>45^{\circ}$.
+
+\section{Calcul d'itinéraire OSRM}
+\label{sec:ch4-osrm}
+
+OSRM (Open Source Routing Machine) calcule des itinéraires adaptés aux
+poids lourds (hauteur, poids, zones interdites) :
+
+\begin{enumerate}
+  \item Le Manager saisit départ, destination et arrêts intermédiaires.
+  \item Spring Boot appelle l'API OSRM avec le profil \texttt{truck}.
+  \item OSRM retourne la géométrie GeoJSON, la distance (m) et la durée (s).
+  \item Le backend stocke la géométrie en MySQL et retourne le tracé.
+  \item Angular affiche le tracé Leaflet avec marqueurs colorés.
+\end{enumerate}
+
+\section{Exécution et suivi GPS en temps réel}
+\label{sec:ch4-suivi}
+
+\subsection{Démarrage du trajet}
+
+\begin{enumerate}
+  \item Le Chauffeur appuie sur « Démarrer le trajet ».
+  \item Angular active \texttt{watchPosition()} avec \texttt{enableHighAccuracy}.
+  \item Chaque position GPS est envoyée au backend via WebSocket.
+  \item Le backend persiste la position et la diffuse au Manager.
+\end{enumerate}
+
+\subsection{Détection d'écart et recalcul}
+
+Si l'écart entre la position GPS réelle et l'itinéraire OSRM dépasse
+\textbf{500 m}, une alerte est envoyée au Manager et un recalcul OSRM
+depuis la position actuelle est déclenché automatiquement.
+
+\subsection{ETA dynamique}
+
+\[
+  \text{ETA} = t_{\text{actuel}} + \frac{d_{\text{restante}}}{v_{\text{moyenne}}}
+  + \sum \text{durées arrêts restants}
+\]
+
+L'ETA est recalculé à chaque mise à jour GPS et affiché avec code couleur :
+vert (avance), orange (retard léger), rouge (retard critique).
+
+\section{Cartographie Leaflet}
+\label{sec:ch4-leaflet}
+
+Trois modes d'affichage disponibles via bouton dans l'interface :
+Standard (routier), Terrain (relief), Satellite (images haute résolution).
+Le marqueur camion est une icône SVG personnalisée avec rotation selon le cap.
+
+\section{Modèle de données -- trajets et GPS}
+\label{sec:ch4-modele}
+
+\begin{table}[H]
+  \centering
+  \caption{Tables du module Trajets et GPS}
+  \label{tab:trajets_db}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Table} & \thead{Colonnes principales} \\
+    \hline
+    \texttt{trajets} &
+      id, pointDepart, destination, dateDepart, statut (EN\_COURS/ACTIF/COMPLETE),
+      chauffeurId, vehiculeId, managerId, geometrieItineraire (JSON),
+      distanceKm, dureeEstimeeMinutes \\
+    \texttt{positions\_gps} &
+      id, trajetId, latitude, longitude, vitesse, precision, cap, timestamp \\
+    \texttt{pauses\_reglementaires} &
+      id, trajetId, type, latitude, longitude, distanceAlongRouteM,
+      heureArriveePlanifiee, durationSeconds, aiScore, fatigueScore,
+      accessibilityScore, contextScore, reasoning, confidence \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Conclusion}
+
+Le module Trajets et GPS constitue la fonctionnalité différenciante de
+LogiWay. La combinaison Multi-GNSS, OSRM poids lourds et Leaflet assure
+un suivi précis adapté au secteur du transport routier tunisien.
+
+\newpage
+
+% ============================================================
+% CHAPITRE 5 — SPRINT 4 : MODULE IA — VALIDATION DES RÉCLAMATIONS
+% ============================================================
+\chapitreavecplan{Sprint 4 -- Module IA : Système de validation intelligente des réclamations}
+\begin{plandechapitre}
+  \planitem{Introduction et problématique}{sec:ch5-introduction}
+  \planitem{Architecture du système de validation}{sec:ch5-archi}
+  \planitem{Type de système : expert à règles (Rule-Based)}{sec:ch5-typesys}
+  \planitem{Couche 1 : Détection de toxicité}{sec:ch5-couche1}
+  \planitem{Couche 2 : Validation sémantique métier}{sec:ch5-couche2}
+  \planitem{Logique de décision finale}{sec:ch5-decision}
+  \planitem{Exemples de validation}{sec:ch5-exemples}
+  \planitem{Flux complet de traitement}{sec:ch5-flux}
+\end{plandechapitre}
+
+\section{Introduction et problématique}
+\label{sec:ch5-introduction}
+
+Ce chapitre fait partie du Sprint~4 (cœur métier), aux côtés des trajets
+et des pauses ML. Il détaille le service Flask d'intelligence artificielle
+(port 5001) qui valide les réclamations avant leur persistance, en
+complément du workflow Spring Boot présenté au chapitre~3.
+
+Dans un système de gestion de flotte, les réclamations soumises par les
+chauffeurs et managers doivent rester pertinentes, professionnelles et
+limitées au domaine de la gestion logistique. Sans filtrage, des messages
+hors-sujet, offensants ou non pertinents peuvent saturer le système de
+traitement et nuire à la qualité de service.
+
+Le module de validation IA répond à cette problématique en interceptant
+chaque réclamation avant sa persistance en base de données.
+
+\section{Architecture du système de validation}
+\label{sec:ch5-archi}
+
+Le système adopte une architecture à trois couches communicantes via HTTP :
+
+\begin{table}[H]
+  \centering
+  \caption{Couches du système de validation des réclamations}
+  \label{tab:archi_recla}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Couche} & \thead{Rôle et technologie} \\
+    \hline
+    Frontend Angular &
+      Formulaire réactif (FormBuilder), debounce 600 ms,
+      validation temps réel avec indicateurs visuels \\
+    Backend Spring Boot &
+      \texttt{le service de Réclamation} appelle méthode
+      \texttt{POST de validation}
+      via RestTemplate avant persistance \\
+    Service IA Python Flask (port 5001) &
+      Moteur de validation expert : toxicité + sémantique métier.
+      Réponse JSON : \{valide, typeErreur, message, scores\} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=1.1\textwidth]{flux_ai_reclamation.png}
+  \caption{Flux de validation IA d'une réclamation -- de Angular à MySQL}
+  \label{fig:recla_ia}
+\end{figure}
+
+\section{Type de système : expert à règles (Rule-Based)}
+\label{sec:ch5-typesys}
+
+\begin{tcolorbox}[keybox]
+  \textbf{Important :} Le service de validation des réclamations est un
+  \textbf{système expert à règles déterministes} (Rule-Based Expert System),
+  et non un modèle Machine Learning. Il n'utilise ni apprentissage automatique,
+  ni réseaux de neurones, ni entraînement sur données.
+\end{tcolorbox}
+
+Il s'appuie sur deux algorithmes de \textit{pattern matching} basés sur des
+expressions régulières avec word boundaries (\textbackslash{}b).
+
+\section{Couche 1 : Détection de toxicité}
+\label{sec:ch5-couche1}
+
+\subsection{Objectif}
+
+Bloquer tout langage inapproprié, offensant ou non professionnel dans les
+réclamations soumises.
+
+\subsection{Algorithme}
+
+
+
+Le dictionnaire contient plus de 30 mots en français et en anglais.
+Un seul match déclenche un score de 1.0 et un rejet immédiat.
+Le seuil de blocage est fixé à $\geq 0.55$.
+
+\textbf{Exemple :}
+\begin{itemize}
+  \item ``Ce \textbf{connard} ne répond pas'' $\rightarrow$ DÉTECTÉ (mot entier)
+  \item ``Re\textbf{connaître} le problème'' $\rightarrow$ IGNORÉ (sous-chaîne)
+\end{itemize}
+
+\section{Couche 2 : Validation sémantique métier}
+\label{sec:ch5-couche2}
+
+\subsection{Objectif}
+
+Garantir que le contenu de la réclamation se rapporte bien au domaine de
+la gestion de flotte de transport.
+
+\subsection{Algorithme}
+
+Le seuil de validation est fixé à $\geq 0.25$ (minimum 2 mots métier
+détectés sur 50). En deçà, la réclamation est rejetée comme hors-sujet.
+
+\begin{table}[H]
+  \centering
+  \caption{Dictionnaire métier de validation sémantique}
+  \label{tab:dictionnaire}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|c|}
+    \hline
+    \thead{Domaine} & \thead{Exemples de termes} & \thead{Count} \\
+    \hline
+    Véhicules &
+      véhicule, camion, truck, maintenance, panne, carburant,
+      pneu, frein, moteur & 15 \\
+    Trajets/Logistique &
+      trajet, route, itinéraire, livraison, secteur, gps,
+      retard, colis, chargement & 18 \\
+    Personnel &
+      chauffeur, driver, conducteur, pause, repos, horaire & 8 \\
+    Incidents &
+      incident, accident, problème, réclamation, entrepôt,
+      client & 9 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+
+
+\section{Logique de décision finale}
+\label{sec:ch5-decision}
+
+\[
+  \text{Décision} =
+  \begin{cases}
+    \text{REJET (toxique)} & \text{si } S_{\text{toxicité}} \geq 0.55 \\
+    \text{REJET (hors-sujet)} & \text{si } S_{\text{sémantique}} < 0.25 \\
+    \text{ACCEPTATION} & \text{sinon}
+  \end{cases}
+\]
+
+\section{Exemples de validation}
+\label{sec:ch5-exemples}
+
+\begin{table}[H]
+  \centering
+  \caption{Exemples de résultats de validation}
+  \label{tab:exemples_valid}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|Y|c|c|c|}
+    \hline
+    \thead{Texte soumis} & \thead{$S_{tox}$} & \thead{$S_{sem}$} & \thead{Résultat} \\
+    \hline
+    ``Le camion 42 a une panne de frein urgente'' &
+      0.0 & 1.0 & \textcolor{teal}{\textbf{ACCEPTÉ}} \\
+    ``Retard livraison client secteur nord'' &
+      0.0 & 1.0 & \textcolor{teal}{\textbf{ACCEPTÉ}} \\
+    ``Ce connard ne répond jamais'' &
+      1.0 & --- & \textcolor{red}{\textbf{REJETÉ (toxique)}} \\
+    ``J'ai mal à la tête aujourd'hui'' &
+      0.0 & 0.0 & \textcolor{amber}{\textbf{REJETÉ (hors-sujet)}} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Flux complet de traitement}
+\label{sec:ch5-flux}
+
+\begin{enumerate}
+  \item L'utilisateur saisit la réclamation dans Angular (debounce 600 ms).
+  \item Angular appelle le backend Spring Boot via JWT.
+  \item Spring Boot appelle \texttt{POST /validate} sur le service Flask.
+  \item Si accepté : persistance MySQL + notification SSE SuperAdmin.
+  \item Si rejeté : message d'erreur explicite retourné à l'utilisateur.
+\end{enumerate}
+
+\section{Conclusion}
+
+Le module de validation IA garantit la qualité des réclamations enregistrées
+dans LogiWay, réduisant le bruit opérationnel et assurant un traitement
+efficace par les managers et SuperAdmins.
+
+\newpage
+
+% ============================================================
+% CHAPITRE 6 — SPRINT 4 : MODULE ML — PAUSES RÉGLEMENTAIRES
+% ============================================================
+\chapitreavecplan{Sprint 4 -- Module ML : Pauses réglementaires intelligentes}
+\begin{plandechapitre}
+  \planitem{Introduction et contexte métier}{sec:ch6-introduction}
+  \planitem{Réglementation CE 561/2006 et seuils applicables}{sec:ch6-reglementation}
+  \planitem{Calcul dynamique du temps de conduite}{sec:ch6-calcul}
+  \planitem{Architecture globale du service ML et microservices}{sec:ch6-archi}
+  \planitem{Modèle Machine Learning : RandomForest Regressor}{sec:ch6-modele}
+  \planitem{Ingénierie des 15 caractéristiques (Features)}{sec:ch6-features}
+  \planitem{Interprétation et gradation des scores IA}{sec:ch6-scores}
+  \planitem{Moteur de génération et sélection des POI}{sec:ch6-moteur}
+  \planitem{Affichage cartographique et notifications IHM}{sec:ch6-affichage}
+  \planitem{Bilan et valeur opérationnelle}{sec:ch6-conclusion}
+\end{plandechapitre}
+
+% ------------------------------------------------------------
+\section{Introduction et contexte métier}
+\label{sec:ch6-introduction}
+
+Ce chapitre fait partie du Sprint~4 (cœur métier). Il détaille le service
+Flask ML (port 5000) qui prédit les pauses réglementaires des chauffeurs
+selon le règlement CE~561/2006.
+
+Dans le secteur du transport routier de marchandises, la fatigue au volant représente la cause principale de \textbf{30\% des accidents mortels} impliquant des poids lourds. Outre l'enjeu humain crucial, la conformité légale constitue un défi financier critique pour les transporteurs. Le Règlement Européen \textbf{CE 561/2006} impose un encadrement strict des temps de conduite et de repos, assorti de sanctions financières allant jusqu'à \textbf{15~000~€ par infraction} constatée ainsi que la suspension des licences de transport.
+
+Le module de pauses réglementaires intelligentes de LogiWay résout cette problématique en combinant algorithmique géospatiale, règles métier strictes et intelligence artificielle. Le système automatise la détection préventive des dépassements horaires, calcule les temps de conduite effectifs en tenant compte des arrêts réels, et recommande au chauffeur les points d'intérêt (POI) optimaux pour effectuer ses temps de repos obligatoires.
+
+% ------------------------------------------------------------
+\section{Réglementation CE 561/2006 et seuils applicables}
+\label{sec:ch6-reglementation}
+
+\begin{table}[H]
+  \centering
+  \caption{Seuils réglementaires appliqués par le système}
+  \label{tab:reglementation}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|Y|}
+    \hline
+    \thead{Seuil} & \thead{Règle} & \thead{Action système} \\
+    \hline
+    \textbf{3 heures} &
+      Alerte préventive recommandée &
+      WARNING\_ALERT : popup non bloquante au chauffeur,
+      notification Manager \\
+    \textbf{4h30} &
+      Pause de 45 min OBLIGATOIRE &
+      MANDATORY\_REST : popup non fermable,
+      alerte critique SuperAdmin + Manager \\
+    \textbf{9h/jour} &
+      Maximum journalier de conduite &
+      Enregistrement conformité, rapport audit \\
+    \textbf{11h consécutives} &
+      Repos journalier minimum &
+      Réinitialisation des compteurs \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Calcul du temps de conduite}
+\label{sec:ch6-calcul}
+
+\subsection{Formule mathématique}
+
+\begin{tcolorbox}[ruleframe]
+\[
+  T_{\text{conduite}} = \frac{T_{\text{écoulé}} - \sum T_{\text{pauses}}}{3600}
+  \text{ heures}
+\]
+
+\medskip
+\textbf{Exemple :}
+Départ 08h00, heure actuelle 12h15, pauses effectuées : 10 min + 15 min = 25 min.
+\[
+  T_{\text{conduite}} = \frac{(15300 - 1500)}{3600} = \frac{13800}{3600}
+  \approx 3{,}83 \text{ h}
+\]
+$\rightarrow$ 3h50 de conduite effective (proche du seuil d'alerte 4h30)
+\end{tcolorbox}
+
+\subsection{Évaluation automatique}
+
+Un scheduler Spring Boot évalue tous les trajets EN\_COURS toutes les
+\textbf{2 minutes}, en filtrant uniquement les trajets avec
+$T_{\text{conduite}} \geq 3$ heures. Cette optimisation réduit de 85\%
+les calculs inutiles.
+
+\section{Architecture du service ML}
+\label{sec:ch6-archi}
+
+Le système est organisé en quatre couches :
+
+\begin{enumerate}
+  \item \textbf{Frontend Angular} : marqueurs Leaflet par type de pause,
+        popup d'alerte 20 min avant l'heure de pause, timer Angular.
+  \item \textbf{Backend Spring Boot} : orchestration, appel Flask ML,
+        persistance MySQL, notifications SSE.
+  \item \textbf{Service Flask ML (port 5000)} : modèle RandomForest,
+        calcul des 15 features, génération des scores IA.
+  \item \textbf{MySQL} : tables \texttt{pauses\_reglementaires},
+        \texttt{poi\_cache} (données Overpass/OSM pré-chargées).
+\end{enumerate}
+\begin{figure}[H]
+\centering
+\includegraphics[width=1\textwidth]{pause_ai1.png}
+\caption{Flux complet du processus de modele Machine Learning pour le pause}
+\label{fig:auth_pause_ml}
+\end{figure}
+\section{Le modèle RandomForest}
+\label{sec:ch6-modele}
+
+\subsection{Choix du modèle}
+
+\begin{table}[H]
+  \centering
+  \caption{Justification du choix de RandomForest}
+  \label{tab:rf_justif}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Critère} & \thead{Avantage RandomForest} \\
+    \hline
+    Précision & R² = 0.90 (90\% de précision prédictive) \\
+    Robustesse & Résiste au bruit et aux valeurs aberrantes \\
+    Interprétabilité & Importance des features calculable \\
+    Performance & Prédiction en $< 50$ ms \\
+    Généralisation & Pas de sur-apprentissage grâce à l'ensemble d'arbres \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Les 15 features analysées}
+\label{sec:ch6-features}
+
+\begin{table}[H]
+  \centering
+  \caption{Features du modèle RandomForest -- groupes et poids}
+  \label{tab:features}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|Y|c|}
+    \hline
+    \thead{Groupe} & \thead{Feature} & \thead{Description} & \thead{Poids} \\
+    \hline
+    \multirow{3}{*}{État chauffeur} &
+      hours\_driving & Heures de conduite continues & 35\% \\
+    & total\_distance\_km & Distance totale du trajet & 12\% \\
+    & dist\_along\_ratio & Progression trajet (0.0--1.0) & 18\% \\
+    \hline
+    \multirow{2}{*}{Contexte temporel} &
+      arrival\_hour & Heure d'arrivée estimée au POI & 10\% \\
+    & is\_meal\_hour & Heure de repas (1=oui) & 8\% \\
+    \hline
+    \multirow{6}{*}{Caractéristiques POI} &
+      poi\_type\_encoded & Type POI (0=POI...5=services) & --- \\
+    & perp\_distance\_m & Distance POI--route & 15\% \\
+    & has\_hgv & Accès poids lourds & 25\% \\
+    & has\_shower & Douches disponibles & 5\% \\
+    & has\_toilets & Toilettes disponibles & 8\% \\
+    & is\_24h & Ouvert 24h/24 & 7\% \\
+    \hline
+    \multirow{4}{*}{Features calculées} &
+      is\_meal\_poi & POI adapté repas & --- \\
+    & is\_mid\_range\_fuel & Station à mi-parcours & --- \\
+    & is\_too\_close & Trop proche du départ & --- \\
+    & is\_highway\_service & Service autoroutier & --- \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Processus d'entraînement}
+
+\begin{itemize}
+  \item \textbf{Dataset synthétique} : 10~000 exemples générés avec des
+        règles réalistes, répartis en 4 classes de scores
+        (0--29, 30--49, 50--79, 80--100).
+  \item \textbf{Split} : 70\% entraînement / 30\% validation.
+  \item \textbf{Paramètres} : 200 arbres, profondeur maximale 20,
+        minimum 5 échantillons par feuille.
+  \item \textbf{Métriques finales} : R² = 0.90, MAE = 8.5/100,
+        temps de prédiction $< 50$ ms.
+\end{itemize}
+
+\section{Interprétation des scores IA}
+\label{sec:ch6-scores}
+
+\begin{table}[H]
+  \centering
+  \caption{Interprétation des scores de recommandation}
+  \label{tab:scores_ia}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|}
+    \hline
+    \thead{Score} & \thead{Niveau} & \thead{Interprétation} \\
+    \hline
+    0--40   & Non recommandé & POI inadapté (trop loin, pas d'accès PL, trop proche du départ) \\
+    41--69  & Acceptable     & POI convenable mais non optimal \\
+    70--84  & Recommandé     & Bonne combinaison timing + accessibilité PL \\
+    85--100 & Urgent         & Seuil 4h30 proche, pause critique -- conformité CE 561/2006 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Moteur de génération de pauses }
+\label{sec:ch6-moteur}
+
+Le script Python suit 7 étapes :
+
+\begin{enumerate}
+  \item \textbf{OSRM} : calcul de l'itinéraire réel (polyline décodée).
+  \item \textbf{Tracé enrichi} : distances cumulées et bearings par point.
+  \item \textbf{Overpass API / poi\_cache} : récupération des POI réels OSM
+        (stations, restaurants, aires de repos, parkings PL).
+  \item \textbf{Projection + Filtre} : garder les POI à $\leq 800$ m du tracé,
+        hors zones d'exclusion (1er et dernier km).
+  \item \textbf{Scoring IA} : score = fatigue(40\%) + accessibilité(35\%)
+        + contexte(25\%).
+  \item \textbf{Sélection fenêtre 8 km} : 1 POI maximum par tranche de 8 km.
+  \item \textbf{Injection réglementaire} : ajout WARNING\_ALERT (3h) et
+        MANDATORY\_REST (4h30) interpolés sur le tracé réel.
+\end{enumerate}
+
+\section{Affichage sur la carte Leaflet}
+\label{sec:ch6-affichage}
+
+Les marqueurs de pause sont affichés sur la carte avec :
+
+\begin{itemize}
+  \item Types de pauses : 
+    \begin{itemize}
+      \item [Alerte] WARNING\_ALERT
+      \item [Obligatoire] MANDATORY\_REST
+      \item [Station-service] STATION\_SERVICE
+      \item [Aire de repos] REST\_AREA
+      \item [Kiosk] KIOSK
+    \end{itemize}
+  \item Bordure colorée selon le score IA : rouge ($>80$), orange ($>60$), jaune ($>40$), vert ($\leq 40$).
+  \item Popup avec : nomLieu, heure estimée, durée, aiScore/100, reasoning IA.
+  \item \textbf{Popup d'alerte 20 min avant l'heure de pause} : uniquement pour le rôle CHAUFFEUR en mission active.
+  \item Pour MANDATORY\_REST : popup non fermable (conformité réglementaire).
+\end{itemize}
+\section{Conclusion}
+\label{sec:ch6-conclusion}
+
+Le module ML de pauses réglementaires de LogiWay transforme la conformité
+CE~561/2006 de contrainte subie en avantage opérationnel : meilleure sécurité
+des chauffeurs, réduction du risque d'amendes et optimisation des itinéraires.
+
+\newpage
+
+% ============================================================
+% CHAPITRE 7 — SPRINT 3 : CHATBOT RAG ET GÉNÉRATION DE RAPPORTS
+% ============================================================
+\chapitreavecplan{Sprint 3 -- Chatbot intelligent RAG et génération de rapports}
+\begin{plandechapitre}
+  \planitem{Introduction}{sec:ch7-introduction}
+  \planitem{Architecture globale}{sec:ch7-archi}
+  \planitem{Module 1 : Chatbot intelligent avec RAG}{sec:ch7-module1}
+  \planitem{Module 2 : Génération intelligente de rapports}{sec:ch7-module2}
+  \planitem{Technologies du module}{sec:ch7-technologies}
+\end{plandechapitre}
+
+\section{Introduction}
+\label{sec:ch7-introduction}
+
+Ce chapitre complète le Sprint~3 (Communication), présenté au chapitre~3
+(messagerie interne WebSocket). Il détaille le chatbot intelligent RAG et
+le générateur de rapports qui accompagnent les outils de communication de
+la plateforme LogiWay.
+
+Les gestionnaires de flottes consacrent un temps considérable à extraire
+manuellement des données depuis plusieurs interfaces et à produire des rapports.
+Le Sprint~3 répond à cette problématique avec deux modules IA :
+un \textbf{chatbot RAG} (Retrieval-Augmented Generation) et un
+\textbf{générateur automatique de rapports multi-formats}.
+
+\section{Architecture globale}
+\label{sec:ch7-archi}
+
+\begin{table}[H]
+  \centering
+  \caption{Couches de l'architecture chatbot RAG}
+  \label{tab:archi_rag}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Couche} & \thead{Rôle} \\
+    \hline
+    Frontend Angular &
+      Interface conversationnelle, formulaire de génération de rapports,
+      téléchargement automatique des fichiers \\
+    Backend Spring Boot &
+      Authentification JWT, contrôle RBAC, proxy sécurisé
+      vers service FastAPI \\
+    Service RAG FastAPI (port 8000) &
+      LangChain + Google Gemini : chatbot NLU,
+      analyse de requêtes, génération SQL, création PDF/CSV/TXT \\
+    MySQL &
+      Données métier, historique des conversations,
+      métadonnées des rapports générés \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Module 1 : Chatbot intelligent avec RAG}
+\label{sec:ch7-module1}
+
+\subsection{Principe du RAG}
+
+Le RAG (\textit{Retrieval-Augmented Generation}) combine deux approches :
+\begin{itemize}
+  \item \textbf{Retrieval} : extraction des données pertinentes
+        depuis MySQL en temps réel via requêtes SQL.
+  \item \textbf{Generation} : Google Gemini formule une réponse
+        en français naturel, contextualisée aux données réelles.
+\end{itemize}
+
+Cette approche garantit des réponses basées sur les données réelles
+de la plateforme, sans hallucinations du LLM.
+
+\subsection{Flux de traitement}
+
+\begin{enumerate}
+  \item L'utilisateur pose une question en français via l'interface Angular.
+  \item Spring Boot valide le JWT et contrôle les droits RBAC.
+  \item Le service FastAPI reçoit la question.
+  \item \textbf{Gemini analyse l'intention} : domaine, action, entités.
+  \item \textbf{LangChain sélectionne l'outil} approprié
+        (véhicules, chauffeurs, trajets, congés, réclamations).
+  \item \textbf{Requête SQL exécutée} sur MySQL.
+  \item \textbf{Gemini génère la réponse} en français avec le contexte données.
+  \item La réponse conversationnelle est retournée à Angular.
+\end{enumerate}
+
+\subsection{Outils LangChain disponibles}
+
+\begin{table}[H]
+  \centering
+  \caption{Outils LangChain du chatbot LogiWay}
+  \label{tab:langchain_tools}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Outil} & \thead{Fonction} \\
+    \hline
+    \texttt{get\_vehicles\_info} & Statut, disponibilité et détails de la flotte \\
+    \texttt{get\_chauffeurs\_info} & Données chauffeurs, affectations, disponibilité \\
+    \texttt{get\_trajets\_info} & Historique et statut des trajets \\
+    \texttt{get\_conges\_info} & Gestion et statut des congés \\
+    \texttt{get\_reclamations\_info} & Suivi des réclamations \\
+    \texttt{execute\_sql\_query} & Requêtes SQL dynamiques sécurisées \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Contrôle d'accès par rôle}
+
+\begin{itemize}
+  \item \textbf{SuperAdmin} : accès à toutes les données de toutes les entreprises.
+  \item \textbf{Manager} : accès limité aux données de son entreprise et secteur.
+  \item \textbf{Chauffeur} : pas d'accès au chatbot.
+\end{itemize}
+
+\subsection{Sécurité}
+
+\begin{itemize}
+  \item Requêtes SQL paramétrées (protection injection SQL via SQLAlchemy).
+  \item Isolation des données par rôle dans les requêtes.
+  \item Limitation à 100 résultats par défaut, timeout 5 secondes.
+\end{itemize}
+
+\subsection{Exemples d'utilisation}
+
+\begin{tcolorbox}[ruleframe]
+\textbf{Question :} ``Combien de véhicules sont disponibles ?''
+
+\textbf{Workflow :}
+Gemini détecte domaine = véhicules, action = compter, filtre = disponibles.
+Requête SQL générée.
+\end{tcolorbox}
+
+\section{Module 2 : Génération intelligente de rapports}
+\label{sec:ch7-module2}
+
+\subsection{Principe}
+
+La génération transforme une \textbf{requête en langage naturel} en document
+professionnel sans aucune compétence technique requise.
+
+\[
+  \text{Requête NL} \xrightarrow{\text{NLU}} \text{Paramètres}
+  \xrightarrow{\text{SQL}} \text{Données}
+  \xrightarrow{\text{Générateur}} \text{PDF/CSV/TXT}
+\]
+
+\subsection{Analyse NLU (Natural Language Understanding)}
+
+Le module \texttt{ReportRequestAnalyzer} analyse la requête en français pour
+en extraire 4 paramètres structurés :
+
+\begin{table}[H]
+  \centering
+  \caption{Paramètres extraits par l'analyse NLU}
+  \label{tab:nlu}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|p{0.18\textwidth}|p{0.25\textwidth}|X|}
+    \hline
+    \thead{Paramètre} & \thead{Valeurs} & \thead{Exemple de détection} \\
+    \hline
+    Domaine &
+      véhicules, chauffeurs, trajets, congés, réclamations, global &
+      ``liste des véhicules'' $\rightarrow$ domaine = véhicules \\
+    \hline
+    Format &
+      PDF, CSV, TXT &
+      ``rapport en CSV'' $\rightarrow$ format = CSV \\
+    \hline
+    Période &
+      aujourd'hui, semaine, mois, année &
+      ``ce mois'' $\rightarrow$ date\_debut = 2026-07-01 \\
+    \hline
+    Filtres &
+      statut, priorité, tri, limite &
+      ``réclamations ouvertes'' $\rightarrow$ statut = EN\_COURS \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Formats de sortie}
+
+\begin{itemize}
+  \item \textbf{PDF} (ReportLab) : en-tête professionnel, tableau formaté,
+        pagination, encodage UTF-8 pour le français.
+  \item \textbf{CSV} (module csv Python) : standard RFC~4180, UTF-8 with BOM,
+        compatible Excel/Google~Sheets.
+  \item \textbf{TXT} : texte aligné, archivage simple.
+\end{itemize}
+
+\subsection{Domaines de rapports couverts}
+
+Véhicules, chauffeurs, trajets, congés, réclamations, rapports globaux
+multi-domaines.
+
+\subsection{Performances}
+
+\begin{itemize}
+  \item Génération d'un rapport : $< 10$ secondes.
+  \item Réponse chatbot : $< 3$ secondes.
+  \item Résultats max par rapport : 10~000 lignes.
+\end{itemize}
+
+\section{Technologies du module}
+\label{sec:ch7-technologies}
+
+\begin{table}[H]
+  \centering
+  \caption{Technologies utilisées -- chatbot RAG et rapports}
+  \label{tab:techno_chatbot}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Technologie} & \thead{Rôle} \\
+    \hline
+    \textbf{Google Gemini} & LLM pour compréhension NL et génération de réponses \\
+    \textbf{LangChain} & Orchestration des agents et outils métier \\
+    \textbf{FastAPI} & Service web Python hautes performances \\
+    \textbf{SQLAlchemy} & ORM Python, requêtes paramétrées sécurisées \\
+    \textbf{ReportLab} & Génération PDF professionnels \\
+    \textbf{FAISS / Chroma} & Base vectorielle (optionnelle, recherche sémantique) \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Conclusion}
+
+Le module chatbot RAG + génération de rapports transforme l'accès à
+l'information dans LogiWay : les managers et SuperAdmins interrogent leurs
+données en français naturel et obtiennent des rapports professionnels en
+quelques secondes, sans aucune compétence technique.
+
+\newpage
+
+% ============================================================
+% CHAPITRE 8 — SPRINT 5 : TABLEAUX DE BORD KPI ET ANALYTIQUE
+% ============================================================
+\chapitreavecplan{Sprint 5 -- Tableaux de bord KPI, Analytics et Dashboard}
+\begin{plandechapitre}
+  \planitem{Introduction}{sec:ch8-introduction}
+  \planitem{Accès et périmètre par rôle}{sec:ch8-acces}
+  \planitem{KPI Cards -- 8 indicateurs principaux}{sec:ch8-kpicards}
+  \planitem{Graphiques analytiques -- 7 visualisations}{sec:ch8-graphiques}
+  \planitem{Classement des chauffeurs -- Top 10}{sec:ch8-classement}
+  \planitem{Tableaux de statistiques détaillées}{sec:ch8-tableaux}
+  \planitem{Structure des dashboards par rôle}{sec:ch8-structure}
+  \planitem{Filtres globaux}{sec:ch8-filtres}
+  \planitem{Score de performance chauffeur}{sec:ch8-score}
+  \planitem{Conclusion}{sec:ch8-conclusion}
+\end{plandechapitre}
+
+\section{Introduction}
+\label{sec:ch8-introduction}
+
+Le Sprint~5 constitue la couche d'intelligence décisionnelle de LogiWay.
+Il est réalisé en dernier car il agrège les données de tous les sprints
+précédents : sans les modules Trajets, Pauses ML, Réclamations, Congés et
+Gestion de Flotte opérationnels, aucun indicateur ne peut être calculé.
+
+LogiWay propose des tableaux de bord analytiques personnalisés par rôle,
+offrant une vision 360° des opérations. L'approche s'inspire des principes
+Power~BI : KPIs clés, graphiques dynamiques, filtres interactifs et
+comparaisons temporelles.
+
+Le module Analytics de LogiWay offre une vision globale et en temps réel
+de l'ensemble des opérations logistiques. Il centralise les données
+provenant de tous les modules de la plateforme -- trajets, véhicules,
+réclamations, congés, utilisateurs -- pour les présenter sous forme
+d'indicateurs clés et de graphiques interactifs.
+
+L'objectif est de permettre aux décideurs (SUPERADMIN et MANAGER) de :
+\begin{itemize}
+  \item détecter rapidement les anomalies opérationnelles ;
+  \item mesurer la performance de la flotte et des chauffeurs ;
+  \item anticiper les problèmes réglementaires (pauses CE 561/2006) ;
+  \item prendre des décisions basées sur des données réelles et actualisées.
+\end{itemize}
+
+\section{Accès et périmètre par rôle}
+\label{sec:ch8-acces}
+
+La technologie de visualisation repose sur Chart.js, Angular~19 et
+ng2-charts. L'accès est différencié selon le rôle de l'utilisateur :
+
+\begin{table}[H]
+  \centering
+  \caption{Accès et périmètre du Dashboard Analytics}
+  \label{tab:kpi_acces}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Rôle} & \thead{Périmètre des données} \\
+    \hline
+    SUPERADMIN & Toutes les entreprises, tous les chauffeurs, toutes les flottes (accès complet) \\
+    MANAGER & Uniquement les données de son entreprise (lecture entreprise) \\
+    DRIVER & Pas d'accès -- dispose de son propre cockpit personnel \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{KPI Cards -- 8 indicateurs principaux}
+\label{sec:ch8-kpicards}
+
+Les KPI Cards sont affichées en haut du dashboard. Chacune présente un
+indicateur synthétique avec des sous-valeurs de détail. Elles permettent
+une lecture rapide de l'état opérationnel sans avoir à analyser les
+graphiques.
+
+\begin{table}[H]
+  \centering
+  \caption{Les 8 KPI Cards du Dashboard Analytics}
+  \label{tab:kpi_cards}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|}
+    \hline
+    \thead{\#} & \thead{KPI} & \thead{Indicateurs affichés} \\
+    \hline
+    1 & Chauffeurs Actifs &
+      Chauffeurs actifs en service, total enregistré, pourcentage de disponibilité \\
+    2 & Véhicules en Service &
+      EN\_SERVICE, EN\_MAINTENANCE, HORS\_SERVICE, total de la flotte \\
+    3 & Missions en Cours &
+      Trajets en cours, à l'heure (ETA respecté), en retard, terminées \\
+    4 & Taux de Ponctualité &
+      Pourcentage de missions livrées à l'heure, jauge de progression \\
+    5 & Congés en Attente &
+      EN\_ATTENTE de validation, APPROUVÉS, REFUSÉS \\
+    6 & Réclamations Ouvertes &
+      EN\_COURS, RÉSOLUES, total général \\
+    7 & Utilisateurs Actifs &
+      SUPERADMIN, MANAGER, DRIVER \\
+    8 & Global Score Flotte &
+      Score global sur 100 points (algorithme pondéré) \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{KPI 1 -- Chauffeurs Actifs}
+
+\textbf{Objectif :} Connaître immédiatement la disponibilité humaine de la flotte.
+
+\textbf{Indicateurs affichés :} nombre de chauffeurs actifs en service,
+nombre total de chauffeurs enregistrés, pourcentage de disponibilité.
+
+\textbf{Utilité :} un manager ou superadmin peut identifier en un coup
+d'œil si l'effectif est suffisant pour couvrir les missions du jour. Un
+taux faible signale un besoin de recrutement ou un problème d'absences.
+
+\subsection{KPI 2 -- Véhicules en Service}
+
+\textbf{Objectif :} Suivre l'état de la flotte de véhicules en temps réel.
+
+\textbf{Indicateurs affichés :} nombre de véhicules \texttt{EN\_SERVICE}
+(opérationnels), \texttt{EN\_MAINTENANCE} (immobilisés temporairement),
+\texttt{HORS\_SERVICE} (indisponibles), total de la flotte.
+
+\textbf{Utilité :} détecter les immobilisations imprévues, anticiper les
+maintenances planifiées et s'assurer que la capacité de la flotte
+correspond aux besoins opérationnels du jour.
+
+\subsection{KPI 3 -- Missions en Cours}
+
+\textbf{Objectif :} Avoir une vue instantanée de l'activité logistique en
+temps réel.
+
+\textbf{Indicateurs affichés :} nombre total de missions (trajets) en
+cours, missions à l'heure (respectant l'ETA prévu), missions en retard
+(dépassant l'ETA prévu), total des missions terminées (historique).
+
+\textbf{Utilité :} identifier immédiatement les livraisons problématiques
+pour intervenir (contacter le chauffeur, alerter le client, réorganiser
+les tournées).
+
+\subsection{KPI 4 -- Taux de Ponctualité}
+
+\textbf{Objectif :} Mesurer la qualité de service globale de la flotte.
+
+\textbf{Indicateurs affichés :} pourcentage de missions livrées à l'heure
+et représentation visuelle par jauge de progression.
+
+\textbf{Calcul :} $( \text{missions à l'heure} / \text{total missions en cours} ) \times 100$
+
+\textbf{Utilité :} indicateur de performance clé pour évaluer la fiabilité
+du service. Un taux en baisse déclenche une analyse des causes (trafic,
+planification insuffisante, pauses non respectées).
+
+\subsection{KPI 5 -- Congés en Attente}
+
+\textbf{Objectif :} Gérer les ressources humaines et anticiper les absences.
+
+\textbf{Indicateurs affichés :} nombre de demandes de congé
+\texttt{EN\_ATTENTE} de validation, de congés approuvés en cours ou à
+venir, de demandes refusées.
+
+\textbf{Utilité :} permettre au MANAGER et au SUPERADMIN de ne pas oublier
+les demandes en attente qui bloquent les chauffeurs dans l'incertitude.
+Un nombre élevé de demandes en attente signale un retard dans la gestion RH.
+
+\subsection{KPI 6 -- Réclamations Ouvertes}
+
+\textbf{Objectif :} Suivre la qualité du service interne et la résolution
+des problèmes.
+
+\textbf{Indicateurs affichés :} nombre de réclamations \texttt{EN\_COURS}
+(non résolues), de réclamations résolues, total général des réclamations.
+
+\textbf{Utilité :} un nombre élevé de réclamations ouvertes sans traitement
+signale un dysfonctionnement dans le suivi. Combiné avec la priorité
+(URGENT, HAUTE), cet indicateur aide à prioriser les actions du SUPERADMIN.
+
+\subsection{KPI 7 -- Utilisateurs Actifs}
+
+\textbf{Objectif :} Avoir une vue de la composition humaine de la plateforme.
+
+\textbf{Indicateurs affichés :} nombre d'administrateurs (SUPERADMIN), de
+managers (MANAGER), de chauffeurs (DRIVER).
+
+\textbf{Utilité :} suivi de la croissance de la plateforme et vérification
+de l'équilibre des rôles (ex. : ratio manager/chauffeur optimal pour la
+supervision).
+
+\subsection{KPI 8 -- Global Score Flotte}
+
+\textbf{Objectif :} Fournir un score synthétique unique représentant la
+santé globale de l'opération.
+
+\textbf{Indicateur affiché :} score global sur 100 points calculé par
+algorithme pondéré.
+
+\textbf{Calcul pondéré :}
+\begin{itemize}
+  \item Ponctualité globale : 35\% ;
+  \item Taux de disponibilité des véhicules : 25\% ;
+  \item Taux de missions réussies : 20\% ;
+  \item Score carburant (efficacité) : 10\% ;
+  \item Score incidents : 10\%.
+\end{itemize}
+
+\textbf{Utilité :} indicateur de synthèse permettant de comparer les
+performances d'une période à l'autre, ou entre entreprises (vue
+SUPERADMIN). Un score en baisse déclenche une investigation sur les
+dimensions les plus dégradées.
+
+\section{Graphiques analytiques -- 7 visualisations}
+\label{sec:ch8-graphiques}
+
+Les graphiques offrent une analyse temporelle et comparative des données.
+Ils sont interactifs -- clic sur une légende pour masquer/afficher une
+série, survol pour les valeurs précises.
+
+\begin{table}[H]
+  \centering
+  \caption{Les 7 graphiques analytiques du dashboard}
+  \label{tab:kpi_graphs}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|c|Y|}
+    \hline
+    \thead{\#} & \thead{Graphique} & \thead{Type} & \thead{Données représentées} \\
+    \hline
+    1 & Ponctualité des 12 derniers mois &
+      Stacked Bar + Line &
+      Missions à l'heure / retard $<$30min / retard $>$30min + courbe de tendance \\
+    2 & Flux des Missions &
+      Area Chart &
+      Missions terminées (volume réussi) / en retard (volume problématique) \\
+    3 & Incidents du Mois &
+      Donut Chart &
+      Accidents, pannes, embouteillages, contrôles routiers, autres \\
+    4 & Consommation Carburant &
+      Gauge Chart &
+      Consommation moyenne vs cible, écart, alertes carburant bas \\
+    5 & Capacité de Charge par Type de Véhicule &
+      Donut Chart &
+      Taux de remplissage min/moyen/max par catégorie \\
+    6 & Répartition des Rôles Utilisateurs &
+      Donut Chart &
+      Proportion SUPERADMIN / MANAGER / DRIVER \\
+    7 & Congés par Statut &
+      Horizontal Bar &
+      EN\_ATTENTE, APPROUVÉ, REFUSÉ, ANNULÉ \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Graphique 1 -- Ponctualité des 12 derniers mois}
+
+\textbf{Type de graphique :} Stacked Bar Chart (barres empilées) + Line
+Chart (courbe de tendance).
+
+\textbf{Objectif :} analyser l'évolution de la ponctualité mois par mois
+sur une année complète.
+
+\textbf{Données représentées :} barres empilées (missions à l'heure /
+retard $<$ 30 min / retard $>$ 30 min) et courbe superposée du pourcentage
+de ponctualité mensuel.
+
+\textbf{Utilité :} identifier les mois problématiques (pic de retards en
+été ? en hiver ?), détecter les tendances d'amélioration ou de
+dégradation, corréler avec des événements externes (vacances scolaires,
+travaux routiers). C'est l'indicateur de qualité de service le plus
+important du dashboard.
+
+\subsection{Graphique 2 -- Flux des Missions (Tendance)}
+
+\textbf{Type de graphique :} Area Chart (graphique en aires).
+
+\textbf{Objectif :} visualiser le volume d'activité et son évolution dans
+le temps.
+
+\textbf{Données représentées :} aire 1 (missions terminées, volume réussi)
+et aire 2 (missions en retard, volume problématique).
+
+\textbf{Utilité :} identifier les pics d'activité qui ont pu saturer la
+flotte et provoquer des retards. Aider à la planification des ressources
+pour les périodes de forte activité anticipées. Mesurer si les
+améliorations opérationnelles ont un impact réel sur le volume traité.
+
+\subsection{Graphique 3 -- Incidents du Mois}
+
+\textbf{Type de graphique :} Donut Chart (graphique en anneau).
+
+\textbf{Objectif :} comprendre la nature et la répartition des incidents
+survenus dans le mois.
+
+\textbf{Catégories représentées :} accidents, pannes mécaniques,
+embouteillages et problèmes de trafic, contrôles routiers, autres incidents.
+
+\textbf{Utilité :} identifier le type d'incident le plus fréquent pour
+cibler les actions correctives. Si les pannes dominent $\rightarrow$
+renforcer la maintenance préventive. Si les embouteillages dominent
+$\rightarrow$ optimiser les itinéraires ou horaires de départ. Ce
+graphique alimente directement la prise de décision opérationnelle.
+
+\subsection{Graphique 4 -- Consommation Carburant}
+
+\textbf{Type de graphique :} Gauge Chart (jauge demi-cercle).
+
+\textbf{Objectif :} mesurer l'efficacité énergétique de la flotte par
+rapport à un objectif cible.
+
+\textbf{Données représentées :} consommation moyenne mesurée (L/100km),
+cible de consommation définie, écart entre réel et cible, nombre de
+véhicules avec alerte de carburant bas.
+
+\textbf{Utilité :} contrôler les coûts opérationnels liés au carburant et
+détecter les véhicules anormalement consommateurs (problème mécanique,
+surcharge). Les alertes de niveau bas préviennent les pannes en mission.
+Indicateur directement lié à la rentabilité de l'entreprise.
+
+\subsection{Graphique 5 -- Capacité de Charge par Type de Véhicule}
+
+\textbf{Type de graphique :} Donut Chart (graphique en anneau).
+
+\textbf{Objectif :} analyser l'utilisation de la capacité de chargement
+selon les catégories de véhicules.
+
+\textbf{Catégories de véhicules :} poids lourd (capacité $\geq$ 7,5
+tonnes), van (3,5 à 7,5 tonnes), petit véhicule ($<$ 3,5 tonnes).
+
+\textbf{Données représentées :} taux de remplissage minimum, moyen et
+maximum par catégorie.
+
+\textbf{Utilité :} identifier si les véhicules sont sous-utilisés
+(tournées non optimisées) ou sur-utilisés (risque de surcharge légale).
+Optimiser la répartition des missions selon la capacité réelle des
+véhicules disponibles. Indicateur clé pour la rentabilité et la conformité
+réglementaire.
+
+\subsection{Graphique 6 -- Répartition des Rôles Utilisateurs}
+
+\textbf{Type de graphique :} Donut Chart (graphique en anneau).
+
+\textbf{Objectif :} visualiser la composition de la communauté
+d'utilisateurs de la plateforme.
+
+\textbf{Données représentées :} proportion SUPERADMIN / MANAGER / DRIVER
+et statut actif pour chaque rôle.
+
+\textbf{Utilité :} suivre la croissance de la plateforme, s'assurer d'un
+ratio équilibré entre encadrants (managers) et chauffeurs, et identifier
+les besoins en recrutement par rôle. Vue particulièrement pertinente pour
+le SUPERADMIN qui gère plusieurs entreprises.
+
+\subsection{Graphique 7 -- Congés par Statut}
+
+\textbf{Type de graphique :} Horizontal Bar Chart (barres horizontales).
+
+\textbf{Objectif :} visualiser la distribution des demandes de congé
+selon leur état de traitement.
+
+\textbf{Statuts représentés :} EN\_ATTENTE (non traitées), APPROUVÉ,
+REFUSÉ, ANNULÉ (annulées par le demandeur).
+
+\textbf{Utilité :} mesurer le backlog RH (demandes en attente) et la
+politique d'approbation (ratio approuvé/refusé). Un nombre élevé de
+demandes EN\_ATTENTE indique un retard de traitement qui impacte la
+planification des missions.
+
+\section{Classement des chauffeurs -- Top 10}
+\label{sec:ch8-classement}
+
+\textbf{Objectif :} identifier et récompenser les chauffeurs les plus
+performants, et détecter ceux qui nécessitent un accompagnement. Le
+classement est calculé par un algorithme de scoring multi-critères.
+
+\begin{table}[H]
+  \centering
+  \caption{Indicateurs par chauffeur dans le classement}
+  \label{tab:kpi_classement}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Indicateur} & \thead{Description} \\
+    \hline
+    Rang & Position dans le classement (1 à 10) \\
+    Score de performance & Note globale sur 100 points \\
+    Missions complétées & Nombre de livraisons terminées dans la période \\
+    Taux de ponctualité & \% de livraisons effectuées dans les délais \\
+    Heures de conduite & Total d'heures de conduite calculé sur les trajets \\
+    Score de disponibilité & Disponibilité effective vs potentielle \\
+    Nombre d'incidents & Incidents signalés (malus sur le score) \\
+    Badge de performance & Étiquette qualitative selon le score \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Badges de performance des chauffeurs}
+  \label{tab:kpi_badges}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|Y|}
+    \hline
+    \thead{Badge} & \thead{Seuil de score} & \thead{Signification} \\
+    \hline
+    Excellent & $>$ 85 / 100 & Chauffeur exemplaire, modèle à valoriser \\
+    Bon & 70 -- 85 / 100 & Performance satisfaisante, quelques axes d'amélioration \\
+    Normal & 50 -- 70 / 100 & Performance dans la moyenne, suivi recommandé \\
+    À améliorer & $<$ 50 / 100 & Difficultés identifiées, accompagnement nécessaire \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Composition du score -- pondération}
+  \label{tab:kpi_ponderation}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Critère} & \thead{Poids} \\
+    \hline
+    Ponctualité des livraisons & 35\% \\
+    Volume de missions complétées & 20\% \\
+    Heures de conduite effectuées & 15\% \\
+    Disponibilité et assiduité & 15\% \\
+    Expérience (ancienneté) & 15\% \\
+    Malus incidents & --3 pts par incident \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Utilité :} ce classement permet de mettre en place une politique
+de reconnaissance des chauffeurs performants et d'identifier rapidement
+les situations nécessitant un suivi RH ou une formation. Les médailles
+(or, argent, bronze) pour les 3 premiers renforcent la dimension
+gamification et motivation.
+
+\section{Tableaux de statistiques détaillées}
+\label{sec:ch8-tableaux}
+
+\subsection{Tableau Réclamations par Statut}
+
+\textbf{Objectif :} synthèse rapide de l'état du traitement des réclamations.
+
+\begin{table}[H]
+  \centering
+  \caption{Réclamations par statut}
+  \label{tab:kpi_reclamations}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Statut} & \thead{Description} \\
+    \hline
+    EN\_COURS & Réclamations soumises et en attente de traitement \\
+    RÉSOLU & Réclamations traitées avec succès \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Utilité :} mesurer l'efficacité du processus de modération et
+identifier les bottlenecks dans le traitement des réclamations. Un ratio
+EN\_COURS/RÉSOLU élevé signale un manque de ressources ou de priorités
+dans la gestion des réclamations.
+
+\subsection{Tableau Congés par Statut}
+
+\textbf{Objectif :} vue synthétique de la politique de gestion des congés.
+
+\begin{table}[H]
+  \centering
+  \caption{Congés par statut}
+  \label{tab:kpi_conges}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Statut} & \thead{Description} \\
+    \hline
+    EN\_ATTENTE & Demandes soumises, en attente de décision \\
+    APPROUVÉ & Congés validés par le manager \\
+    REFUSÉ & Demandes rejetées avec justification \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Utilité :} complémente le Graphique 7 avec des valeurs précises.
+Permet au manager de voir son backlog en un coup d'œil et de prioriser
+les demandes les plus anciennes.
+
+\section{Structure des dashboards par rôle}
+\label{sec:ch8-structure}
+
+\subsection{Dashboard SuperAdmin -- Vue globale}
+
+\begin{table}[H]
+  \centering
+  \caption{KPIs du dashboard SuperAdmin}
+  \label{tab:kpi_superadmin}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|l|}
+    \hline
+    \thead{KPI} & \thead{Description} & \thead{Tendance} \\
+    \hline
+    Chauffeurs actifs &
+      Nombre EN\_SERVICE / total inscrit & $\uparrow\downarrow$ vs hier \\
+    Véhicules actifs &
+      EN\_SERVICE / EN\_MAINTENANCE / HORS\_SERVICE & $\uparrow\downarrow$ vs hier \\
+    Missions en cours &
+      Trajets EN\_COURS (badge retard si applicable) & Temps réel \\
+    Congés en attente &
+      Demandes non traitées (alerte si $> 5$) & Alerte \\
+    Entreprises actives &
+      Nb ACTIF / total & Mensuel \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Graphiques principaux :}
+\begin{itemize}
+  \item Ponctualité globale (histogramme empilé + courbe tendance 12 mois)
+  \item Distribution des incidents (donut 4 catégories)
+  \item Jauge consommation carburant (Optimal / Élevé / Anomalie)
+  \item Classement chauffeurs avec médailles       
+\end{itemize}
+
+\subsection{Dashboard Manager -- Console de gestion}
+
+KPIs filtrés exclusivement sur l'entreprise du Manager :
+Missions actives, Véhicules disponibles, Historique 7 jours,
+Secteur/Zone activée (badge Activé/Non assigné).
+
+\textbf{Graphiques :} Flux des missions hebdomadaire, Efficacité énergétique,
+État des véhicules, Performance ponctualité par chauffeur.
+
+\subsection{Dashboard Chauffeur -- Espace Cockpit}
+
+KPIs personnels : Score de performance (0--100), missions complétées
+ce mois, distance parcourue, taux de ponctualité.
+
+\textbf{Graphique radar} sur 6 axes : Ponctualité, Sécurité, Consommation,
+Pauses, Missions, Conformité.
+
+\subsection{Dashboard Pauses Réglementaires (Pause-AI)}
+
+KPIs de sécurité :
+
+\begin{table}[H]
+  \centering
+  \caption{KPIs du dashboard Pause-AI}
+  \label{tab:kpi_pause}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{KPI} & \thead{Description} \\
+    \hline
+    Pauses recommandées &
+      Nb d'alertes IA selon temps de conduite continu \\
+    Pauses effectuées &
+      Arrêts réellement validés par les chauffeurs \\
+    Pauses ignorées &
+      Recommandations ignorées (risque conformité) \\
+    Taux de conformité &
+      $\frac{\text{Pauses effectuées}}{\text{Pauses recommandées}} \times 100$ \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Graphiques :} Évolution vigilance (courbe double fatigue/conformité),
+Accessibilité des arrêts, Types de POI fréquentés.
+
+\subsection{Dashboards complémentaires}
+
+\begin{itemize}
+  \item \textbf{Congés} : colonnes empilées validés/rejetés/en attente,
+        donut par type (vacances/maladie/mariage).
+  \item \textbf{Flotte} : jauges santé mécanique, kilométrage par véhicule,
+        radar constructeurs.
+  \item \textbf{Réclamations} : donut par statut, délai moyen de traitement,
+        tableau filtrable.
+  \item \textbf{Historique trajets} : fréquence hebdomadaire, km quotidiens.
+\end{itemize}
+
+\section{Filtres globaux}
+\label{sec:ch8-filtres}
+
+Tous les dashboards disposent de filtres dynamiques appliqués en temps réel :
+période (jour/semaine/mois/trimestre/année), entreprise (SuperAdmin),
+type de véhicule, statut chauffeur, zone géographique.
+
+\section{Score de performance chauffeur}
+\label{sec:ch8-score}
+
+\begin{tcolorbox}[ruleframe]
+\[
+  S_{\text{perf}} = 0.25 \cdot S_{\text{ponct}} + 0.25 \cdot S_{\text{sécu}}
+  + 0.15 \cdot S_{\text{carb}} + 0.10 \cdot S_{\text{pauses}}
+  + 0.10 \cdot S_{\text{missions}} + 0.15 \cdot S_{\text{autres}}
+\]
+\end{tcolorbox}
+
+Badges d'interprétation : Excellent (85--100), Bon (65--84),
+Moyen (40--64), Faible (0--39).
+
+\section{Conclusion}
+\label{sec:ch8-conclusion}
+
+Le module Analytics de LogiWay constitue la couche d'intelligence
+décisionnelle de la plateforme. En agrégeant les données de l'ensemble
+des modules -- gestion de flotte, trajets, réclamations, congés,
+utilisateurs -- il transforme les données opérationnelles brutes en
+indicateurs actionnables.
+
+Les tableaux de bord de LogiWay offrent une vision opérationnelle complète
+à chaque rôle, permettant des décisions éclairées sur la gestion de la
+flotte, la sécurité des conducteurs et la performance logistique.
+
+\textbf{Points forts du module :}
+\begin{itemize}
+  \item \textbf{Couverture complète :} 8 KPI Cards + 7 graphiques +
+  classement chauffeurs + 2 tableaux de synthèse, soit plus de
+  18 vues analytiques différentes sur une seule interface.
+  \item \textbf{Différenciation par rôle :} le SUPERADMIN a une vue
+  multi-entreprises globale, le MANAGER est centré sur son périmètre --
+  même interface, données filtrées selon le rôle.
+  \item \textbf{Visualisations adaptées :} chaque type de donnée utilise
+  le graphique le plus adapté à sa nature (tendance temporelle
+  $\rightarrow$ Area/Bar, répartition $\rightarrow$ Donut, niveau
+  $\rightarrow$ Gauge).
+  \item \textbf{Scoring objectif :} l'algorithme de classement des
+  chauffeurs est transparent et pondéré sur des critères métier réels,
+  évitant le subjectivisme dans l'évaluation des performances.
+  \item \textbf{Données temps réel :} les KPI Cards reflètent l'état
+  actuel de la plateforme -- tout changement dans les modules (nouveau
+  trajet, réclamation, congé) est visible immédiatement dans le dashboard.
+\end{itemize}
+
+\textbf{Lien avec les autres modules :} le Dashboard Analytics est le
+module terminal qui consomme et valorise les données produites par tous
+les autres modules de LogiWay. Il ne fonctionne pleinement qu'une fois
+les modules Trajets, Pauses ML, Réclamations, Congés et Gestion de Flotte
+opérationnels -- ce qui justifie sa position en Sprint~5 dans
+l'organisation du projet.
+
+\newpage
+
+% ============================================================
+% CHAPITRE 9 — SPRINT 6 : TESTS, VALIDATION ET DÉPLOIEMENT
+% ============================================================
+\chapitreavecplan{Sprint 6 -- Tests, validation et déploiement}
+\begin{plandechapitre}
+  \planitem{Introduction et résumé exécutif}{sec:ch9-intro}
+  \planitem{Stratégie de test et pyramide des tests}{sec:ch9-pyramide}
+  \planitem{Cartographie des modules testés}{sec:ch9-cartographie}
+  \planitem{Tests unitaires Backend Spring Boot}{sec:ch9-backend}
+  \planitem{Tests unitaires Python IA/ML}{sec:ch9-python}
+  \planitem{Tests unitaires Frontend Angular}{sec:ch9-frontend}
+  \planitem{Tests de performance k6}{sec:ch9-performance}
+  \planitem{Tests End-to-End Playwright}{sec:ch9-e2e}
+  \planitem{Containerisation et déploiement Docker}{sec:ch9-docker}
+  \planitem{Bilan global et conclusions}{sec:ch9-bilan}
+\end{plandechapitre}
+
+\section{Introduction et résumé exécutif}
+\label{sec:ch9-intro}
+
+Le Sprint~6 conclut le cycle de développement de LogiWay. Il valide la
+qualité de l'ensemble de la plateforme via des tests automatisés à tous
+les niveaux -- unitaire, performance et end-to-end -- puis prépare le
+déploiement en production via Docker et Docker Compose.
+
+\begin{table}[H]
+  \centering
+  \caption{Résumé exécutif des tests LogiWay}
+  \label{tab:tests_resume}
+  \rowcolors{2}{tablerow}{white}
+  \small
+  \begin{tabularx}{\textwidth}{|X|X|c|c|c|}
+    \hline
+    \thead{Niveau} & \thead{Framework} & \thead{Nb} & \thead{Couverture} & \thead{Statut} \\
+    \hline
+    Unitaire Backend -- Java &
+      JUnit 5 + Mockito + JaCoCo & 10 & 97,7\% lignes & \textcolor{teal}{\textbf{PASSÉ}} \\
+    Unitaire IA/ML -- Python &
+      pytest + coverage.py & 15 & 99\% & \textcolor{teal}{\textbf{PASSÉ}} \\
+    Unitaire Frontend -- Angular &
+      Jest + Istanbul & 20+ & 100\% & \textcolor{teal}{\textbf{PASSÉ}} \\
+    Performance &
+      k6 v2.2.0 & 4 scénarios & p(95) = 38ms & \textcolor{teal}{\textbf{PASSÉ}} \\
+    End-to-End &
+      Playwright 1.63.0 & 15 & --- & \textcolor{teal}{\textbf{PASSÉ}} \\
+    \hline
+    \textbf{Total} & & \textbf{60+ tests} & & \textcolor{teal}{\textbf{Tous passés}} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Environnement d'exécution :} Windows 11, Intel Core i7, 16 Go RAM.
+
+\section{Stratégie de test et pyramide des tests}
+\label{sec:ch9-pyramide}
+
+La stratégie de test s'appuie sur la pyramide des tests, avec trois
+niveaux complémentaires :
+
+\begin{itemize}
+  \item \textbf{Base large -- Tests unitaires :} rapides, isolés,
+  nombreux, ils couvrent la logique métier sur toutes les couches
+  (JUnit/Jest/pytest). Exécution en moins de 60 secondes.
+  \item \textbf{Niveau intermédiaire -- Performance (k6) :} mesurent la
+  résistance du système sous charge -- 4 scénarios exécutés en ~2 minutes.
+  \item \textbf{Sommet -- E2E (Playwright) :} lents mais complets, ils
+  valident les scénarios utilisateur réels intégrant toutes les couches
+  (Angular + Spring Boot + Keycloak + MySQL) en ~2 minutes.
+\end{itemize}
+
+\section{Cartographie des modules testés}
+\label{sec:ch9-cartographie}
+
+\begin{itemize}
+  \item \textbf{Backend Spring Boot (port 8080) :}
+    \begin{itemize}
+      \item Module Authentification $\rightarrow$ tests unitaires :
+      login, rôles RBAC, sessions ;
+      \item Module Réclamations $\rightarrow$ tests unitaires : création,
+      résolution, notification ;
+      \item Module Pauses Réglementaires $\rightarrow$ tests unitaires :
+      règle CE 561/2006, seuils 3h/4h30 ;
+      \item Module Trajets $\rightarrow$ tests de performance : charge,
+      temps de réponse ;
+      \item Module Notifications SSE $\rightarrow$ tests de performance :
+      débit, latence.
+    \end{itemize}
+  \item \textbf{Services Python IA/ML :}
+    \begin{itemize}
+      \item Service Réclamation IA $\rightarrow$ tests unitaires :
+      toxicité, sémantique, API ;
+      \item Service ML Pauses $\rightarrow$ tests unitaires : modèle
+      RandomForest.
+    \end{itemize}
+  \item \textbf{Frontend Angular (port 4200) :}
+    \begin{itemize}
+      \item Composant Authentification $\rightarrow$ tests unitaires :
+      formulaire, erreurs, redirections ;
+      \item Guards de navigation $\rightarrow$ tests unitaires : RBAC,
+      contrôle d'accès par rôle ;
+      \item Module Réclamations $\rightarrow$ tests E2E : navigation,
+      affichage, création.
+    \end{itemize}
+  \item \textbf{Système complet :} scénarios utilisateur E2E -- login,
+  navigation dashboard, réclamations.
+\end{itemize}
+
+\section{Tests unitaires Backend Spring Boot}
+\label{sec:ch9-backend}
+
+\subsection{Objectif}
+
+Vérifier la logique métier du backend Java de manière isolée, sans base
+de données ni réseau réel. Chaque règle métier critique est testée
+indépendamment pour garantir son comportement correct dans tous les cas
+possibles.
+
+\subsection{Frameworks et outils}
+
+\begin{table}[H]
+  \centering
+  \caption{Outils de test du backend}
+  \label{tab:tests_outils_backend}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Outil} & \thead{Rôle} \\
+    \hline
+    JUnit 5 & Framework principal d'exécution des tests Java \\
+    Mockito & Simulation (mock) des dépendances -- remplace la BDD par des objets simulés \\
+    AssertJ & Bibliothèque d'assertions fluentes et lisibles \\
+    JaCoCo & Génération des rapports de couverture de code \\
+    Spring Boot Starter Test & Conteneur de test intégrant tous les outils ci-dessus \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Résultats de couverture}
+
+\begin{table}[H]
+  \centering
+  \caption{Résultats de couverture du backend}
+  \label{tab:tests_couv_backend}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Métrique} & \thead{Résultat} \\
+    \hline
+    Classes couvertes & 100\% -- 171 / 171 \\
+    Méthodes couvertes & 88,4\% -- 1 125 / 1 273 \\
+    Branches couvertes & 91,8\% -- 3 834 / 4 175 \\
+    Lignes couvertes & 97,7\% -- 7 163 / 7 330 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Module Réclamations -- 4 tests}
+
+\textbf{Objectif :} valider le cycle de vie complet d'une réclamation
+soumise par un chauffeur : création, consultation, résolution et escalade
+en cas d'urgence.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests du module Réclamations}
+  \label{tab:tests_reclamations}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario} & \thead{Résultat} \\
+    \hline
+    1 & Consulter une réclamation &
+      Réclamation existante $\rightarrow$ données retournées correctement & \textcolor{teal}{OK} \\
+    2 & Consulter une réclamation inexistante &
+      Identifiant inconnu $\rightarrow$ exception levée & \textcolor{teal}{OK} \\
+    3 & Résoudre une réclamation &
+      Changement de statut : EN\_COURS $\rightarrow$ RÉSOLU & \textcolor{teal}{OK} \\
+    4 & Créer une réclamation urgente &
+      Priorité URGENT $\rightarrow$ notification automatique au SuperAdmin & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Couverture :} logique de création, de résolution, de rejet et de
+notification SSE du service réclamation.
+
+\subsection{Module Pauses Réglementaires ML -- 6 tests}
+
+\textbf{Objectif :} vérifier que le système applique correctement le
+règlement européen CE 561/2006 sur les temps de conduite. Une erreur ici
+expose l'entreprise à des sanctions réglementaires.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests du module Pauses CE 561/2006}
+  \label{tab:tests_pauses}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario} & \thead{Résultat} \\
+    \hline
+    1 & Récupérer les pauses d'un trajet court &
+      Trajet $<$ 3h $\rightarrow$ aucune pause générée & \textcolor{teal}{OK} \\
+    2 & Vérifier l'alerte d'avertissement &
+      Trajet $>$ 3h $\rightarrow$ alerte WARNING\_ALERT présente & \textcolor{teal}{OK} \\
+    3 & Vérifier la pause obligatoire &
+      Trajet $>$ 4h30 $\rightarrow$ pause MANDATORY\_REST de 45 min & \textcolor{teal}{OK} \\
+    4 & Tester avec durée 3h exactement &
+      180 minutes $\rightarrow$ éligible aux pauses & \textcolor{teal}{OK} \\
+    5 & Tester avec durée 4h &
+      240 minutes $\rightarrow$ éligible aux pauses & \textcolor{teal}{OK} \\
+    6 & Tester durées variées (paramétré) &
+      270, 360, 480 minutes $\rightarrow$ tous éligibles & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Couverture :} conditions de seuil 3h et 4h30, génération des types
+de pauses WARNING\_ALERT et MANDATORY\_REST.
+
+\section{Tests unitaires Python IA/ML}
+\label{sec:ch9-python}
+
+\subsection{Objectif}
+
+Valider la précision des algorithmes de traitement intelligent des
+réclamations. Le service IA analyse chaque réclamation avant soumission
+pour détecter le contenu inapproprié (toxicité) et vérifier la pertinence
+métier (sémantique). Une erreur dans ces algorithmes impacte directement
+l'expérience utilisateur.
+
+\subsection{Frameworks et outils}
+
+\begin{table}[H]
+  \centering
+  \caption{Outils de test Python}
+  \label{tab:tests_outils_python}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Outil} & \thead{Rôle} \\
+    \hline
+    pytest & Framework de test Python, exécution et rapport \\
+    pytest-cov & Calcul et affichage de la couverture de code \\
+    pytest-flask & Client de test pour les endpoints Flask \\
+    coverage.py & Analyse détaillée de la couverture ligne par ligne \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Résultats de couverture}
+
+\begin{table}[H]
+  \centering
+  \caption{Résultats de couverture des services Python}
+  \label{tab:tests_couv_python}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|c|}
+    \hline
+    \thead{Module} & \thead{Instructions} & \thead{Couverture} \\
+    \hline
+    Service Réclamation IA & 370 instructions & 99\% \\
+    Modèle ML & 57 instructions & 100\% \\
+    \hline
+    \textbf{Total} & \textbf{427 instructions} & \textbf{99\%} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Module Détection de Toxicité -- 7 tests}
+
+\textbf{Objectif :} s'assurer que l'algorithme de détection de contenu
+inapproprié est précis -- ni trop restrictif (faux positifs qui
+bloqueraient des réclamations légitimes), ni trop permissif (faux
+négatifs qui laisseraient passer du contenu offensant).
+
+\begin{table}[H]
+  \centering
+  \caption{Tests du module toxicité}
+  \label{tab:tests_toxicite}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario} & \thead{Résultat} \\
+    \hline
+    1 & Analyser un texte professionnel &
+      Signalement d'une panne de véhicule $\rightarrow$ score = 0,0 & \textcolor{teal}{OK} \\
+    2 & Analyser un texte avec insulte &
+      Mot grossier explicite $\rightarrow$ score $\geq$ 0,55 & \textcolor{teal}{OK} \\
+    3 & Analyser une sous-chaîne ambiguë &
+      Mot professionnel contenant une syllabe vulgaire $\rightarrow$ 0,0 & \textcolor{teal}{OK} \\
+    4 & Analyser du texte en majuscules &
+      Même insulte en majuscules $\rightarrow$ score $\geq$ 0,55 & \textcolor{teal}{OK} \\
+    5 & Tester un texte logistique (paramétré) &
+      Retard de livraison secteur nord $\rightarrow$ 0,0 & \textcolor{teal}{OK} \\
+    6 & Tester un texte de maintenance (paramétré) &
+      Maintenance urgente véhicule $\rightarrow$ 0,0 & \textcolor{teal}{OK} \\
+    7 & Tester un texte d'itinéraire (paramétré) &
+      Problème route nationale $\rightarrow$ 0,0 & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Couverture :} moteur de règles regex, normalisation du texte,
+calcul de score, gestion des word boundaries.
+
+\subsection{Module Validation Sémantique -- 5 tests}
+
+\textbf{Objectif :} vérifier que les réclamations soumises concernent bien
+le domaine de la logistique et empêcher les soumissions hors-sujet qui
+polluent le système de modération.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests du module sémantique}
+  \label{tab:tests_semantique}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario} & \thead{Résultat} \\
+    \hline
+    1 & Analyser un texte sans rapport &
+      Plainte personnelle non logistique $\rightarrow$ score $<$ 0,25 & \textcolor{teal}{OK} \\
+    2 & Analyser un texte véhicule &
+      Signalement panne moteur camion $\rightarrow$ score $\geq$ 0,25 & \textcolor{teal}{OK} \\
+    3 & Analyser un texte trajet/livraison &
+      Retard livraison sur itinéraire $\rightarrow$ score $\geq$ 0,25 & \textcolor{teal}{OK} \\
+    4 & Vérifier la borne maximale du score &
+      Texte avec tous les mots-clés logistiques $\rightarrow$ score $\leq$ 1,0 & \textcolor{teal}{OK} \\
+    5 & Vérifier le seuil de mots-clés &
+      2 mots-clés $>$ 1 mot-clé $\rightarrow$ score supérieur & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Couverture :} moteur de mots-clés métier, calcul proportionnel,
+normalisation, seuil d'acceptation.
+
+\subsection{Module Endpoints API IA -- 3 tests}
+
+\textbf{Objectif :} valider que le service Flask expose correctement ses
+endpoints HTTP et retourne les réponses conformes au contrat d'interface
+attendu par le frontend Angular.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests des endpoints API IA}
+  \label{tab:tests_api}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Réponse attendue} & \thead{Résultat} \\
+    \hline
+    1 & Vérifier la disponibilité du service &
+      Statut 200 + réponse \texttt{healthy} & \textcolor{teal}{OK} \\
+    2 & Valider un texte professionnel &
+      Statut 200 + valide = vrai & \textcolor{teal}{OK} \\
+    3 & Rejeter un texte toxique &
+      Statut 200 + valide = faux + type = toxicité & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Couverture :} routage Flask, sérialisation des réponses JSON,
+gestion des erreurs 400.
+
+\section{Tests unitaires Frontend Angular}
+\label{sec:ch9-frontend}
+
+\subsection{Objectif}
+
+Vérifier le comportement des composants Angular et des guards de
+navigation de manière isolée, sans appels réseau réels. Les services HTTP
+sont remplacés par des mocks. L'objectif principal est de valider le
+contrôle d'accès par rôle (RBAC) et les flux d'authentification.
+
+\subsection{Frameworks et outils}
+
+\begin{table}[H]
+  \centering
+  \caption{Outils de test du frontend}
+  \label{tab:tests_outils_front}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Outil} & \thead{Rôle} \\
+    \hline
+    Jest & Framework de test JavaScript/TypeScript, rapide et moderne \\
+    jest-preset-angular & Adaptateur Jest pour Angular (remplacement de Karma) \\
+    jest-environment-jsdom & Simulation du DOM navigateur en environnement Node.js \\
+    Istanbul & Génération des rapports de couverture (intégré à Jest) \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Résultats de couverture}
+
+\begin{table}[H]
+  \centering
+  \caption{Résultats de couverture du frontend}
+  \label{tab:tests_couv_front}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Métrique} & \thead{Résultat} \\
+    \hline
+    Statements (instructions) & 100\% -- 20 / 20 \\
+    Branches (conditions) & 100\% -- 4 / 4 \\
+    Functions (fonctions) & 100\% -- 4 / 4 \\
+    Lines (lignes) & 100\% -- 19 / 19 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Module Authentification -- Composant Login -- 4 tests}
+
+\textbf{Objectif :} valider tous les cas possibles lors de la connexion
+d'un utilisateur : succès avec redirection selon le rôle, et les
+différentes erreurs retournées par le backend.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests du composant Login}
+  \label{tab:tests_login}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario} & \thead{Résultat} \\
+    \hline
+    1 & Se connecter avec credentials valides &
+      MANAGER avec entreprise active $\rightarrow$ redirection dashboard & \textcolor{teal}{OK} \\
+    2 & Se connecter avec mauvais mot de passe &
+      Credentials incorrects $\rightarrow$ message \texttt{Invalid credentials} & \textcolor{teal}{OK} \\
+    3 & Se connecter avec un compte rejeté &
+      Compte refusé par le SuperAdmin $\rightarrow$ message \texttt{Compte rejeté} & \textcolor{teal}{OK} \\
+    4 & Analyser le message d'erreur backend &
+      Réponse JSON d'erreur $\rightarrow$ extraction correcte du message & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Couverture :} branche succès, branche erreur 401, branche erreur
+403, extraction du message backend.
+
+\subsection{Module Guards de Navigation -- 3 tests}
+
+\textbf{Objectif :} s'assurer que les routes protégées sont inaccessibles
+sans authentification valide, et que chaque rôle ne peut accéder qu'à ses
+pages autorisées. C'est la couche de sécurité frontend du système RBAC.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests des guards de navigation}
+  \label{tab:tests_guards}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario} & \thead{Résultat} \\
+    \hline
+    1 & Accéder à une route protégée -- connecté &
+      Session active et valide $\rightarrow$ accès autorisé & \textcolor{teal}{OK} \\
+    2 & Accéder à une route protégée -- non connecté &
+      Aucune session active $\rightarrow$ redirection vers connexion & \textcolor{teal}{OK} \\
+    3 & Accéder à une route réservée MANAGER -- rôle DRIVER &
+      Chauffeur sur une page admin $\rightarrow$ accès refusé & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Couverture :} branche session valide, branche session absente,
+branche rôle insuffisant.
+
+\section{Tests de performance k6}
+\label{sec:ch9-performance}
+
+\subsection{Objectif}
+
+Répondre à la question : \textit{``La plateforme LogiWay tient-elle si
+50 chauffeurs et managers se connectent simultanément ?''} Les tests de
+performance détectent les goulets d'étranglement avant la mise en
+production et valident le dimensionnement de l'architecture.
+
+\begin{table}[H]
+  \centering
+  \caption{Outils de test de performance}
+  \label{tab:tests_outils_perf}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Outil} & \thead{Rôle} \\
+    \hline
+    k6 v2.2.0 & Moteur de test de charge open-source (Grafana Labs) \\
+    Keycloak 24 & Authentification JWT automatique au démarrage des tests \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Concepts clés}
+
+\textbf{VU (Virtual User) :} un utilisateur simulé envoyant des requêtes
+en continu. 50 VUs = simulation de 50 utilisateurs actifs simultanément
+sur la plateforme.
+
+\textbf{Percentile p(90)/p(95) :} mesure les temps de réponse en ignorant
+les pics extrêmes. p(95) = 38ms signifie que 95\% des utilisateurs
+reçoivent leur réponse en moins de 38ms.
+
+\subsection{Scénario 1 -- Smoke Test}
+
+\textbf{Objectif :} vérification minimale que le backend répond avant tout
+test lourd.
+
+\begin{table}[H]
+  \centering
+  \caption{Smoke test}
+  \label{tab:tests_smoke}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Paramètre} & \thead{Valeur} \\
+    \hline
+    Durée & 30 secondes \\
+    Utilisateurs virtuels & 1 VU \\
+    Critère de succès & Tous les endpoints répondent \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Scénario 2 -- Load Test (Principal)}
+
+\textbf{Objectif :} simuler la charge normale d'utilisation -- 50
+utilisateurs simultanés pendant 2 minutes avec montée progressive.
+
+\begin{table}[H]
+  \centering
+  \caption{Charge du load test}
+  \label{tab:tests_load_param}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Paramètre} & \thead{Valeur} \\
+    \hline
+    Durée totale & 2 minutes \\
+    Montée & 0 $\rightarrow$ 10 VUs en 30 secondes \\
+    Plateau & 10 $\rightarrow$ 50 VUs en 1 minute \\
+    Descente & 50 $\rightarrow$ 0 VUs en 30 secondes \\
+    Pic d'utilisateurs & 50 VUs simultanés \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Fonctionnalités testées sous charge :}
+
+\begin{table}[H]
+  \centering
+  \caption{Fonctionnalités testées et seuils de performance}
+  \label{tab:tests_load_fonct}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|c|}
+    \hline
+    \thead{Fonctionnalité} & \thead{Description} & \thead{Seuil} \\
+    \hline
+    Liste des trajets &
+      Récupération paginée des trajets de l'entreprise & p(90) $<$ 1 500 ms \\
+    Pauses réglementaires &
+      Calcul des pauses CE 561/2006 pour un trajet & p(90) $<$ 5 000 ms \\
+    Notifications temps réel &
+      Récupération des notifications SSE de l'utilisateur & p(90) $<$ 1 500 ms \\
+    Durée globale &
+      Toutes les requêtes confondues & p(95) $<$ 2 000 ms \\
+    Taux d'erreur &
+      Pourcentage de requêtes en échec & $<$ 5\% \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Résultats obtenus :}
+
+\begin{table}[H]
+  \centering
+  \caption{Résultats mesurés du load test}
+  \label{tab:tests_load_result}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|c|c|}
+    \hline
+    \thead{Métrique} & \thead{Seuil fixé} & \thead{Résultat mesuré} & \thead{Statut} \\
+    \hline
+    Durée globale p(95) & $<$ 2 000 ms & \textbf{38 ms} & \textcolor{teal}{\textbf{PASSÉ}} \\
+    Liste trajets p(90) & $<$ 1 500 ms & \textbf{30 ms} & \textcolor{teal}{\textbf{PASSÉ}} \\
+    Pauses CE 561/2006 p(90) & $<$ 5 000 ms & \textbf{9 ms} & \textcolor{teal}{\textbf{PASSÉ}} \\
+    Notifications p(90) & $<$ 1 500 ms & \textbf{39 ms} & \textcolor{teal}{\textbf{PASSÉ}} \\
+    Taux d'erreur & $<$ 5\% & \textbf{0\%} & \textcolor{teal}{\textbf{PASSÉ}} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Indicateurs globaux du load test :}
+
+\begin{table}[H]
+  \centering
+  \caption{Indicateurs globaux du load test}
+  \label{tab:tests_load_global}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Indicateur} & \thead{Valeur} \\
+    \hline
+    Requêtes totales envoyées & ~2 050 en 2 minutes \\
+    Débit moyen & ~17 requêtes par seconde \\
+    Temps de réponse moyen & 22 ms \\
+    Temps de réponse minimum & 4,5 ms \\
+    Temps de réponse maximum & 246 ms \\
+    Données reçues & 296 MB \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Scénario 3 -- Stress Test}
+
+\textbf{Objectif :} pousser le système au-delà de sa capacité nominale
+pour identifier le point de saturation.
+
+\begin{table}[H]
+  \centering
+  \caption{Stress test}
+  \label{tab:tests_stress}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Paramètre} & \thead{Valeur} \\
+    \hline
+    Durée totale & 6 minutes \\
+    VUs maximum & 300 utilisateurs simultanés \\
+    Progression & 0 $\rightarrow$ 50 $\rightarrow$ 100 $\rightarrow$ 200 $\rightarrow$ 300 $\rightarrow$ 0 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Scénario 4 -- Soak Test (Endurance)}
+
+\textbf{Objectif :} maintenir une charge modérée pendant une longue durée
+pour détecter les fuites mémoire et la dégradation progressive des
+performances.
+
+\begin{table}[H]
+  \centering
+  \caption{Soak test}
+  \label{tab:tests_soak}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|c|}
+    \hline
+    \thead{Paramètre} & \thead{Valeur} \\
+    \hline
+    Durée totale & 14 minutes \\
+    VUs stables & 20 utilisateurs simultanés \\
+    Anomalie recherchée & Dégradation des temps de réponse dans le temps \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Tests End-to-End Playwright}
+\label{sec:ch9-e2e}
+
+\subsection{Objectif}
+
+Simuler un vrai utilisateur humain qui navigue dans l'application via un
+navigateur Chrome réel. Les tests E2E valident l'intégration complète de
+toutes les couches : Angular + Spring Boot + Keycloak + MySQL. Ils
+détectent les régressions que les tests unitaires ne peuvent pas voir.
+
+\begin{table}[H]
+  \centering
+  \caption{Outils E2E}
+  \label{tab:tests_outils_e2e}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|}
+    \hline
+    \thead{Outil} & \thead{Rôle} \\
+    \hline
+    Playwright 1.63.0 & Framework de contrôle de navigateur (Microsoft) \\
+    Chromium 1243 & Navigateur Chrome utilisé pour l'exécution \\
+    global-setup & Login Keycloak unique partagé entre tous les tests \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Architecture de session :} le login Keycloak est effectué une
+seule fois avant l'ensemble des tests. La session est sauvegardée puis
+injectée dans chaque test -- évite les expirations de token et accélère
+l'exécution.
+
+\subsection{Groupe 1 -- Authentification -- 4 tests}
+
+\textbf{Objectif :} valider les scénarios d'authentification depuis
+l'interface utilisateur réelle : accès à la page de login, gestion des
+erreurs, et connexion réussie avec redirection selon le rôle.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests E2E -- Authentification}
+  \label{tab:tests_e2e_auth}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario utilisateur} & \thead{Résultat} \\
+    \hline
+    1 & Afficher le formulaire de connexion &
+      Utilisateur non connecté accède à la page & \textcolor{teal}{OK} \\
+    2 & Soumettre des identifiants incorrects &
+      Utilisateur tape un mauvais mot de passe & \textcolor{teal}{OK} \\
+    3 & Accéder à la page de connexion sans session &
+      Nouveau contexte navigateur sans historique & \textcolor{teal}{OK} \\
+    4 & Se connecter avec des identifiants valides &
+      MANAGER avec compte actif $\rightarrow$ redirection dashboard & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Groupe 2 -- Navigation Dashboard -- 6 tests}
+
+\textbf{Objectif :} vérifier que toutes les pages du tableau de bord sont
+accessibles pour un utilisateur authentifié, sans redirection non
+souhaitée vers la page de connexion.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests E2E -- Navigation dashboard}
+  \label{tab:tests_e2e_nav}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario utilisateur} & \thead{Résultat} \\
+    \hline
+    1 & Accéder au tableau de bord principal &
+      Page chargée et affichée correctement & \textcolor{teal}{OK} \\
+    2 & Naviguer vers la gestion des trajets &
+      Clic sur le menu Trajets, pas de redirection & \textcolor{teal}{OK} \\
+    3 & Naviguer vers la gestion de flotte &
+      Clic sur le menu Flotte, pas de redirection & \textcolor{teal}{OK} \\
+    4 & Naviguer vers les réclamations &
+      Clic sur le menu Réclamations, pas de redirection & \textcolor{teal}{OK} \\
+    5 & Naviguer vers le profil utilisateur &
+      Clic sur le menu Profil, pas de redirection & \textcolor{teal}{OK} \\
+    6 & Naviguer vers les alertes &
+      Clic sur le menu Alertes, pas de redirection & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Groupe 3 -- Module Réclamations -- 5 tests}
+
+\textbf{Objectif :} valider le parcours complet d'un utilisateur sur la
+page de gestion des réclamations : affichage des données, statistiques en
+temps réel, et ouverture du formulaire de création.
+
+\begin{table}[H]
+  \centering
+  \caption{Tests E2E -- Module Réclamations}
+  \label{tab:tests_e2e_recla}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|c|l|Y|l|}
+    \hline
+    \thead{\#} & \thead{Action testée} & \thead{Scénario utilisateur} & \thead{Résultat} \\
+    \hline
+    1 & Accéder à la page Réclamations &
+      Titre \texttt{Gestion des Réclamations} visible & \textcolor{teal}{OK} \\
+    2 & Consulter les statistiques &
+      4 blocs : Total, Résolues, Rejetées, En cours & \textcolor{teal}{OK} \\
+    3 & Consulter l'historique &
+      Tableau avec colonnes et données visible & \textcolor{teal}{OK} \\
+    4 & Vérifier les permissions de création &
+      Bouton \texttt{Nouvelle réclamation} visible et cliquable & \textcolor{teal}{OK} \\
+    5 & Ouvrir le formulaire de création &
+      Dialog Angular Material s'ouvre correctement & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Containerisation et déploiement Docker}
+\label{sec:ch9-docker}
+
+En complément de la stratégie de tests, le Sprint~6 prépare le déploiement
+de la plateforme en production à l'aide de Docker et Docker Compose.
+
+\begin{table}[H]
+  \centering
+  \caption{Services Docker Compose de LogiWay}
+  \label{tab:tests_docker}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|l|}
+    \hline
+    \thead{Service} & \thead{Technologie} & \thead{Port} \\
+    \hline
+    Backend & Spring Boot & 8080 \\
+    Frontend & Angular (Nginx) & 4200 \\
+    MySQL & Base de données & 3306 \\
+    Keycloak & Authentification & 8081 \\
+    Pause-AI & Flask ML (scikit-learn) & 5000 \\
+    Reclamation-AI & Flask IA & 5001 \\
+    RAG-Service & FastAPI & 8000 \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\textbf{Éléments livrés :} Dockerfile backend Spring Boot, Dockerfile
+frontend Angular (Nginx), fichier \texttt{docker-compose.yml} avec variables
+d'environnement via \texttt{.env}, et réseau Docker isolé.
+
+\section{Bilan global et conclusions}
+\label{sec:ch9-bilan}
+
+\subsection{Tableau de synthèse final}
+
+\begin{table}[H]
+  \centering
+  \caption{Tableau de synthèse des tests LogiWay}
+  \label{tab:tests_synthese}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|c|c|c|}
+    \hline
+    \thead{Couche testée} & \thead{Outil} & \thead{Nb. tests} & \thead{Couverture} & \thead{Résultat} \\
+    \hline
+    Backend Java -- Métier & JUnit 5 + Mockito + JaCoCo & 10 & 97,7\% lignes & \textcolor{teal}{OK} \\
+    Python -- Toxicité & pytest + coverage.py & 7 & 99\% & \textcolor{teal}{OK} \\
+    Python -- Sémantique & pytest + coverage.py & 5 & 99\% & \textcolor{teal}{OK} \\
+    Python -- Endpoints API & pytest-flask & 3 & 99\% & \textcolor{teal}{OK} \\
+    Frontend -- Login & Jest + Istanbul & 4 & 100\% & \textcolor{teal}{OK} \\
+    Frontend -- Guards RBAC & Jest + Istanbul & 3 & 100\% & \textcolor{teal}{OK} \\
+    Performance -- Load Test & k6 & 1 scénario & p(95) = 38ms & \textcolor{teal}{OK} \\
+    Performance -- Smoke & k6 & 1 scénario & --- & \textcolor{teal}{OK} \\
+    Performance -- Stress & k6 & 1 scénario & --- & \textcolor{teal}{OK} \\
+    Performance -- Soak & k6 & 1 scénario & --- & \textcolor{teal}{OK} \\
+    E2E -- Authentification & Playwright & 4 & --- & \textcolor{teal}{OK} \\
+    E2E -- Navigation & Playwright & 6 & --- & \textcolor{teal}{OK} \\
+    E2E -- Réclamations & Playwright & 5 & --- & \textcolor{teal}{OK} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Points forts de la stratégie de test}
+
+\begin{itemize}
+  \item \textbf{Couverture supérieure à 97\%} sur toutes les couches de
+  code -- Backend Java, Python IA/ML et Frontend Angular.
+  \item \textbf{Zéro erreur sous charge} -- le backend traite 50
+  utilisateurs simultanés avec 0\% de taux d'erreur.
+  \item \textbf{Performances excellentes} -- temps de réponse p(95) à
+  38ms, soit 52 fois en dessous du seuil de 2 000ms.
+  \item \textbf{Tests indépendants du code} -- les tests E2E Playwright
+  n'ont nécessité aucune modification du code applicatif existant.
+  \item \textbf{Session centralisée} -- le login Keycloak unique partagé
+  entre tous les tests E2E évite les problèmes d'expiration de token.
+  \item \textbf{Couverture des règles réglementaires} -- la règle CE
+  561/2006 est testée sur 6 cas différents dont des tests paramétrés sur
+  des durées variées.
+\end{itemize}
+
+\subsection{Ordre d'exécution recommandé}
+
+\begin{lstlisting}[language=bash,caption={Ordre d'exécution des tests LogiWay}]
+# 1. Tests unitaires Backend - rapides, sans prerequis
+cd backend
+mvn test
+
+# 2. Tests unitaires Python IA/ML
+cd ../pause-ai-service
+pytest -v
+
+cd ../reclamation-ai-service
+pytest -v
+
+# 3. Tests unitaires Frontend
+cd ../frontend
+npm test
+
+# 4. Tests de performance - backend + Keycloak demarres
+cd ..
+k6 run tests-perf\logiway_load_test.js
+
+# 5. Tests E2E - frontend + backend + Keycloak demarres
+cd frontend
+npx playwright test --headed
+\end{lstlisting}
+
+\newpage
+
+% ============================================================
+% CHAPITRE 10 — RÉALISATIONS ET INTERFACES
+% ============================================================
+\chapitreavecplan{Réalisations et interfaces utilisateur}
+\begin{plandechapitre}
+  \planitem{Introduction}{sec:ch10-introduction}
+  \planitem{Interface d'authentification}{sec:ch10-auth}
+  \planitem{Interface SuperAdmin}{sec:ch10-superadmin}
+  \planitem{Interface cartographique (GPS temps réel)}{sec:ch10-cartographie}
+  \planitem{Interface Chauffeur -- Espace Cockpit}{sec:ch10-chauffeur}
+  \planitem{Interface Chatbot et Génération de Rapports}{sec:ch10-chatbot}
+  \planitem{Récapitulatif des interfaces réalisées}{sec:ch10-recap}
+\end{plandechapitre}
+
+\section{Introduction}
+\label{sec:ch10-introduction}
+
+Ce chapitre présente les interfaces réalisées pour chaque rôle,
+illustrées par des captures d'écran et descriptions fonctionnelles.
+
+\section{Interface d'authentification}
+\label{sec:ch10-auth}
+
+\begin{figure}[H]
+  \centering
+
+  \begin{minipage}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{interface_login.png}
+    \caption*{Interface de connexion dark mode}
+  \end{minipage}
+  \hfill
+  \begin{minipage}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{interface_login_light.png}
+    \caption*{interface de connexion light mode}
+  \end{minipage}
+
+  \caption{Interfaces de connexion et d'authentification de LogiWay}
+  \label{fig:login}
+\end{figure}
+
+Fonctionnalités : login Keycloak, messages d'erreur explicites
+(compte rejeté, désactivé, identifiants invalides), lien mot de passe oublié.
+
+\section{Interface SuperAdmin}
+\label{sec:ch10-superadmin}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{dhaboard_superadmin.png}
+    \caption{Vue d'ensemble}
+    \label{fig:superadmin_1}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{dhaboard_superadmin1.png}
+    \caption{Graphiques analytiques}
+    \label{fig:superadmin_2}
+  \end{subfigure}
+  \caption{Dashboard SuperAdmin}
+  \label{fig:superadmin}
+\end{figure}
+
+Navigation : Tableau de Bord, Gérer les Comptes, Cartographie,
+Analytique, Gestion Logistique, Centre d'Alertes, Messenger.
+
+\section{Interface cartographique (GPS temps réel)}
+\label{sec:ch10-cartographie}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{Capture d'écran 2026-05-18 165130.png}
+  \caption{Carte Leaflet -- suivi GPS temps réel, tracé OSRM, pauses IA}
+  \label{fig:carto}
+\end{figure}
+
+Éléments : tracé bleu (itinéraire OSRM), marqueur camion SVG animé
+avec rotation, marqueurs pauses colorés par type et score IA,
+popup riche (vitesse, carburant, ETA, pause prochaine).
+
+\section{Interface Chauffeur -- Espace Cockpit}
+\label{sec:ch10-chauffeur}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{dashboard_chauuffeur.png}
+    \caption{Vue d'ensemble}
+    \label{fig:chauffeur_1}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[b]{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{dashboard_chauuffeur1.png}
+    \caption{Informations mission}
+    \label{fig:chauffeur_2}
+  \end{subfigure}
+  \caption{Espace Chauffeur -- cockpit de mission}
+  \label{fig:chauffeur}
+\end{figure}
+
+L'Espace Chauffeur affiche des cartes d'information permettant au conducteur d'avoir une vue synthétique de son environnement de travail :
+
+\begin{itemize}
+  \item \textbf{Entreprise de rattachement} : Nom, Manager, secteur d'activité
+  \item \textbf{Manager superviseur} : Nom, email, rôle (Référent d'affectation)
+  \item \textbf{Véhicule assigné} : Immatriculation, marque, modèle, statut, kilométrage
+  \item \textbf{Mission actuelle} : Si trajet EN\_COURS, affichage de la destination, ETA et bouton "Voir sur la carte"
+
+\end{itemize}
+
+\section{Interface Chatbot et Génération de Rapports}
+\label{sec:ch10-chatbot}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{chatbot.png}
+  \caption{Interface chatbot RAG -- questions en français naturel}
+  \label{fig:chatbot}
+\end{figure}
+
+L'interface affiche : la conversation en bulles, l'historique persisté,
+un formulaire pour la génération de rapports avec sélection du format
+(PDF/CSV/TXT) et un bouton de téléchargement automatique.
+
+\section{Récapitulatif des interfaces réalisées}
+\label{sec:ch10-recap}
+
+\begin{table}[H]
+  \centering
+  \caption{Récapitulatif des interfaces utilisateur de LogiWay}
+  \label{tab:interfaces}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|Y|}
+    \hline
+    \thead{Interface} & \thead{Rôle} & \thead{Modules couverts} \\
+    \hline
+    Page de connexion & Tous & Login, reset MDP, vérification email \\
+    Dashboard principal & SuperAdmin & KPIs globaux, graphiques, classements \\
+    Gestion entreprises & SuperAdmin & CRUD, workflow validation \\
+    Gestion secteurs & SuperAdmin & CRUD, assignation Manager \\
+    Gestion utilisateurs & SuperAdmin & CRUD Manager/Chauffeur \\
+    Console de Gestion & Manager & KPIs entreprise, graphiques hebdo \\
+    Gérer la Flotte & Manager & Véhicules, affectation chauffeur \\
+    Cartographie GPS & Manager/SuperAdmin & Carte Leaflet, OSRM, pauses IA \\
+    Gestion Congés & Manager & Validation, rejet, historique \\
+    Gestion Réclamations & Manager/SuperAdmin & Traitement, statuts \\
+    Messenger & Tous & Discussions temps réel \\
+    Cockpit de Mission & Chauffeur & Mission, véhicule, secteur, Manager \\
+    Mes Congés & Chauffeur & Demande, suivi, annulation \\
+    Mes Réclamations & Chauffeur & Soumission (avec validation IA) \\
+    Chatbot + Rapports & SuperAdmin/Manager & RAG, génération PDF/CSV/TXT \\
+    Dashboard Pauses & Manager/SuperAdmin & KPIs sécurité, graphiques fatigue \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Conclusion}
+
+Les interfaces de LogiWay ont été développées avec Angular~17 selon une
+approche rôle-centrique. Le design en thème sombre, la réactivité SSE et
+WebSocket, et les contrôles de sécurité backend garantissent une expérience
+utilisateur fluide, sécurisée et adaptée à un usage professionnel.
+
+\newpage
+
+% ============================================================
+% CHAPITRE 11 — CONCLUSION ET PERSPECTIVES
+% ============================================================
+\chapitreavecplan{Conclusion et perspectives}
+\begin{plandechapitre}
+  \planitem{Synthèse des réalisations}{sec:ch11-synthese}
+  \planitem{Compétences acquises}{sec:ch11-competences}
+  \planitem{Perspectives d'évolution -- Phase 2}{sec:ch11-perspectives}
+  \planitem{Conclusion générale}{sec:ch11-conclusion}
+\end{plandechapitre}
+
+\section{Synthèse des réalisations}
+\label{sec:ch11-synthese}
+
+\begin{table}[H]
+  \centering
+  \caption{Bilan complet des modules réalisés}
+  \label{tab:bilan}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|Y|c|}
+    \hline
+    \thead{Module} & \thead{Fonctionnalités principales} & \thead{Avancement} \\
+    \hline
+    Authentification & Keycloak OAuth2/JWT, reset MDP, vérification email & \textcolor{teal}{100\%} \\
+    Gestion utilisateurs & CRUD Manager/Chauffeur, sync Keycloak, RBAC & \textcolor{teal}{100\%} \\
+    Entreprises & Workflow EN\_ATTENTE$\rightarrow$ACTIF, notifications & \textcolor{teal}{100\%} \\
+    Véhicules & CRUD, affectation, isolation entreprise, statuts & \textcolor{teal}{100\%} \\
+    Secteurs & CRUD, zone unique, assignation Manager & \textcolor{teal}{100\%} \\
+    Notifications SSE & Persistance MySQL + diffusion, badge temps réel & \textcolor{teal}{100\%} \\
+    Réclamations + IA & Workflow + validation expert system Python & \textcolor{teal}{100\%} \\
+    Congés & Workflow EN\_ATTENTE/APPROUVE/REJETE & \textcolor{teal}{100\%} \\
+    Messagerie & Discussions WebSocket STOMP, historique MySQL & \textcolor{teal}{100\%} \\
+    Trajets + GPS & Planification OSRM, suivi Multi-GNSS & \textcolor{teal}{100\%} \\
+    Pauses ML & RandomForest, CE 561/2006, affichage Leaflet & \textcolor{teal}{100\%} \\
+    Chatbot RAG & LangChain + Gemini, questions NL, isolation RBAC & \textcolor{teal}{100\%} \\
+    Génération rapports & PDF/CSV/TXT depuis NL, NLU, SQL dynamique & \textcolor{teal}{100\%} \\
+    Dashboards KPI & SuperAdmin, Manager, Chauffeur, Pauses, RH & \textcolor{teal}{100\%} \\
+    Tests & Unitaires (JUnit/pytest/Jest), k6, Playwright & \textcolor{teal}{100\%} \\
+    Déploiement & Docker Compose : MySQL + Keycloak + Backend + Frontend + IA & \textcolor{teal}{100\%} \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\section{Compétences acquises}
+\label{sec:ch11-competences}
+
+Ce projet m'a permis de maîtriser :
+
+\begin{itemize}
+  \item \textbf{Architecture sécurisée} : OAuth2/JWT Keycloak, Spring Boot
+        Resource Server, cookies HttpOnly, protection XSS/CSRF.
+  \item \textbf{Développement Full-Stack} : Spring Boot 3.x, Angular~17,
+        JPA/Hibernate héritage JOINED, DTO pattern, pagination.
+  \item \textbf{Communication temps réel} : WebSocket STOMP (GPS, messagerie),
+        SSE (notifications), EventSource Angular.
+  \item \textbf{Géolocalisation et cartographie} : Leaflet.js, OSRM poids lourds,
+        Multi-GNSS GPS/Galileo/GLONASS.
+  \item \textbf{Intelligence Artificielle} : système expert règles (Flask),
+        RandomForest scikit-learn, RAG LangChain + Gemini, FastAPI.
+  \item \textbf{Microservices Python} : Flask, FastAPI, SQLAlchemy,
+        ReportLab, architecture découplée.
+  \item \textbf{Méthodologie Agile Scrum} : organisation en 6 sprints de
+        2 semaines, backlog, revues, rétrospectives.
+  \item \textbf{Qualité et validation} : stratégie de tests pyramidale --
+        unitaires (JUnit 5, pytest, Jest), performance (k6), E2E (Playwright)
+        -- avec couvertures supérieures à 97\% et déploiement Docker Compose.
+\end{itemize}
+
+\section{Perspectives d'évolution -- Phase 2}
+\label{sec:ch11-perspectives}
+
+\subsection{Complétion des modules en cours}
+
+\begin{itemize}
+  \item ETA dynamique avec recalcul OSRM sur écart $>500$ m.
+  \item Terminaison de trajet avec libération automatique des ressources.
+  \item Dashboards KPI : congés, véhicules, réclamations, utilisateurs.
+\end{itemize}
+
+\subsection{Modèles Machine Learning avancés}
+
+\begin{table}[H]
+  \centering
+  \caption{Modèles ML prévus pour la Phase 2}
+  \label{tab:ml_phase2}
+  \rowcolors{2}{tablerow}{white}
+  \begin{tabularx}{\textwidth}{|l|l|Y|}
+    \hline
+    \thead{Module} & \thead{Algorithme} & \thead{Objectif} \\
+
+    Recommandation chauffeur & Régression logistique &
+      Chauffeur optimal pour une mission donnée \\
+    Prédiction fatigue avancée & Random Forest &
+      Niveau de fatigue (0--100\%) selon historique et météo \\
+    Maintenance prédictive & XGBoost Regression &
+      Probabilité de panne moteur/freins/pneus à 30 jours \\
+    Anomalie carburant & Isolation Forest &
+      Consommations anormales et cause probable \\
+ 
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection{Application mobile}
+
+Une application Android/iOS avec Angular/Ionic intégrera :
+suivi GPS en arrière-plan, notifications push sur points d'arrêt,
+messagerie mobile et mode hors-ligne avec synchronisation.
+
+\section{Conclusion générale}
+\label{sec:ch11-conclusion}
+
+Ce projet de développement chez \textbf{ExypnoTech Engineering Services}
+a abouti à la conception d'une plateforme professionnelle de gestion de flotte
+répondant aux enjeux opérationnels du transport routier tunisien.
+
+La combinaison \textbf{Spring Boot~3.x + Angular~17 + Keycloak + MySQL},
+enrichie de trois microservices d'intelligence artificielle
+(système expert réclamations, RandomForest pauses, RAG chatbot),
+produit une solution robuste, sécurisée et évolutive que les PME de transport
+peuvent déployer à coût maîtrisé en gardant le contrôle de leurs données.
+
+Avec un avancement global de \textbf{75\%} des fonctionnalités planifiées,
+LogiWay démontre la faisabilité d'une plateforme intelligente de gestion
+de flotte entièrement open-source, adaptée au contexte tunisien.
+
+\medskip
+\begin{flushright}
+  \textit{Kossay Boubaker,}\\
+  \textit{Monastir, Juillet 2026}
+\end{flushright}
+
+\newpage
+
+% ============================================================
+% BIBLIOGRAPHIE
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{springboot}
+\textbf{Spring Boot 3.x Reference Documentation}\\
+\url{https://docs.spring.io/spring-boot/docs/current/reference/html/}
+
+\bibitem{springsec}
+\textbf{Spring Security -- OAuth2 Resource Server}\\
+\url{https://docs.spring.io/spring-security/reference/servlet/oauth2/resource-server/}
+
+\bibitem{keycloak}
+\textbf{Keycloak 24.x Documentation}\\
+\url{https://www.keycloak.org/documentation}
+
+\bibitem{angular}
+\textbf{Angular 17 Documentation}\\
+\url{https://angular.dev/overview}
+
+\bibitem{mysql}
+\textbf{MySQL 8.0 Reference Manual}\\
+\url{https://dev.mysql.com/doc/refman/8.0/en/}
+
+\bibitem{hibernate}
+\textbf{Hibernate ORM 6 Documentation}\\
+\url{https://hibernate.org/orm/documentation/}
+
+\bibitem{osrm}
+\textbf{OSRM -- Open Source Routing Machine}\\
+\url{http://project-osrm.org/}
+
+\bibitem{leaflet}
+\textbf{Leaflet.js Documentation}\\
+\url{https://leafletjs.com/reference.html}
+
+\bibitem{sklearn}
+\textbf{scikit-learn : RandomForestRegressor}\\
+\url{https://scikit-learn.org/stable/modules/ensemble.html\#random-forests}
+
+\bibitem{langchain}
+\textbf{LangChain Documentation}\\
+\url{https://python.langchain.com/docs/introduction/}
+
+\bibitem{gemini}
+\textbf{Google Gemini API Documentation}\\
+\url{https://ai.google.dev/gemini-api/docs}
+
+\bibitem{fastapi}
+\textbf{FastAPI Documentation}\\
+\url{https://fastapi.tiangolo.com/}
+
+\bibitem{flask}
+\textbf{Flask Documentation}\\
+\url{https://flask.palletsprojects.com/}
+
+\bibitem{reportlab}
+\textbf{ReportLab Documentation}\\
+\url{https://www.reportlab.com/docs/reportlab-userguide.pdf}
+
+\bibitem{oauth2}
+\textbf{OAuth 2.0 Authorization Framework -- RFC 6749}\\
+\url{https://datatracker.ietf.org/doc/html/rfc6749}
+
+\bibitem{ce561}
+\textbf{Règlement (CE) No 561/2006 -- Temps de conduite et de repos}\\
+\url{https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32006R0561}
+
+\bibitem{scrum}
+\textbf{Scrum Guide 2020} -- K.~Schwaber, J.~Sutherland\\
+\url{https://scrumguides.org/scrum-guide.html}
+
+\bibitem{stomp}
+\textbf{STOMP Protocol Specification 1.2}\\
+\url{https://stomp.github.io/stomp-specification-1.2.html}
+
+\bibitem{overpass}
+\textbf{Overpass API Documentation}\\
+\url{https://wiki.openstreetmap.org/wiki/Overpass\_API}
+
+\end{thebibliography}
+
+\end{document}

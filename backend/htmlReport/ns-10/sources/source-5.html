@@ -1,0 +1,277 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > OsrmService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: OsrmService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">OsrmService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (32/32)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (43/43)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">OsrmService$GeoPoint</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">OsrmService$RouteEstimation</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (6/6)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (32/32)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (47/47)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode"><b class="fc">&nbsp;package com.logiway.services;</b>
+&nbsp;
+&nbsp;import com.fasterxml.jackson.databind.JsonNode;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.beans.factory.annotation.Value;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.web.client.RestTemplate;
+&nbsp;import org.springframework.web.util.UriComponentsBuilder;
+&nbsp;
+&nbsp;import java.net.URI;
+&nbsp;
+&nbsp;@Service
+&nbsp;@RequiredArgsConstructor
+&nbsp;public class OsrmService {
+&nbsp;
+&nbsp;    private final RestTemplate restTemplate;
+&nbsp;    private final ObjectMapper objectMapper;
+&nbsp;
+&nbsp;    @Value(&quot;${osrm.base-url:http://router.project-osrm.org/route/v1/driving/}&quot;)
+&nbsp;    private String osrmBaseUrl;
+&nbsp;
+&nbsp;    @Value(&quot;${osrm.geocode-url:https://nominatim.openstreetmap.org/search}&quot;)
+&nbsp;    private String geocodeUrl;
+&nbsp;
+&nbsp;    public RouteEstimation calculerItineraire(Double latitudeDepart, Double longitudeDepart, Double latitudeArrivee, Double longitudeArrivee, String typeOptimisation) {
+<b class="fc">&nbsp;        if (latitudeDepart == null || longitudeDepart == null || latitudeArrivee == null || longitudeArrivee == null) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // Configuration du profil selon le choix du Manager
+&nbsp;        // OSRM standard (driving) priorise le plus rapide (fastest) basé sur la durée. 
+&nbsp;        // L&#39;annotation &quot;shortest&quot; est passée via les annotations OSRM si supporté par le serveur cible
+<b class="fc">&nbsp;        String profileUrl = osrmBaseUrl;</b>
+&nbsp;        
+<b class="fc">&nbsp;        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(profileUrl)</b>
+<b class="fc">&nbsp;            .pathSegment(longitudeDepart.toString() + &quot;,&quot; + latitudeDepart.toString() + &quot;;&quot; + longitudeArrivee.toString() + &quot;,&quot; + latitudeArrivee.toString())</b>
+<b class="fc">&nbsp;            .queryParam(&quot;overview&quot;, &quot;full&quot;)</b>
+<b class="fc">&nbsp;            .queryParam(&quot;geometries&quot;, &quot;geojson&quot;)</b>
+<b class="fc">&nbsp;            .queryParam(&quot;steps&quot;, &quot;true&quot;);</b>
+&nbsp;            
+<b class="fc">&nbsp;        if (&quot;shortest&quot;.equalsIgnoreCase(typeOptimisation)) {</b>
+&nbsp;            // OSRM Public Node supporte les annotations. Distance / Duration annotations.
+<b class="fc">&nbsp;            builder.queryParam(&quot;annotations&quot;, &quot;true&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        URI uri = builder.build(true).toUri();</b>
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            String body = restTemplate.getForObject(uri, String.class);</b>
+<b class="fc">&nbsp;            if (body == null || body.isBlank()) {</b>
+<b class="fc">&nbsp;                return null;</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            JsonNode root = objectMapper.readTree(body);</b>
+<b class="fc">&nbsp;            JsonNode route = root.path(&quot;routes&quot;).isArray() &amp;&amp; root.path(&quot;routes&quot;).size() &gt; 0 ? root.path(&quot;routes&quot;).get(0) : null;</b>
+<b class="fc">&nbsp;            if (route == null) {</b>
+<b class="fc">&nbsp;                return null;</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            double distanceKm = route.path(&quot;distance&quot;).asDouble(0d) / 1000d;</b>
+<b class="fc">&nbsp;            int durationMinutes = (int) Math.round(route.path(&quot;duration&quot;).asDouble(0d) / 60d);</b>
+<b class="fc">&nbsp;            String geometry = route.path(&quot;geometry&quot;).toString();</b>
+<b class="fc">&nbsp;            return new RouteEstimation(distanceKm, durationMinutes, geometry);</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public GeoPoint geocoder(String query) {
+<b class="fc">&nbsp;        if (query == null || query.isBlank()) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        URI uri = UriComponentsBuilder.fromHttpUrl(geocodeUrl)</b>
+<b class="fc">&nbsp;            .queryParam(&quot;q&quot;, query)</b>
+<b class="fc">&nbsp;            .queryParam(&quot;format&quot;, &quot;jsonv2&quot;)</b>
+<b class="fc">&nbsp;            .queryParam(&quot;limit&quot;, 1)</b>
+<b class="fc">&nbsp;            .build(true)</b>
+<b class="fc">&nbsp;            .toUri();</b>
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            String body = restTemplate.getForObject(uri, String.class);</b>
+<b class="fc">&nbsp;            if (body == null || body.isBlank()) {</b>
+<b class="fc">&nbsp;                return null;</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            JsonNode root = objectMapper.readTree(body);</b>
+<b class="fc">&nbsp;            if (!root.isArray() || root.isEmpty()) {</b>
+<b class="fc">&nbsp;                return null;</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            JsonNode first = root.get(0);</b>
+<b class="fc">&nbsp;            Double lat = first.path(&quot;lat&quot;).asDouble();</b>
+<b class="fc">&nbsp;            Double lon = first.path(&quot;lon&quot;).asDouble();</b>
+<b class="fc">&nbsp;            String label = first.path(&quot;display_name&quot;).asText(query);</b>
+<b class="fc">&nbsp;            return new GeoPoint(lat, lon, label);</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    public record RouteEstimation(Double distanceKm, Integer durationMinutes, String geometryJson) {</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    public record GeoPoint(Double latitude, Double longitude, String label) {</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

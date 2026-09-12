@@ -1,0 +1,11 @@
+<h2 mat-dialog-title>
+    Document Justificatif - {{ data.companyName || 'Entreprise' }}
+</h2>
+
+<mat-dialog-content class="pdf-content">
+    <iframe [src]="safePdfUrl" title="Prévisualisation PDF" class="pdf-frame"></iframe>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button (click)="dialogRef.close()">Fermer</button>
+</mat-dialog-actions>

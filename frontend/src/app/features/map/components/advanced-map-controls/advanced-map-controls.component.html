@@ -1,0 +1,20 @@
+<div class="top-right-controls">
+    <button mat-fab class="control-btn home" (click)="onHome()" title="Tableau de bord" aria-label="Home">
+        <mat-icon>home</mat-icon>
+    </button>
+
+    <!-- Theme Toggle: Map-local only, between Home and Alerts -->
+    <button mat-fab class="control-btn theme-toggle-map" (click)="onThemeToggle()"
+        [title]="isDarkMode ? 'Passer en mode clair' : 'Passer en mode sombre'"
+        [attr.aria-label]="isDarkMode ? 'Light mode' : 'Dark mode'">
+        <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <button mat-fab class="control-btn alerts" (click)="onNotifications()" title="Alertes"
+        [matBadge]="alertCount > 0 ? alertCount : null" matBadgeColor="warn">
+        <mat-icon>notifications</mat-icon>
+    </button>
+    <button mat-fab class="control-btn settings" (click)="onSettings()" title="Configuration">
+        <mat-icon>settings</mat-icon>
+    </button>
+</div>

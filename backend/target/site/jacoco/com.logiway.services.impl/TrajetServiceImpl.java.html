@@ -1,0 +1,876 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TrajetServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">TrajetServiceImpl.java</span></div><h1>TrajetServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.trajet.TourneeOptimiseeResponse;
+import com.logiway.dto.meteo.MeteoResponse;
+import com.logiway.dto.trajet.TrajetCarteResponse;
+import com.logiway.dto.trajet.TrajetOptimisationRequest;
+import com.logiway.dto.trajet.TrajetPositionRequest;
+import com.logiway.dto.trajet.TrajetRequest;
+import com.logiway.dto.trajet.TrajetResponse;
+import com.logiway.entities.Chauffeur;
+import com.logiway.entities.Manager;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Trajet;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.Vehicule;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutChauffeur;
+import com.logiway.entities.enums.StatutTrajet;
+import com.logiway.entities.enums.StatutVehicule;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.ResourceNotFoundException;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.repositories.TrajetRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.repositories.VehiculeRepository;
+import com.logiway.repositories.ChauffeurRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.NotificationRealtimeService;
+import com.logiway.services.MeteoService;
+import com.logiway.services.OsrmService;
+import com.logiway.services.PauseReglementaireService;
+import com.logiway.services.TrajetOptimisationService;
+
+import com.logiway.services.TrajetService;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Service
+<span class="fc" id="L54">@RequiredArgsConstructor</span>
+@Transactional
+<span class="fc" id="L56">@Slf4j</span>
+public class TrajetServiceImpl implements TrajetService {
+
+    private final TrajetRepository trajetRepository;
+    private final VehiculeRepository vehiculeRepository;
+    private final ChauffeurRepository chauffeurRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationRealtimeService notificationRealtimeService;
+    private final MeteoService meteoService;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final OsrmService osrmService;
+    private final PauseReglementaireService pauseReglementaireService;
+    private final TrajetOptimisationService trajetOptimisationService;
+<span class="fc" id="L70">    private final Map&lt;Long, String&gt; weatherAlertHistory = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @Override
+    public Page&lt;TrajetResponse&gt; getTrajets(String search, StatutTrajet statut, Pageable pageable) {
+<span class="fc" id="L74">        List&lt;Trajet&gt; trajets = resolveVisibleTrajets();</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">        if (statut != null) {</span>
+<span class="fc bfc" id="L76" title="All 2 branches covered.">            trajets = trajets.stream().filter(trajet -&gt; statut == trajet.getStatut()).toList();</span>
+        }
+
+<span class="pc bpc" id="L79" title="1 of 4 branches missed.">        if (search != null &amp;&amp; !search.isBlank()) {</span>
+<span class="fc" id="L80">            String needle = search.toLowerCase(Locale.ROOT);</span>
+<span class="fc" id="L81">            trajets = trajets.stream().filter(trajet -&gt;</span>
+<span class="fc bfc" id="L82" title="All 2 branches covered.">                contains(trajet.getPointDepart(), needle)</span>
+<span class="fc bfc" id="L83" title="All 2 branches covered.">                    || contains(trajet.getDestination(), needle)</span>
+<span class="fc bfc" id="L84" title="All 4 branches covered.">                    || contains(trajet.getVehicule() != null ? trajet.getVehicule().getMatricule() : null, needle)</span>
+<span class="fc bfc" id="L85" title="All 4 branches covered.">                    || contains(trajet.getChauffeur() != null ? trajet.getChauffeur().getNom() + &quot; &quot; + trajet.getChauffeur().getPrenom() : null, needle)</span>
+<span class="fc" id="L86">            ).toList();</span>
+        }
+
+<span class="fc" id="L89">        List&lt;TrajetResponse&gt; responses = trajets.stream().map(this::toResponse).toList();</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if (pageable == null) {</span>
+<span class="fc" id="L91">            return new PageImpl&lt;&gt;(responses);</span>
+        }
+
+<span class="fc" id="L94">        int start = Math.min((int) pageable.getOffset(), responses.size());</span>
+<span class="fc" id="L95">        int end = Math.min(start + pageable.getPageSize(), responses.size());</span>
+<span class="fc" id="L96">        return new PageImpl&lt;&gt;(responses.subList(start, end), pageable, responses.size());</span>
+    }
+
+    public List&lt;TrajetCarteResponse&gt; getTrajetsCarte() {
+        List&lt;Trajet&gt; trajets;
+        try {
+<span class="fc" id="L102">            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc bfc" id="L104" title="All 2 branches covered.">            if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+                // SuperAdmin — tous les trajets EN_COURS de toutes les entreprises
+<span class="fc" id="L106">                trajets = trajetRepository.findAll().stream()</span>
+<span class="fc bfc" id="L107" title="All 2 branches covered.">                        .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS)</span>
+<span class="fc" id="L108">                        .toList();</span>
+
+<span class="fc bfc" id="L110" title="All 2 branches covered.">            } else if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+                // Chauffeur — tous ses trajets visibles sur la carte (EN_COURS + ACTIF)
+                // Le Chauffeur doit voir son trajet actif ET son trajet en cours
+<span class="fc" id="L113">                trajets = trajetRepository.findByChauffeurIdWithFetch(currentUser.getId()).stream()</span>
+<span class="fc bfc" id="L114" title="All 2 branches covered.">                        .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS</span>
+<span class="pc bpc" id="L115" title="1 of 2 branches missed.">                                || t.getStatut() == StatutTrajet.ACTIF)</span>
+<span class="fc" id="L116">                        .toList();</span>
+
+<span class="fc bfc" id="L118" title="All 2 branches covered.">            } else if (currentUser instanceof Manager manager) {</span>
+                // Manager — trajets EN_COURS de TOUS ses chauffeurs supervisés
+                // On filtre par chauffeur.manager_id pour couvrir tous les cas,
+                // même si trajet.manager_id est null ou différent.
+<span class="fc" id="L122">                trajets = trajetRepository.findByChauffeurManagerIdWithFetch(manager.getId())</span>
+<span class="fc" id="L123">                        .stream()</span>
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">                        .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS)</span>
+<span class="fc" id="L125">                        .toList();</span>
+            } else {
+<span class="fc" id="L127">                trajets = List.of();</span>
+            }
+
+<span class="fc" id="L130">        } catch (Exception ex) {</span>
+            // Accès non authentifié (simulateur GPS/Python) — retourne uniquement les EN_COURS
+            // sans exposer les données de tous les utilisateurs
+<span class="fc" id="L133">            log.warn(&quot;getTrajetsCarte called without authentication, falling back to EN_COURS only: {}&quot;, ex.getMessage());</span>
+<span class="fc" id="L134">            trajets = trajetRepository.findAll().stream()</span>
+<span class="pc bpc" id="L135" title="1 of 2 branches missed.">                    .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS)</span>
+<span class="fc" id="L136">                    .toList();</span>
+<span class="fc" id="L137">        }</span>
+
+<span class="fc" id="L139">        return trajets.stream()</span>
+<span class="fc" id="L140">                .map(this::toCarteResponse)</span>
+<span class="fc" id="L141">                .toList();</span>
+    }
+    @Override
+    public TrajetResponse getTrajet(Long id) {
+<span class="fc" id="L145">        Trajet trajet = trajetRepository.findById(id)</span>
+<span class="fc" id="L146">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+<span class="fc" id="L147">        return toResponse(trajet);</span>
+    }
+
+    @Override
+    public TrajetResponse createTrajet(TrajetRequest request) {
+<span class="fc" id="L152">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L153">        Trajet trajet = buildTrajet(new Trajet(), request, currentUser);</span>
+<span class="fc bfc" id="L154" title="All 2 branches covered.">        trajet.setStatut(request.statut() != null ? request.statut() : StatutTrajet.ACTIF);</span>
+
+<span class="fc" id="L156">        validateDriverAvailability(trajet);</span>
+
+<span class="fc" id="L158">        enrichRoute(trajet);</span>
+
+<span class="fc" id="L160">        Trajet saved = trajetRepository.saveAndFlush(trajet);</span>
+        try {
+<span class="fc bfc" id="L162" title="All 2 branches covered.">            if (saved.getVehicule() != null) {</span>
+<span class="fc" id="L163">                validateAssignment(saved.getVehicule());</span>
+<span class="fc" id="L164">                activateAssignment(saved);</span>
+            }
+<span class="fc" id="L166">            notifyTripChange(saved, &quot;Nouveau trajet assigné&quot;);</span>
+<span class="fc" id="L167">        } catch (RuntimeException ex) {</span>
+<span class="fc" id="L168">            log.warn(&quot;Trajet {} persisted but post-save processing failed: {}&quot;, saved.getId(), ex.getMessage());</span>
+<span class="fc" id="L169">        }</span>
+
+<span class="fc" id="L171">        return toResponse(saved);</span>
+    }
+
+    @Override
+    public TrajetResponse updateTrajet(Long id, TrajetRequest request) {
+<span class="fc" id="L176">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L177">        Trajet trajet = trajetRepository.findById(id)</span>
+<span class="pc" id="L178">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+
+<span class="fc" id="L180">        buildTrajet(trajet, request, currentUser);</span>
+<span class="fc" id="L181">        enrichRoute(trajet);</span>
+
+<span class="fc" id="L183">        Trajet saved = trajetRepository.saveAndFlush(trajet);</span>
+        try {
+<span class="fc" id="L185">            notifyTripChange(saved, &quot;Trajet mis à jour&quot;);</span>
+<span class="fc" id="L186">        } catch (RuntimeException ex) {</span>
+<span class="fc" id="L187">            log.warn(&quot;Trajet {} updated but notification failed: {}&quot;, saved.getId(), ex.getMessage());</span>
+<span class="fc" id="L188">        }</span>
+<span class="fc" id="L189">        return toResponse(saved);</span>
+    }
+
+    @Override
+    public void deleteTrajet(Long id) {
+<span class="fc" id="L194">        Trajet trajet = trajetRepository.findById(id)</span>
+<span class="pc" id="L195">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+
+<span class="fc bfc" id="L197" title="All 2 branches covered.">        if (trajet.getVehicule() != null) {</span>
+<span class="fc" id="L198">            Vehicule vehicule = trajet.getVehicule();</span>
+<span class="fc" id="L199">            vehicule.setChauffeurActuel(null);</span>
+<span class="fc" id="L200">            vehicule.setStatut(StatutVehicule.EN_SERVICE);</span>
+<span class="fc" id="L201">            vehiculeRepository.save(vehicule);</span>
+        }
+
+<span class="fc bfc" id="L204" title="All 2 branches covered.">        if (trajet.getChauffeur() != null) {</span>
+<span class="fc" id="L205">            Chauffeur chauffeur = trajet.getChauffeur();</span>
+<span class="fc" id="L206">            chauffeur.setVehiculeActuel(null);</span>
+<span class="fc bfc" id="L207" title="All 2 branches covered.">            chauffeur.setStatutConducteur(trajetRepository.existsByChauffeurIdAndStatutIn(chauffeur.getId(), Set.of(StatutTrajet.ACTIF, StatutTrajet.EN_COURS))</span>
+<span class="fc" id="L208">                ? StatutChauffeur.EN_SERVICE</span>
+<span class="fc" id="L209">                : StatutChauffeur.LIBRE);</span>
+<span class="fc" id="L210">            chauffeurRepository.save(chauffeur);</span>
+        }
+
+<span class="fc" id="L213">        trajetRepository.delete(trajet);</span>
+<span class="fc" id="L214">    }</span>
+
+    @Override
+    public TrajetResponse demarrerTrajet(Long id) {
+<span class="fc" id="L218">        Trajet trajet = trajetRepository.findById(id)</span>
+<span class="pc" id="L219">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+<span class="fc" id="L220">        trajet.setStatut(StatutTrajet.EN_COURS);</span>
+<span class="fc bfc" id="L221" title="All 2 branches covered.">        if (trajet.getDateDepart() == null) {</span>
+<span class="fc" id="L222">            trajet.setDateDepart(LocalDateTime.now());</span>
+        }
+<span class="fc bfc" id="L224" title="All 2 branches covered.">        if (trajet.getVehicule() != null) {</span>
+<span class="fc" id="L225">            trajet.getVehicule().setStatut(StatutVehicule.EN_SERVICE);</span>
+<span class="fc" id="L226">            vehiculeRepository.save(trajet.getVehicule());</span>
+        }
+<span class="fc bfc" id="L228" title="All 2 branches covered.">        if (trajet.getChauffeur() != null) {</span>
+<span class="fc" id="L229">            trajet.getChauffeur().setStatutConducteur(StatutChauffeur.EN_SERVICE);</span>
+<span class="fc" id="L230">            chauffeurRepository.save(trajet.getChauffeur());</span>
+        }
+<span class="fc" id="L232">        Trajet saved = trajetRepository.save(trajet);</span>
+
+        try {
+<span class="fc" id="L235">            log.info(&quot;[TRAJET] Génération des pauses réglementaires lancée pour le trajet {}&quot;, saved.getId());</span>
+<span class="fc" id="L236">            pauseReglementaireService.genererPauses(saved.getId());</span>
+<span class="fc" id="L237">        } catch (Exception ex) {</span>
+<span class="fc" id="L238">            log.warn(&quot;[TRAJET] Impossible de générer les pauses réglementaires pour le trajet {}: {}&quot;, saved.getId(), ex.getMessage(), ex);</span>
+<span class="fc" id="L239">        }</span>
+
+<span class="fc" id="L241">        notifyTripChange(saved, &quot;Trajet démarré&quot;);</span>
+
+<span class="fc" id="L243">        return toResponse(saved);</span>
+    }
+
+
+
+    @Override
+    public TrajetResponse terminerTrajet(Long id) {
+<span class="fc" id="L250">        Trajet trajet = trajetRepository.findById(id)</span>
+<span class="pc" id="L251">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+
+<span class="fc" id="L253">        trajet.setStatut(StatutTrajet.COMPLETE);</span>
+<span class="fc" id="L254">        trajet.setDateArriveeReelle(LocalDateTime.now());</span>
+
+<span class="fc bfc" id="L256" title="All 2 branches covered.">        if (trajet.getVehicule() != null) {</span>
+<span class="fc" id="L257">            trajet.getVehicule().setStatut(StatutVehicule.EN_SERVICE);</span>
+<span class="fc" id="L258">            trajet.getVehicule().setChauffeurActuel(null);</span>
+<span class="fc" id="L259">            vehiculeRepository.save(trajet.getVehicule());</span>
+        }
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        if (trajet.getChauffeur() != null) {</span>
+<span class="fc" id="L262">            trajet.getChauffeur().setVehiculeActuel(null);</span>
+<span class="fc" id="L263">            trajet.getChauffeur().setStatutConducteur(StatutChauffeur.LIBRE);</span>
+<span class="fc" id="L264">            chauffeurRepository.save(trajet.getChauffeur());</span>
+        }
+
+<span class="fc" id="L267">        Trajet saved = trajetRepository.save(trajet);</span>
+<span class="fc" id="L268">        weatherAlertHistory.remove(saved.getId());</span>
+<span class="fc" id="L269">        notifyTripChange(saved, &quot;Trajet terminé&quot;);</span>
+<span class="fc" id="L270">        return toResponse(saved);</span>
+    }
+
+    @Override
+    public TrajetResponse updatePosition(Long id, TrajetPositionRequest request) {
+<span class="fc" id="L275">        Trajet trajet = trajetRepository.findById(id)</span>
+<span class="pc" id="L276">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</span>
+
+<span class="fc bfc" id="L278" title="All 2 branches covered.">        if (trajet.getVehicule() == null) {</span>
+<span class="fc" id="L279">            throw new ResourceNotFoundException(&quot;Aucun véhicule lié à ce trajet&quot;);</span>
+        }
+
+<span class="fc" id="L282">        Vehicule vehicule = trajet.getVehicule();</span>
+<span class="fc" id="L283">        vehicule.setLatitudeActuelle(request.latitude());</span>
+<span class="fc" id="L284">        vehicule.setLongitudeActuelle(request.longitude());</span>
+<span class="fc" id="L285">        vehicule.setVitesseActuelle(request.vitesse());</span>
+<span class="fc" id="L286">        vehicule.setNiveauCarburant(request.carburant());</span>
+<span class="fc bfc" id="L287" title="All 2 branches covered.">        vehicule.setDernierePositionMaj(request.datePosition() != null ? request.datePosition() : LocalDateTime.now());</span>
+<span class="fc" id="L288">        vehiculeRepository.save(vehicule);</span>
+
+<span class="fc" id="L290">        handleWeatherAlerts(trajet, request.latitude(), request.longitude());</span>
+
+<span class="fc" id="L292">        List&lt;Long&gt; audience = buildNotificationAudience(trajet);</span>
+<span class="fc bfc" id="L293" title="All 2 branches covered.">        if (!audience.isEmpty()) {</span>
+<span class="fc" id="L294">            notificationRealtimeService.publishNamedEventToUsers(audience, &quot;gps-position&quot;, toCarteResponse(trajet));</span>
+        }
+
+<span class="fc" id="L297">        return toResponse(trajet);</span>
+    }
+
+    @Override
+    public List&lt;TourneeOptimiseeResponse&gt; optimiserTrajets(TrajetOptimisationRequest request) {
+<span class="fc" id="L302">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc bfc" id="L303" title="All 4 branches covered.">        List&lt;TrajetRequest&gt; demandes = request != null &amp;&amp; request.trajets() != null ? request.trajets() : List.of();</span>
+<span class="fc bfc" id="L304" title="All 2 branches covered.">        if (demandes.isEmpty()) {</span>
+<span class="fc" id="L305">            return List.of();</span>
+        }
+
+<span class="fc" id="L308">        List&lt;Vehicule&gt; vehicules = resolveVehiclesForOptimisation(currentUser, request);</span>
+<span class="fc" id="L309">        List&lt;TrajetOptimisationService.OptimizationAssignment&gt; assignments = trajetOptimisationService.optimiser(demandes, vehicules);</span>
+
+<span class="fc" id="L311">        List&lt;TourneeOptimiseeResponse&gt; result = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L312" title="All 2 branches covered.">        for (TrajetOptimisationService.OptimizationAssignment assignment : assignments) {</span>
+<span class="fc" id="L313">            Trajet trajet = buildTrajet(new Trajet(), assignment.trajet(), currentUser);</span>
+<span class="fc" id="L314">            trajet.setVehicule(assignment.vehicule());</span>
+<span class="pc bpc" id="L315" title="1 of 2 branches missed.">            trajet.setStatut(assignment.trajet().statut() != null ? assignment.trajet().statut() : StatutTrajet.ACTIF);</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">            if (assignment.route() != null) {</span>
+<span class="fc" id="L317">                trajet.setDistanceKm(assignment.route().distanceKm());</span>
+<span class="fc" id="L318">                trajet.setDureeEstimeeMinutes(assignment.route().durationMinutes());</span>
+<span class="fc" id="L319">                trajet.setGeometrieItineraire(assignment.route().geometryJson());</span>
+            }
+
+<span class="fc" id="L322">            enrichRoute(trajet);</span>
+<span class="fc" id="L323">            validateAssignment(assignment.vehicule());</span>
+<span class="fc" id="L324">            validateDriverAvailability(trajet);</span>
+<span class="fc" id="L325">            Trajet saved = trajetRepository.save(trajet);</span>
+<span class="fc" id="L326">            activateAssignment(saved);</span>
+<span class="fc" id="L327">            notifyTripChange(saved, &quot;Trajet optimisé et assigné&quot;);</span>
+<span class="fc" id="L328">            result.add(new TourneeOptimiseeResponse(</span>
+<span class="fc bfc" id="L329" title="All 2 branches covered.">                saved.getVehicule() != null ? saved.getVehicule().getId() : null,</span>
+<span class="fc bfc" id="L330" title="All 2 branches covered.">                saved.getVehicule() != null ? saved.getVehicule().getMatricule() : null,</span>
+<span class="fc bfc" id="L331" title="All 2 branches covered.">                saved.getVehicule() != null ? saved.getVehicule().getCouleur() : null,</span>
+<span class="fc bfc" id="L332" title="All 2 branches covered.">                saved.getVehicule() != null ? saved.getVehicule().getLatitudeActuelle() : null,</span>
+<span class="fc bfc" id="L333" title="All 2 branches covered.">                saved.getVehicule() != null ? saved.getVehicule().getLongitudeActuelle() : null,</span>
+<span class="fc" id="L334">                List.of(toResponse(saved))</span>
+            ));
+<span class="fc" id="L336">        }</span>
+
+<span class="fc" id="L338">        return result;</span>
+    }
+
+    private Trajet buildTrajet(Trajet trajet, TrajetRequest request, Utilisateur currentUser) {
+<span class="fc" id="L342">        trajet.setPointDepart(request.pointDepart());</span>
+<span class="fc" id="L343">        trajet.setDestination(request.destination());</span>
+<span class="fc" id="L344">        trajet.setLatitudeDepart(resolveLatitude(request.pointDepart(), request.latitudeDepart()));</span>
+<span class="fc" id="L345">        trajet.setLongitudeDepart(resolveLongitude(request.pointDepart(), request.longitudeDepart()));</span>
+<span class="fc" id="L346">        trajet.setLatitudeArrivee(resolveLatitude(request.destination(), request.latitudeArrivee()));</span>
+<span class="fc" id="L347">        trajet.setLongitudeArrivee(resolveLongitude(request.destination(), request.longitudeArrivee()));</span>
+<span class="fc" id="L348">        trajet.setDateDepart(request.dateDepart());</span>
+<span class="fc" id="L349">        trajet.setDateArrivee(request.dateArrivee());</span>
+<span class="fc" id="L350">        trajet.setChargeKg(request.chargeKg());</span>
+<span class="fc" id="L351">        trajet.setPriorite(request.priorite());</span>
+<span class="fc" id="L352">        trajet.setNotes(request.notes());</span>
+<span class="fc" id="L353">        trajet.setChauffeur(resolveChauffeur(request.chauffeurId()));</span>
+<span class="fc" id="L354">        trajet.setVehicule(resolveVehicule(request.vehiculeId()));</span>
+<span class="fc" id="L355">        trajet.setManager(resolveManager(request.managerId(), currentUser));</span>
+<span class="fc bfc" id="L356" title="All 2 branches covered.">        trajet.setTypeOptimisation(request.typeOptimisation() != null ? request.typeOptimisation() : &quot;shortest&quot;);</span>
+<span class="fc" id="L357">        return trajet;</span>
+    }
+
+    private void enrichRoute(Trajet trajet) {
+<span class="pc bpc" id="L361" title="1 of 2 branches missed.">        String opt = trajet.getTypeOptimisation() != null ? trajet.getTypeOptimisation() : &quot;shortest&quot;;</span>
+<span class="fc" id="L362">        OsrmService.RouteEstimation route = osrmService.calculerItineraire(</span>
+<span class="fc" id="L363">            trajet.getLatitudeDepart(), trajet.getLongitudeDepart(), trajet.getLatitudeArrivee(), trajet.getLongitudeArrivee(), opt);</span>
+
+<span class="fc bfc" id="L365" title="All 2 branches covered.">        if (route != null) {</span>
+<span class="fc" id="L366">            trajet.setDistanceKm(route.distanceKm());</span>
+<span class="fc" id="L367">            trajet.setDureeEstimeeMinutes(route.durationMinutes());</span>
+<span class="fc" id="L368">            trajet.setGeometrieItineraire(route.geometryJson());</span>
+        }
+<span class="fc" id="L370">    }</span>
+
+    private void validateAssignment(Vehicule vehicule) {
+<span class="fc bfc" id="L373" title="All 2 branches covered.">        if (vehicule == null) {</span>
+<span class="fc" id="L374">            return;</span>
+        }
+
+<span class="pc bpc" id="L377" title="1 of 4 branches missed.">        if (vehicule.getStatut() != StatutVehicule.EN_SERVICE &amp;&amp; vehicule.getStatut() != StatutVehicule.HORS_SERVICE) {</span>
+<span class="fc" id="L378">            throw new IllegalStateException(&quot;Le véhicule n'est pas disponible&quot;);</span>
+        }
+
+<span class="fc" id="L381">        boolean busy = trajetRepository.existsByVehiculeIdAndStatutIn(vehicule.getId(), Set.of(StatutTrajet.ACTIF, StatutTrajet.EN_COURS));</span>
+<span class="fc bfc" id="L382" title="All 2 branches covered.">        if (busy) {</span>
+<span class="fc" id="L383">            throw new IllegalStateException(&quot;Le véhicule est déjà affecté à un trajet actif&quot;);</span>
+        }
+<span class="fc" id="L385">    }</span>
+
+    private void validateDriverAvailability(Trajet trajet) {
+<span class="fc bfc" id="L388" title="All 2 branches covered.">        if (trajet.getChauffeur() == null) {</span>
+<span class="fc" id="L389">            return;</span>
+        }
+
+<span class="fc" id="L392">        Chauffeur chauffeur = trajet.getChauffeur();</span>
+<span class="fc" id="L393">        List&lt;Trajet&gt; trajetsChauffeur = trajetRepository.findByChauffeurIdWithFetch(chauffeur.getId());</span>
+<span class="fc" id="L394">        Trajet latestComplete = trajetsChauffeur.stream()</span>
+<span class="pc bpc" id="L395" title="1 of 4 branches missed.">            .filter(item -&gt; item.getStatut() == StatutTrajet.COMPLETE &amp;&amp; item.getDateArriveeReelle() != null)</span>
+<span class="fc" id="L396">            .findFirst()</span>
+<span class="fc" id="L397">            .orElse(null);</span>
+
+<span class="fc bfc" id="L399" title="All 2 branches covered.">        if (latestComplete == null) {</span>
+<span class="fc" id="L400">            return;</span>
+        }
+
+<span class="fc" id="L403">        LocalDateTime availableAt = latestComplete.getDateArriveeReelle().plusHours(12);</span>
+<span class="pc bpc" id="L404" title="1 of 4 branches missed.">        boolean hasActiveTrip = trajetsChauffeur.stream().anyMatch(item -&gt; item.getStatut() == StatutTrajet.ACTIF || item.getStatut() == StatutTrajet.EN_COURS);</span>
+<span class="fc bfc" id="L405" title="All 4 branches covered.">        if (hasActiveTrip || LocalDateTime.now().isBefore(availableAt)) {</span>
+<span class="fc" id="L406">            String formattedDate = availableAt.format(DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy à HH:mm&quot;));</span>
+<span class="fc" id="L407">            String driverName = (chauffeur.getPrenom() + &quot; &quot; + chauffeur.getNom()).trim();</span>
+<span class="fc" id="L408">            String message = &quot;⚠️ Ce chauffeur n'est pas encore disponible. Repos obligatoire de 12 heures après la dernière mission. Disponible le &quot; + formattedDate + &quot;.&quot;;</span>
+
+<span class="fc" id="L410">            notifyAvailabilityBlock(trajet, String.format(&quot;⚠️ Impossible d'assigner %s — Repos obligatoire en cours jusqu'au %s.&quot;, driverName, formattedDate));</span>
+<span class="fc" id="L411">            throw new IllegalStateException(message);</span>
+        }
+<span class="fc" id="L413">    }</span>
+
+    private void notifyAvailabilityBlock(Trajet trajet, String message) {
+<span class="fc" id="L416">        List&lt;Long&gt; audience = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L417" title="2 of 4 branches missed.">        if (trajet.getManager() != null &amp;&amp; trajet.getManager().getId() != null) {</span>
+<span class="fc" id="L418">            audience.add(trajet.getManager().getId());</span>
+        }
+<span class="fc bfc" id="L420" title="All 2 branches covered.">        for (Long userId : audience) {</span>
+<span class="fc" id="L421">            utilisateurRepository.findById(userId).ifPresent(user -&gt; {</span>
+<span class="fc" id="L422">                Notification notification = Notification.builder()</span>
+<span class="fc" id="L423">                    .type(TypeNotif.NOTIF_TRAJET)</span>
+<span class="fc" id="L424">                    .message(message)</span>
+<span class="fc" id="L425">                    .utilisateur(user)</span>
+<span class="fc" id="L426">                    .estLu(false)</span>
+<span class="fc" id="L427">                    .build();</span>
+<span class="fc" id="L428">                notificationRepository.save(notification);</span>
+<span class="fc" id="L429">                notificationRealtimeService.publishToUsers(List.of(userId), notification);</span>
+<span class="fc" id="L430">            });</span>
+<span class="fc" id="L431">        }</span>
+<span class="fc" id="L432">    }</span>
+
+    private void activateAssignment(Trajet trajet) {
+<span class="fc bfc" id="L435" title="All 4 branches covered.">        if (trajet.getVehicule() != null &amp;&amp; trajet.getChauffeur() != null) {</span>
+<span class="fc" id="L436">            Vehicule vehicule = trajet.getVehicule();</span>
+<span class="fc" id="L437">            vehicule.setStatut(StatutVehicule.EN_SERVICE);</span>
+<span class="fc" id="L438">            vehicule.setChauffeurActuel(trajet.getChauffeur());</span>
+<span class="fc" id="L439">            vehiculeRepository.save(vehicule);</span>
+
+<span class="fc" id="L441">            trajet.getChauffeur().setVehiculeActuel(vehicule);</span>
+<span class="fc" id="L442">            trajet.getChauffeur().setStatutConducteur(StatutChauffeur.EN_SERVICE);</span>
+<span class="fc" id="L443">            chauffeurRepository.save(trajet.getChauffeur());</span>
+        }
+<span class="fc" id="L445">    }</span>
+
+    private void notifyTripChange(Trajet trajet, String messagePrefix) {
+<span class="fc" id="L448">        List&lt;Long&gt; audience = buildNotificationAudience(trajet);</span>
+<span class="fc bfc" id="L449" title="All 2 branches covered.">        if (audience.isEmpty()) {</span>
+<span class="fc" id="L450">            return;</span>
+        }
+
+<span class="fc" id="L453">        String message = messagePrefix + &quot; : &quot; + trajet.getPointDepart() + &quot; -&gt; &quot; + trajet.getDestination();</span>
+<span class="fc bfc" id="L454" title="All 2 branches covered.">        for (Long userId : audience) {</span>
+<span class="fc" id="L455">            utilisateurRepository.findById(userId).ifPresent(user -&gt; {</span>
+<span class="fc" id="L456">                Notification notification = Notification.builder()</span>
+<span class="fc" id="L457">                    .type(TypeNotif.NOTIF_TRAJET)</span>
+<span class="fc" id="L458">                    .message(message)</span>
+<span class="fc" id="L459">                    .utilisateur(user)</span>
+<span class="fc" id="L460">                    .build();</span>
+<span class="fc" id="L461">                notificationRepository.save(notification);</span>
+<span class="fc" id="L462">                notificationRealtimeService.publishToUsers(List.of(userId), notification);</span>
+<span class="fc" id="L463">            });</span>
+<span class="fc" id="L464">        }</span>
+<span class="fc" id="L465">    }</span>
+
+    private List&lt;Long&gt; buildNotificationAudience(Trajet trajet) {
+<span class="fc" id="L468">        List&lt;Long&gt; audience = new ArrayList&lt;&gt;();</span>
+<span class="pc bpc" id="L469" title="1 of 4 branches missed.">        if (trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getId() != null) {</span>
+<span class="fc" id="L470">            audience.add(trajet.getChauffeur().getId());</span>
+        }
+<span class="pc bpc" id="L472" title="1 of 4 branches missed.">        if (trajet.getManager() != null &amp;&amp; trajet.getManager().getId() != null) {</span>
+<span class="fc" id="L473">            audience.add(trajet.getManager().getId());</span>
+        }
+<span class="fc" id="L475">        utilisateurRepository.findByRole(Role.SUPERADMIN).stream()</span>
+<span class="fc" id="L476">            .map(Utilisateur::getId)</span>
+<span class="fc" id="L477">            .forEach(audience::add);</span>
+<span class="fc" id="L478">        return audience.stream().distinct().toList();</span>
+    }
+
+    private List&lt;Vehicule&gt; resolveVehiclesForOptimisation(Utilisateur currentUser, TrajetOptimisationRequest request) {
+<span class="pc bpc" id="L482" title="2 of 6 branches missed.">        if (request != null &amp;&amp; request.vehiculeIds() != null &amp;&amp; !request.vehiculeIds().isEmpty()) {</span>
+<span class="fc" id="L483">            return vehiculeRepository.findAllById(request.vehiculeIds());</span>
+        }
+
+<span class="fc bfc" id="L486" title="All 2 branches covered.">        if (currentUser.getEntreprise() != null) {</span>
+<span class="fc" id="L487">            return vehiculeRepository.findByEntreprise_Id(currentUser.getEntreprise().getId()).stream()</span>
+<span class="pc bpc" id="L488" title="3 of 4 branches missed.">                .filter(vehicule -&gt; vehicule.getStatut() == StatutVehicule.EN_SERVICE || vehicule.getStatut() == StatutVehicule.HORS_SERVICE)</span>
+<span class="fc" id="L489">                .toList();</span>
+        }
+
+<span class="fc" id="L492">        return vehiculeRepository.findAll().stream()</span>
+<span class="pc bpc" id="L493" title="3 of 4 branches missed.">            .filter(vehicule -&gt; vehicule.getStatut() == StatutVehicule.EN_SERVICE || vehicule.getStatut() == StatutVehicule.HORS_SERVICE)</span>
+<span class="fc" id="L494">            .toList();</span>
+    }
+
+    private Chauffeur resolveChauffeur(Long chauffeurId) {
+<span class="fc bfc" id="L498" title="All 2 branches covered.">        if (chauffeurId == null) {</span>
+<span class="fc" id="L499">            return null;</span>
+        }
+<span class="fc" id="L501">        Utilisateur utilisateur = utilisateurRepository.findById(chauffeurId)</span>
+<span class="pc" id="L502">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Chauffeur introuvable&quot;));</span>
+<span class="fc bfc" id="L503" title="All 2 branches covered.">        if (utilisateur instanceof Chauffeur chauffeur) {</span>
+<span class="fc" id="L504">            return chauffeur;</span>
+        }
+<span class="fc" id="L506">        throw new ResourceNotFoundException(&quot;Chauffeur introuvable&quot;);</span>
+    }
+
+    private Vehicule resolveVehicule(Long vehiculeId) {
+<span class="fc bfc" id="L510" title="All 2 branches covered.">        if (vehiculeId == null) {</span>
+<span class="fc" id="L511">            return null;</span>
+        }
+<span class="fc" id="L513">        return vehiculeRepository.findById(vehiculeId)</span>
+<span class="pc" id="L514">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Véhicule introuvable&quot;));</span>
+    }
+
+    private Manager resolveManager(Long managerId, Utilisateur currentUser) {
+<span class="fc bfc" id="L518" title="All 2 branches covered.">        if (managerId != null) {</span>
+<span class="fc" id="L519">            Utilisateur utilisateur = utilisateurRepository.findById(managerId)</span>
+<span class="pc" id="L520">                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Manager introuvable&quot;));</span>
+<span class="fc bfc" id="L521" title="All 2 branches covered.">            if (utilisateur instanceof Manager manager) {</span>
+<span class="fc" id="L522">                return manager;</span>
+            }
+<span class="fc" id="L524">            throw new ResourceNotFoundException(&quot;Manager introuvable&quot;);</span>
+        }
+
+<span class="fc bfc" id="L527" title="All 4 branches covered.">        if (currentUser != null &amp;&amp; currentUser.getRole() == Role.MANAGER) {</span>
+<span class="pc bpc" id="L528" title="1 of 2 branches missed.">            return currentUser instanceof Manager manager ? manager : null;</span>
+        }
+
+<span class="fc bfc" id="L531" title="All 4 branches covered.">        return currentUser != null &amp;&amp; currentUser.getCreatedBy() instanceof Manager manager ? manager : null;</span>
+    }
+
+    private Double resolveLatitude(String label, Double provided) {
+<span class="fc bfc" id="L535" title="All 2 branches covered.">        if (provided != null) {</span>
+<span class="fc" id="L536">            return provided;</span>
+        }
+<span class="fc" id="L538">        return parseCoordinate(label, true);</span>
+    }
+
+    private Double resolveLongitude(String label, Double provided) {
+<span class="fc bfc" id="L542" title="All 2 branches covered.">        if (provided != null) {</span>
+<span class="fc" id="L543">            return provided;</span>
+        }
+<span class="fc" id="L545">        return parseCoordinate(label, false);</span>
+    }
+
+    private Double parseCoordinate(String value, boolean latitude) {
+<span class="pc bpc" id="L549" title="1 of 4 branches missed.">        if (value == null || value.isBlank()) {</span>
+<span class="fc" id="L550">            return null;</span>
+        }
+
+<span class="fc" id="L553">        String normalized = value.trim();</span>
+<span class="fc" id="L554">        String[] parts = normalized.split(&quot;,&quot;);</span>
+<span class="fc bfc" id="L555" title="All 2 branches covered.">        if (parts.length == 2) {</span>
+            try {
+<span class="fc bfc" id="L557" title="All 2 branches covered.">                return Double.parseDouble(parts[latitude ? 0 : 1].trim());</span>
+<span class="fc" id="L558">            } catch (NumberFormatException ignored) {</span>
+                // fallback to geocoding below
+            }
+        }
+
+        try {
+<span class="fc" id="L564">            OsrmService.GeoPoint point = osrmService.geocoder(value);</span>
+<span class="fc bfc" id="L565" title="All 2 branches covered.">            if (point == null) {</span>
+<span class="fc" id="L566">                return null;</span>
+            }
+<span class="fc bfc" id="L568" title="All 2 branches covered.">            return latitude ? point.latitude() : point.longitude();</span>
+<span class="fc" id="L569">        } catch (RuntimeException ex) {</span>
+<span class="fc" id="L570">            log.warn(&quot;Coordinate resolution failed for '{}': {}&quot;, value, ex.getMessage());</span>
+<span class="fc" id="L571">            return null;</span>
+        }
+    }
+
+    private List&lt;Trajet&gt; resolveVisibleTrajets() {
+<span class="fc" id="L576">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc bfc" id="L578" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L579">            return trajetRepository.findAll().stream()</span>
+<span class="fc" id="L580">                    .sorted(Comparator.comparing(Trajet::getDateDepart,</span>
+<span class="fc" id="L581">                            Comparator.nullsLast(Comparator.reverseOrder())))</span>
+<span class="fc" id="L582">                    .toList();</span>
+        }
+
+<span class="fc bfc" id="L585" title="All 2 branches covered.">        if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L586">            return trajetRepository.findByChauffeurIdWithFetch(currentUser.getId());</span>
+        }
+
+<span class="fc bfc" id="L589" title="All 2 branches covered.">        if (currentUser instanceof Manager manager) {</span>
+            // Manager — tous les trajets de ses chauffeurs supervisés (chauffeur.manager_id = manager.id)
+            // On utilise findByChauffeurManagerIdWithFetch pour couvrir les trajets
+            // même si trajet.manager_id est null ou pointe vers un autre manager.
+<span class="fc" id="L593">            return trajetRepository.findByChauffeurManagerIdWithFetch(manager.getId());</span>
+        }
+
+<span class="fc" id="L596">        return List.of();</span>
+    }
+    private boolean contains(String value, String needle) {
+<span class="fc bfc" id="L599" title="All 4 branches covered.">        return value != null &amp;&amp; value.toLowerCase(Locale.ROOT).contains(needle);</span>
+    }
+
+    private TrajetResponse toResponse(Trajet trajet) {
+<span class="fc" id="L603">        TripTimingMetrics metrics = computeTripTimingMetrics(trajet);</span>
+<span class="fc bfc" id="L604" title="All 2 branches covered.">        Double distanceKm = trajet.getDistanceKm() != null ? trajet.getDistanceKm() : estimateDistanceKm(trajet);</span>
+<span class="fc" id="L605">        return new TrajetResponse(</span>
+<span class="fc" id="L606">            trajet.getId(),</span>
+<span class="fc" id="L607">            trajet.getPointDepart(),</span>
+<span class="fc" id="L608">            trajet.getDestination(),</span>
+<span class="fc" id="L609">            trajet.getLatitudeDepart(),</span>
+<span class="fc" id="L610">            trajet.getLongitudeDepart(),</span>
+<span class="fc" id="L611">            trajet.getLatitudeArrivee(),</span>
+<span class="fc" id="L612">            trajet.getLongitudeArrivee(),</span>
+            distanceKm,
+<span class="fc" id="L614">            trajet.getDureeEstimeeMinutes(),</span>
+<span class="fc" id="L615">            trajet.getGeometrieItineraire(),</span>
+<span class="fc" id="L616">            trajet.getChargeKg(),</span>
+<span class="fc" id="L617">            trajet.getPriorite(),</span>
+<span class="fc" id="L618">            trajet.getNotes(),</span>
+<span class="fc" id="L619">            trajet.getDateDepart(),</span>
+<span class="fc" id="L620">            trajet.getDateArrivee(),</span>
+<span class="fc" id="L621">            trajet.getDateArriveeReelle(),</span>
+<span class="fc" id="L622">            metrics.dureeReelleMinutes(),</span>
+<span class="fc" id="L623">            metrics.retardMinutes(),</span>
+<span class="fc" id="L624">            metrics.statutPerformance(),</span>
+<span class="fc" id="L625">            trajet.getStatut(),</span>
+<span class="fc bfc" id="L626" title="All 2 branches covered.">            trajet.getChauffeur() != null ? trajet.getChauffeur().getId() : null,</span>
+<span class="fc bfc" id="L627" title="All 2 branches covered.">            trajet.getChauffeur() != null ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim() : null,</span>
+<span class="fc bfc" id="L628" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getId() : null,</span>
+<span class="fc bfc" id="L629" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getMatricule() : null,</span>
+<span class="fc bfc" id="L630" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getCouleur() : null,</span>
+<span class="fc bfc" id="L631" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getLatitudeActuelle() : null,</span>
+<span class="fc bfc" id="L632" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getLongitudeActuelle() : null,</span>
+<span class="fc bfc" id="L633" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getVitesseActuelle() : null,</span>
+<span class="fc bfc" id="L634" title="All 2 branches covered.">            trajet.getManager() != null ? trajet.getManager().getId() : null,</span>
+<span class="fc bfc" id="L635" title="All 2 branches covered.">            trajet.getManager() != null ? (trajet.getManager().getPrenom() + &quot; &quot; + trajet.getManager().getNom()).trim() : null</span>
+        );
+    }
+
+    private TripTimingMetrics computeTripTimingMetrics(Trajet trajet) {
+<span class="fc bfc" id="L640" title="All 2 branches covered.">        if (trajet.getDateDepart() == null) {</span>
+<span class="fc" id="L641">            return new TripTimingMetrics(null, null, null);</span>
+        }
+
+<span class="fc" id="L644">        LocalDateTime referenceEnd = trajet.getDateArriveeReelle();</span>
+<span class="fc bfc" id="L645" title="All 4 branches covered.">        boolean isRunning = trajet.getStatut() == StatutTrajet.EN_COURS || trajet.getStatut() == StatutTrajet.ACTIF;</span>
+<span class="fc bfc" id="L646" title="All 4 branches covered.">        if (referenceEnd == null &amp;&amp; isRunning) {</span>
+<span class="fc" id="L647">            referenceEnd = LocalDateTime.now();</span>
+        }
+
+<span class="fc bfc" id="L650" title="All 2 branches covered.">        if (referenceEnd == null) {</span>
+<span class="fc" id="L651">            return new TripTimingMetrics(null, null, null);</span>
+        }
+
+<span class="fc" id="L654">        long realMinutes = java.time.Duration.between(trajet.getDateDepart(), referenceEnd).toMinutes();</span>
+<span class="fc" id="L655">        int realDuration = (int) Math.max(0, realMinutes);</span>
+<span class="fc bfc" id="L656" title="All 2 branches covered.">        int planned = trajet.getDureeEstimeeMinutes() != null ? trajet.getDureeEstimeeMinutes() : 0;</span>
+<span class="fc" id="L657">        int retard = realDuration - planned;</span>
+
+<span class="fc" id="L659">        return new TripTimingMetrics(</span>
+<span class="fc" id="L660">            realDuration,</span>
+<span class="fc" id="L661">            retard,</span>
+<span class="fc bfc" id="L662" title="All 2 branches covered.">            computePerformanceLabel(retard, isRunning, trajet.getDateArriveeReelle() == null)</span>
+        );
+    }
+
+    private Double estimateDistanceKm(Trajet trajet) {
+<span class="pc bpc" id="L667" title="2 of 8 branches missed.">        if (trajet.getLatitudeDepart() == null || trajet.getLongitudeDepart() == null || trajet.getLatitudeArrivee() == null || trajet.getLongitudeArrivee() == null) {</span>
+<span class="fc" id="L668">            return 0.0;</span>
+        }
+
+<span class="fc" id="L671">        double earthRadiusKm = 6371.0;</span>
+<span class="fc" id="L672">        double lat1 = Math.toRadians(trajet.getLatitudeDepart());</span>
+<span class="fc" id="L673">        double lat2 = Math.toRadians(trajet.getLatitudeArrivee());</span>
+<span class="fc" id="L674">        double deltaLat = Math.toRadians(trajet.getLatitudeArrivee() - trajet.getLatitudeDepart());</span>
+<span class="fc" id="L675">        double deltaLon = Math.toRadians(trajet.getLongitudeArrivee() - trajet.getLongitudeDepart());</span>
+<span class="fc" id="L676">        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)</span>
+<span class="fc" id="L677">            + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);</span>
+<span class="fc" id="L678">        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));</span>
+<span class="fc" id="L679">        return round(c * earthRadiusKm);</span>
+    }
+
+    private double round(double value) {
+<span class="fc" id="L683">        return Math.round(value * 100.0) / 100.0;</span>
+    }
+
+    private String computePerformanceLabel(int retardMinutes, boolean isRunning, boolean missingArrival) {
+<span class="pc bpc" id="L687" title="1 of 4 branches missed.">        if (missingArrival &amp;&amp; isRunning) {</span>
+<span class="fc bfc" id="L688" title="All 2 branches covered.">            if (retardMinutes &lt; 0) {</span>
+<span class="fc" id="L689">                return &quot;En avance&quot;;</span>
+            }
+<span class="fc bfc" id="L691" title="All 2 branches covered.">            if (retardMinutes &lt; 5) {</span>
+<span class="fc" id="L692">                return &quot;À l'heure&quot;;</span>
+            }
+<span class="fc bfc" id="L694" title="All 2 branches covered.">            if (retardMinutes &lt;= 30) {</span>
+<span class="fc" id="L695">                return &quot;Léger retard&quot;;</span>
+            }
+<span class="fc" id="L697">            return &quot;Retard important&quot;;</span>
+        }
+
+<span class="fc bfc" id="L700" title="All 2 branches covered.">        if (retardMinutes &lt; 0) {</span>
+<span class="fc" id="L701">            return &quot;En avance&quot;;</span>
+        }
+<span class="fc bfc" id="L703" title="All 2 branches covered.">        if (retardMinutes &lt; 5) {</span>
+<span class="fc" id="L704">            return &quot;À l'heure&quot;;</span>
+        }
+<span class="fc bfc" id="L706" title="All 2 branches covered.">        if (retardMinutes &lt;= 30) {</span>
+<span class="fc" id="L707">            return &quot;Léger retard&quot;;</span>
+        }
+<span class="fc" id="L709">        return &quot;Retard important&quot;;</span>
+    }
+
+<span class="fc" id="L712">    private record TripTimingMetrics(Integer dureeReelleMinutes, Integer retardMinutes, String statutPerformance) { }</span>
+
+    private TrajetCarteResponse toCarteResponse(Trajet trajet) {
+<span class="fc" id="L715">        String geometrieItineraire = trajet.getGeometrieItineraire();</span>
+<span class="pc bpc" id="L716" title="1 of 4 branches missed.">        if ((geometrieItineraire == null || geometrieItineraire.isBlank())</span>
+<span class="fc bfc" id="L717" title="All 2 branches covered.">            &amp;&amp; trajet.getLatitudeDepart() != null</span>
+<span class="pc bpc" id="L718" title="1 of 2 branches missed.">            &amp;&amp; trajet.getLongitudeDepart() != null</span>
+<span class="fc bfc" id="L719" title="All 2 branches covered.">            &amp;&amp; trajet.getLatitudeArrivee() != null</span>
+<span class="pc bpc" id="L720" title="1 of 2 branches missed.">            &amp;&amp; trajet.getLongitudeArrivee() != null) {</span>
+            try {
+<span class="fc" id="L722">                OsrmService.RouteEstimation route = osrmService.calculerItineraire(</span>
+<span class="fc" id="L723">                    trajet.getLatitudeDepart(),</span>
+<span class="fc" id="L724">                    trajet.getLongitudeDepart(),</span>
+<span class="fc" id="L725">                    trajet.getLatitudeArrivee(),</span>
+<span class="fc" id="L726">                    trajet.getLongitudeArrivee(),</span>
+<span class="fc" id="L727">                    trajet.getTypeOptimisation()</span>
+                );
+<span class="pc bpc" id="L729" title="1 of 6 branches missed.">                if (route != null &amp;&amp; route.geometryJson() != null &amp;&amp; !route.geometryJson().isBlank()) {</span>
+<span class="fc" id="L730">                    geometrieItineraire = route.geometryJson();</span>
+                }
+<span class="fc" id="L732">            } catch (RuntimeException ex) {</span>
+<span class="fc" id="L733">                log.warn(&quot;OSRM geometry fallback failed for trajet {}: {}&quot;, trajet.getId(), ex.getMessage());</span>
+<span class="fc" id="L734">            }</span>
+        }
+
+<span class="fc" id="L737">        return new TrajetCarteResponse(</span>
+<span class="fc" id="L738">            trajet.getId(),</span>
+<span class="fc" id="L739">            trajet.getPointDepart(),</span>
+<span class="fc" id="L740">            trajet.getDestination(),</span>
+<span class="fc" id="L741">            trajet.getLatitudeDepart(),</span>
+<span class="fc" id="L742">            trajet.getLongitudeDepart(),</span>
+<span class="fc" id="L743">            trajet.getLatitudeArrivee(),</span>
+<span class="fc" id="L744">            trajet.getLongitudeArrivee(),</span>
+<span class="fc" id="L745">            trajet.getDistanceKm(),</span>
+<span class="fc" id="L746">            trajet.getDureeEstimeeMinutes(),</span>
+            geometrieItineraire,
+<span class="fc" id="L748">            trajet.getStatut(),</span>
+<span class="fc bfc" id="L749" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getId() : null,</span>
+<span class="fc bfc" id="L750" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getMatricule() : null,</span>
+<span class="fc bfc" id="L751" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getCouleur() : null,</span>
+<span class="fc" id="L752">            resolveVehiculeLatitude(trajet),</span>
+<span class="fc" id="L753">            resolveVehiculeLongitude(trajet),</span>
+<span class="fc bfc" id="L754" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getVitesseActuelle() : null,</span>
+<span class="fc bfc" id="L755" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getNiveauCarburant() : null,</span>
+<span class="fc bfc" id="L756" title="All 2 branches covered.">            trajet.getChauffeur() != null ? trajet.getChauffeur().getId() : null,</span>
+<span class="fc bfc" id="L757" title="All 2 branches covered.">            trajet.getChauffeur() != null ? trajet.getChauffeur().getTelephone() : null,</span>
+<span class="fc bfc" id="L758" title="All 2 branches covered.">            trajet.getChauffeur() != null ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim() : null,</span>
+<span class="fc bfc" id="L759" title="All 2 branches covered.">            trajet.getChauffeur() != null ? trajet.getChauffeur().getImage() : null,</span>
+<span class="pc bpc" id="L760" title="1 of 4 branches missed.">            trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getRole() != null ? trajet.getChauffeur().getRole().name() : null,</span>
+<span class="pc bpc" id="L761" title="1 of 4 branches missed.">            trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getSecteur() != null ? trajet.getChauffeur().getSecteur().getNom() : null,</span>
+<span class="fc" id="L762">            trajet.getTypeOptimisation(),</span>
+<span class="fc" id="L763">            trajet.getChargeKg(),</span>
+<span class="fc bfc" id="L764" title="All 2 branches covered.">            trajet.getVehicule() != null ? trajet.getVehicule().getKilometrage() : null,</span>
+            null
+        );
+    }
+
+    /**
+     * Résout la latitude réelle du véhicule pour l'affichage carte.
+     * Si la dernière position GPS du véhicule est antérieure au démarrage du trajet
+     * (ou absente), on retourne le point de départ du trajet pour que le camion
+     * apparaisse au début de son itinéraire et non à sa position périmée.
+     */
+    private Double resolveVehiculeLatitude(Trajet trajet) {
+<span class="fc bfc" id="L776" title="All 2 branches covered.">        if (trajet.getVehicule() == null) return null;</span>
+<span class="fc" id="L777">        Double lat = trajet.getVehicule().getLatitudeActuelle();</span>
+<span class="fc bfc" id="L778" title="All 2 branches covered.">        if (lat == null) return trajet.getLatitudeDepart();</span>
+        // Si la position GPS n'a jamais été mise à jour après le démarrage du trajet,
+        // utiliser le point de départ du trajet
+<span class="fc" id="L781">        LocalDateTime posMaj = trajet.getVehicule().getDernierePositionMaj();</span>
+<span class="fc" id="L782">        LocalDateTime dateDepart = trajet.getDateDepart();</span>
+<span class="pc bpc" id="L783" title="2 of 6 branches missed.">        if (posMaj == null || (dateDepart != null &amp;&amp; posMaj.isBefore(dateDepart))) {</span>
+<span class="fc" id="L784">            return trajet.getLatitudeDepart();</span>
+        }
+<span class="fc" id="L786">        return lat;</span>
+    }
+
+    /**
+     * Résout la longitude réelle du véhicule pour l'affichage carte.
+     * Même logique que resolveVehiculeLatitude.
+     */
+    private Double resolveVehiculeLongitude(Trajet trajet) {
+<span class="fc bfc" id="L794" title="All 2 branches covered.">        if (trajet.getVehicule() == null) return null;</span>
+<span class="fc" id="L795">        Double lng = trajet.getVehicule().getLongitudeActuelle();</span>
+<span class="fc bfc" id="L796" title="All 2 branches covered.">        if (lng == null) return trajet.getLongitudeDepart();</span>
+<span class="fc" id="L797">        LocalDateTime posMaj = trajet.getVehicule().getDernierePositionMaj();</span>
+<span class="fc" id="L798">        LocalDateTime dateDepart = trajet.getDateDepart();</span>
+<span class="pc bpc" id="L799" title="2 of 6 branches missed.">        if (posMaj == null || (dateDepart != null &amp;&amp; posMaj.isBefore(dateDepart))) {</span>
+<span class="fc" id="L800">            return trajet.getLongitudeDepart();</span>
+        }
+<span class="fc" id="L802">        return lng;</span>
+    }
+
+    private void handleWeatherAlerts(Trajet trajet, Double latitude, Double longitude) {
+<span class="pc bpc" id="L806" title="3 of 8 branches missed.">        if (trajet == null || latitude == null || longitude == null || trajet.getId() == null) {</span>
+<span class="fc" id="L807">            return;</span>
+        }
+
+<span class="fc" id="L810">        MeteoResponse meteo = meteoService.getMeteo(latitude, longitude);</span>
+<span class="pc bpc" id="L811" title="1 of 6 branches missed.">        if (meteo == null || meteo.dangereux() == null || !meteo.dangereux()) {</span>
+<span class="fc" id="L812">            weatherAlertHistory.remove(trajet.getId());</span>
+<span class="fc" id="L813">            return;</span>
+        }
+
+<span class="fc" id="L816">        String signature = meteo.etatGeneral() + &quot;:&quot; + meteo.risqueConduite();</span>
+<span class="fc" id="L817">        String previousSignature = weatherAlertHistory.put(trajet.getId(), signature);</span>
+<span class="fc bfc" id="L818" title="All 2 branches covered.">        if (signature.equals(previousSignature)) {</span>
+<span class="fc" id="L819">            return;</span>
+        }
+
+<span class="fc" id="L822">        List&lt;Long&gt; audience = buildNotificationAudience(trajet);</span>
+<span class="fc bfc" id="L823" title="All 2 branches covered.">        for (Long userId : audience) {</span>
+<span class="fc" id="L824">            utilisateurRepository.findById(userId).ifPresent(user -&gt; createWeatherNotification(user, trajet, meteo));</span>
+<span class="fc" id="L825">        }</span>
+<span class="fc" id="L826">    }</span>
+
+    private void createWeatherNotification(Utilisateur recipient, Trajet trajet, MeteoResponse meteo) {
+<span class="pc bpc" id="L829" title="3 of 6 branches missed.">        if (recipient == null || trajet == null || meteo == null) {</span>
+<span class="nc" id="L830">            return;</span>
+        }
+
+<span class="fc" id="L833">        String message = buildWeatherMessage(recipient, trajet, meteo);</span>
+<span class="pc bpc" id="L834" title="1 of 4 branches missed.">        if (message == null || message.isBlank()) {</span>
+<span class="fc" id="L835">            return;</span>
+        }
+
+<span class="fc" id="L838">        Notification notification = Notification.builder()</span>
+<span class="fc" id="L839">            .type(TypeNotif.NOTIF_TRAJET)</span>
+<span class="fc" id="L840">            .message(message)</span>
+<span class="fc" id="L841">            .utilisateur(recipient)</span>
+<span class="fc" id="L842">            .build();</span>
+<span class="fc" id="L843">        notificationRepository.save(notification);</span>
+<span class="fc" id="L844">        notificationRealtimeService.publishToUsers(List.of(recipient.getId()), notification);</span>
+<span class="fc" id="L845">    }</span>
+
+    private String buildWeatherMessage(Utilisateur recipient, Trajet trajet, MeteoResponse meteo) {
+<span class="fc bfc" id="L848" title="All 2 branches covered.">        String chauffeurNom = trajet.getChauffeur() != null</span>
+<span class="fc" id="L849">            ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim()</span>
+<span class="fc" id="L850">            : &quot;le chauffeur&quot;;</span>
+<span class="fc bfc" id="L851" title="All 2 branches covered.">        String destination = trajet.getDestination() != null ? trajet.getDestination() : &quot;votre destination&quot;;</span>
+
+<span class="fc bfc" id="L853" title="All 4 branches covered.">        return switch (meteo.etatGeneral()) {</span>
+<span class="pc bpc" id="L854" title="1 of 4 branches missed.">            case &quot;ORAGE&quot; -&gt; switch (recipient.getRole()) {</span>
+<span class="fc" id="L855">                case CHAUFFEUR -&gt; &quot;⛈️ Conditions météo dangereuses sur votre itinéraire. Orage en cours. Réduisez votre vitesse et soyez extrêmement prudent.&quot;;</span>
+<span class="fc" id="L856">                case MANAGER -&gt; &quot;⛈️ Alerte météo — Orage sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;. Vitesse simulée réduite automatiquement.&quot;;</span>
+<span class="fc" id="L857">                case SUPERADMIN -&gt; &quot;⛈️ Alerte météo — Orage détecté sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</span>
+<span class="nc" id="L858">                default -&gt; null;</span>
+            };
+<span class="pc bpc" id="L860" title="1 of 4 branches missed.">            case &quot;BROUILLARD&quot; -&gt; switch (recipient.getRole()) {</span>
+<span class="fc" id="L861">                case CHAUFFEUR -&gt; &quot;🌫️ Brouillard épais détecté. Visibilité inférieure à 200 mètres. Allumez vos feux et réduisez votre vitesse.&quot;;</span>
+<span class="fc" id="L862">                case MANAGER -&gt; &quot;🌫️ Alerte météo — Brouillard épais sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</span>
+<span class="fc" id="L863">                case SUPERADMIN -&gt; &quot;🌫️ Alerte météo — Brouillard épais détecté sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</span>
+<span class="nc" id="L864">                default -&gt; null;</span>
+            };
+<span class="pc bpc" id="L866" title="1 of 4 branches missed.">            case &quot;NEIGE&quot; -&gt; switch (recipient.getRole()) {</span>
+<span class="fc" id="L867">                case CHAUFFEUR -&gt; &quot;❄️ Chute de neige détectée sur votre itinéraire. Réduisez votre vitesse et soyez très prudent.&quot;;</span>
+<span class="fc" id="L868">                case MANAGER -&gt; &quot;❄️ Alerte météo — Neige sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</span>
+<span class="fc" id="L869">                case SUPERADMIN -&gt; &quot;❄️ Alerte météo — Neige détectée sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</span>
+<span class="nc" id="L870">                default -&gt; null;</span>
+            };
+<span class="fc" id="L872">            default -&gt; null;</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CongeServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.services.impl</a> &gt; <span class="el_source">CongeServiceImpl.java</span></div><h1>CongeServiceImpl.java</h1><pre class="source lang-java linenums">package com.logiway.services.impl;
+
+import com.logiway.dto.request.CongeDecisionRequest;
+import com.logiway.dto.request.CreateCongeRequest;
+import com.logiway.dto.request.UpdateCongeRequest;
+import com.logiway.dto.response.ApiMessageResponse;
+import com.logiway.dto.response.CongeResponse;
+import com.logiway.entities.Chauffeur;
+import com.logiway.entities.Conge;
+import com.logiway.entities.Manager;
+import com.logiway.entities.Notification;
+import com.logiway.entities.Utilisateur;
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutConge;
+import com.logiway.entities.enums.TypeNotif;
+import com.logiway.exceptions.BadRequestException;
+import com.logiway.exceptions.ResourceNotFoundException;
+import com.logiway.exceptions.UnauthorizedException;
+import com.logiway.repositories.CongeRepository;
+import com.logiway.repositories.NotificationRepository;
+import com.logiway.repositories.UtilisateurRepository;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.CongeService;
+import com.logiway.services.NotificationRealtimeService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+
+@Service
+<span class="fc" id="L39">@RequiredArgsConstructor</span>
+<span class="fc" id="L40">@Slf4j</span>
+public class CongeServiceImpl implements CongeService {
+
+    private final CongeRepository congeRepository;
+    private final UtilisateurRepository utilisateurRepository;
+    private final NotificationRepository notificationRepository;
+    private final NotificationRealtimeService notificationRealtimeService;
+    private final AuthenticatedUserService authenticatedUserService;
+    private final GoogleCalendarLeaveSyncService googleCalendarLeaveSyncService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List&lt;CongeResponse&gt; getAccessibleConges() {
+<span class="fc" id="L53">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+
+<span class="fc bfc" id="L55" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc" id="L56">            return congeRepository.findAll().stream()</span>
+<span class="fc" id="L57">                .sorted(Comparator.comparing(Conge::getDateDebut, Comparator.nullsLast(Comparator.naturalOrder()))</span>
+<span class="fc" id="L58">                    .thenComparing(Conge::getId, Comparator.nullsLast(Comparator.naturalOrder())))</span>
+<span class="fc" id="L59">                .map(this::toResponse)</span>
+<span class="fc" id="L60">                .toList();</span>
+        }
+
+<span class="fc bfc" id="L63" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc" id="L64">            LinkedHashMap&lt;Long, Conge&gt; unique = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L65">            congeRepository.findByManager_IdOrderByDateDebutDesc(currentUser.getId()).forEach(conge -&gt; unique.putIfAbsent(conge.getId(), conge));</span>
+<span class="fc" id="L66">            congeRepository.findByChauffeur_Manager_IdOrderByDateDebutDesc(currentUser.getId()).forEach(conge -&gt; unique.putIfAbsent(conge.getId(), conge));</span>
+<span class="fc" id="L67">            return unique.values().stream().map(this::toResponse).toList();</span>
+        }
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc" id="L71">            return congeRepository.findByChauffeur_IdOrderByDateDebutDesc(currentUser.getId()).stream()</span>
+<span class="fc" id="L72">                .map(this::toResponse)</span>
+<span class="fc" id="L73">                .toList();</span>
+        }
+
+<span class="fc" id="L76">        return List.of();</span>
+    }
+
+    @Override
+    @Transactional
+    public CongeResponse createConge(CreateCongeRequest request) {
+<span class="fc" id="L82">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L83">        ensureCanCreate(currentUser);</span>
+<span class="fc" id="L84">        validateDates(request.dateDebut(), request.dateFin());</span>
+<span class="fc" id="L85">        ensureNoPendingLeave(currentUser);</span>
+
+<span class="fc" id="L87">        Conge conge = new Conge();</span>
+<span class="fc" id="L88">        conge.setType(request.type());</span>
+<span class="fc" id="L89">        conge.setDateDebut(request.dateDebut());</span>
+<span class="fc" id="L90">        conge.setDateFin(request.dateFin());</span>
+<span class="fc" id="L91">        conge.setMotif(request.motif().trim());</span>
+<span class="fc" id="L92">        conge.setStatut(StatutConge.EN_ATTENTE);</span>
+<span class="fc" id="L93">        conge.setCommentaireValidation(null);</span>
+
+<span class="fc" id="L95">        applyOwnership(conge, currentUser);</span>
+
+<span class="fc" id="L97">        congeRepository.save(conge);</span>
+<span class="fc" id="L98">        notifyReviewersOfRequest(conge, buildRequestMessage(conge, currentUser));</span>
+
+<span class="fc" id="L100">        return toResponse(conge);</span>
+    }
+
+    @Override
+    @Transactional
+    public CongeResponse updateConge(Long id, UpdateCongeRequest request) {
+<span class="fc" id="L106">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L107">        Conge conge = requireOwnedConge(id, currentUser);</span>
+
+<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (request.type() != null) {</span>
+<span class="fc" id="L110">            conge.setType(request.type());</span>
+        }
+<span class="fc bfc" id="L112" title="All 2 branches covered.">        if (request.dateDebut() != null) {</span>
+<span class="fc" id="L113">            conge.setDateDebut(request.dateDebut());</span>
+        }
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        if (request.dateFin() != null) {</span>
+<span class="fc" id="L116">            conge.setDateFin(request.dateFin());</span>
+        }
+<span class="fc bfc" id="L118" title="All 4 branches covered.">        if (request.motif() != null &amp;&amp; !request.motif().isBlank()) {</span>
+<span class="fc" id="L119">            conge.setMotif(request.motif().trim());</span>
+        }
+
+<span class="fc" id="L122">        validateDates(conge.getDateDebut(), conge.getDateFin());</span>
+
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        if (conge.getStatut() == StatutConge.APPROUVE) {</span>
+<span class="fc" id="L125">            googleCalendarLeaveSyncService.deleteLeaveEvent(conge);</span>
+<span class="fc" id="L126">            conge.setCalendarEventId(null);</span>
+        }
+
+<span class="fc" id="L129">        conge.setStatut(StatutConge.EN_ATTENTE);</span>
+<span class="fc" id="L130">        conge.setCommentaireValidation(null);</span>
+<span class="fc" id="L131">        congeRepository.save(conge);</span>
+
+<span class="fc" id="L133">        notifyReviewersOfRequest(conge, buildRequestMessage(conge, currentUser));</span>
+<span class="fc" id="L134">        return toResponse(conge);</span>
+    }
+
+    @Override
+    @Transactional
+    public CongeResponse approveConge(Long id, CongeDecisionRequest request) {
+<span class="fc" id="L140">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L141">        Conge conge = requireReviewableConge(id, currentUser);</span>
+
+<span class="fc" id="L143">        conge.setStatut(StatutConge.APPROUVE);</span>
+<span class="fc" id="L144">        conge.setCommentaireValidation(normalizeComment(request.commentaire()));</span>
+<span class="fc" id="L145">        congeRepository.save(conge);</span>
+
+<span class="fc" id="L147">        Optional&lt;String&gt; calendarEventId = googleCalendarLeaveSyncService.syncApprovedLeave(conge);</span>
+<span class="fc" id="L148">        calendarEventId.ifPresent(conge::setCalendarEventId);</span>
+<span class="fc bfc" id="L149" title="All 2 branches covered.">        if (calendarEventId.isPresent()) {</span>
+<span class="fc" id="L150">            congeRepository.save(conge);</span>
+        }
+
+<span class="fc" id="L153">        markDecisionNotificationAsHandled(currentUser, request.notificationId(), conge, true);</span>
+
+<span class="fc" id="L155">        notifyRequesterOfDecision(conge, &quot;approuvée&quot;, request.commentaire());</span>
+<span class="fc" id="L156">        return toResponse(conge);</span>
+    }
+
+    @Override
+    @Transactional
+    public CongeResponse rejectConge(Long id, CongeDecisionRequest request) {
+<span class="fc" id="L162">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L163">        Conge conge = requireReviewableConge(id, currentUser);</span>
+
+<span class="fc" id="L165">        conge.setStatut(StatutConge.REJETE);</span>
+<span class="fc" id="L166">        conge.setCommentaireValidation(normalizeComment(request.commentaire()));</span>
+<span class="fc" id="L167">        googleCalendarLeaveSyncService.deleteLeaveEvent(conge);</span>
+<span class="fc" id="L168">        conge.setCalendarEventId(null);</span>
+<span class="fc" id="L169">        congeRepository.save(conge);</span>
+
+<span class="fc" id="L171">        markDecisionNotificationAsHandled(currentUser, request.notificationId(), conge, false);</span>
+
+<span class="fc" id="L173">        notifyRequesterOfDecision(conge, &quot;rejetée&quot;, request.commentaire());</span>
+<span class="fc" id="L174">        return toResponse(conge);</span>
+    }
+
+    @Override
+    @Transactional
+    public ApiMessageResponse deleteConge(Long id) {
+<span class="fc" id="L180">        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L181">        Conge conge = requireOwnedConge(id, currentUser);</span>
+
+<span class="fc bfc" id="L183" title="All 2 branches covered.">        if (conge.getStatut() == StatutConge.APPROUVE) {</span>
+<span class="fc" id="L184">            conge.setStatut(StatutConge.ANNULE);</span>
+<span class="fc" id="L185">            conge.setCommentaireValidation(null);</span>
+<span class="fc" id="L186">            googleCalendarLeaveSyncService.deleteLeaveEvent(conge);</span>
+<span class="fc" id="L187">            conge.setCalendarEventId(null);</span>
+<span class="fc" id="L188">            congeRepository.save(conge);</span>
+<span class="fc" id="L189">            notifyReviewersOfCancellation(conge, currentUser);</span>
+<span class="fc" id="L190">            return new ApiMessageResponse(&quot;Le congé a été annulé avec succès.&quot;);</span>
+        }
+
+<span class="fc" id="L193">        congeRepository.delete(conge);</span>
+<span class="fc" id="L194">        notifyReviewersOfCancellation(conge, currentUser);</span>
+<span class="fc" id="L195">        return new ApiMessageResponse(&quot;La demande de congé a été supprimée.&quot;);</span>
+    }
+
+    private void ensureCanCreate(Utilisateur currentUser) {
+<span class="fc bfc" id="L199" title="All 4 branches covered.">        if (currentUser.getRole() != Role.MANAGER &amp;&amp; currentUser.getRole() != Role.CHAUFFEUR) {</span>
+<span class="fc" id="L200">            throw new UnauthorizedException(&quot;Only managers and drivers can submit leave requests&quot;);</span>
+        }
+<span class="fc" id="L202">    }</span>
+
+    private void ensureNoPendingLeave(Utilisateur currentUser) {
+<span class="fc bfc" id="L205" title="All 2 branches covered.">        boolean hasPending = currentUser.getRole() == Role.MANAGER</span>
+<span class="fc" id="L206">            ? congeRepository.existsByManager_IdAndStatut(currentUser.getId(), StatutConge.EN_ATTENTE)</span>
+<span class="fc" id="L207">            : congeRepository.existsByChauffeur_IdAndStatut(currentUser.getId(), StatutConge.EN_ATTENTE);</span>
+
+<span class="fc bfc" id="L209" title="All 2 branches covered.">        if (hasPending) {</span>
+<span class="fc" id="L210">            throw new BadRequestException(&quot;You already have a pending leave request&quot;);</span>
+        }
+<span class="fc" id="L212">    }</span>
+
+    private void applyOwnership(Conge conge, Utilisateur currentUser) {
+<span class="fc bfc" id="L215" title="All 2 branches covered.">        if (currentUser instanceof Manager manager) {</span>
+<span class="fc" id="L216">            conge.setManager(manager);</span>
+<span class="fc" id="L217">            return;</span>
+        }
+
+<span class="fc bfc" id="L220" title="All 2 branches covered.">        if (currentUser instanceof Chauffeur chauffeur) {</span>
+<span class="fc" id="L221">            conge.setChauffeur(chauffeur);</span>
+<span class="fc bfc" id="L222" title="All 2 branches covered.">            if (chauffeur.getManager() == null) {</span>
+<span class="fc" id="L223">                throw new BadRequestException(&quot;Driver must be assigned to a manager before requesting leave&quot;);</span>
+            }
+<span class="fc" id="L225">            conge.setManager(chauffeur.getManager());</span>
+<span class="fc" id="L226">            return;</span>
+        }
+
+<span class="fc" id="L229">        throw new UnauthorizedException(&quot;Only managers and drivers can submit leave requests&quot;);</span>
+    }
+
+    private void validateDates(LocalDate dateDebut, LocalDate dateFin) {
+<span class="fc bfc" id="L233" title="All 4 branches covered.">        if (dateDebut == null || dateFin == null) {</span>
+<span class="fc" id="L234">            throw new BadRequestException(&quot;Leave dates are required&quot;);</span>
+        }
+
+<span class="fc bfc" id="L237" title="All 2 branches covered.">        if (dateFin.isBefore(dateDebut)) {</span>
+<span class="fc" id="L238">            throw new BadRequestException(&quot;The end date must be on or after the start date&quot;);</span>
+        }
+<span class="fc" id="L240">    }</span>
+
+    private Conge requireOwnedConge(Long id, Utilisateur currentUser) {
+<span class="fc" id="L243">        Conge conge = congeRepository.findById(id)</span>
+<span class="fc" id="L244">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Leave request not found&quot;));</span>
+
+<span class="fc bfc" id="L246" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc bfc" id="L247" title="All 4 branches covered.">            if (conge.getManager() == null || !Objects.equals(conge.getManager().getId(), currentUser.getId())) {</span>
+<span class="fc" id="L248">                throw new UnauthorizedException(&quot;You can only modify your own leave requests&quot;);</span>
+            }
+<span class="fc" id="L250">            return conge;</span>
+        }
+
+<span class="fc bfc" id="L253" title="All 2 branches covered.">        if (currentUser.getRole() == Role.CHAUFFEUR) {</span>
+<span class="fc bfc" id="L254" title="All 4 branches covered.">            if (conge.getChauffeur() == null || !Objects.equals(conge.getChauffeur().getId(), currentUser.getId())) {</span>
+<span class="fc" id="L255">                throw new UnauthorizedException(&quot;You can only modify your own leave requests&quot;);</span>
+            }
+<span class="fc" id="L257">            return conge;</span>
+        }
+
+<span class="fc" id="L260">        throw new UnauthorizedException(&quot;SuperAdmin has read-only access on leave requests&quot;);</span>
+    }
+
+    private Conge requireReviewableConge(Long id, Utilisateur currentUser) {
+<span class="fc" id="L264">        Conge conge = congeRepository.findById(id)</span>
+<span class="fc" id="L265">            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Leave request not found&quot;));</span>
+
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        if (currentUser.getRole() == Role.SUPERADMIN) {</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">            if (conge.getManager() == null) {</span>
+<span class="fc" id="L269">                throw new UnauthorizedException(&quot;SuperAdmin can only review manager leave requests&quot;);</span>
+            }
+<span class="fc" id="L271">            return conge;</span>
+        }
+
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        if (currentUser.getRole() == Role.MANAGER) {</span>
+<span class="fc bfc" id="L275" title="All 4 branches covered.">            if (conge.getChauffeur() == null || conge.getChauffeur().getManager() == null</span>
+<span class="fc bfc" id="L276" title="All 2 branches covered.">                || !Objects.equals(conge.getChauffeur().getManager().getId(), currentUser.getId())) {</span>
+<span class="fc" id="L277">                throw new UnauthorizedException(&quot;You can only review leaves of your direct drivers&quot;);</span>
+            }
+<span class="fc" id="L279">            return conge;</span>
+        }
+
+<span class="fc" id="L282">        throw new UnauthorizedException(&quot;You are not allowed to review leave requests&quot;);</span>
+    }
+
+    private void notifyReviewersOfRequest(Conge conge, String message) {
+<span class="fc" id="L286">        resolveReviewers(conge).forEach(recipient -&gt; createNotification(recipient, message));</span>
+<span class="fc" id="L287">    }</span>
+
+    private void notifyRequesterOfDecision(Conge conge, String decisionLabel, String comment) {
+<span class="fc" id="L290">        Utilisateur requester = resolveRequester(conge);</span>
+<span class="fc bfc" id="L291" title="All 2 branches covered.">        if (requester == null) {</span>
+<span class="fc" id="L292">            return;</span>
+        }
+
+<span class="fc" id="L295">        StringBuilder builder = new StringBuilder();</span>
+<span class="fc" id="L296">        builder.append(&quot;Votre demande de congé du &quot;)</span>
+<span class="fc" id="L297">            .append(conge.getDateDebut())</span>
+<span class="fc" id="L298">            .append(&quot; au &quot;)</span>
+<span class="fc" id="L299">            .append(conge.getDateFin())</span>
+<span class="fc" id="L300">            .append(&quot; a été &quot;)</span>
+<span class="fc" id="L301">            .append(decisionLabel)</span>
+<span class="fc" id="L302">            .append(&quot;.&quot;);</span>
+
+<span class="fc bfc" id="L304" title="All 4 branches covered.">        if (comment != null &amp;&amp; !comment.isBlank()) {</span>
+<span class="fc" id="L305">            builder.append(&quot; Commentaire: &quot;).append(comment.trim());</span>
+        }
+
+<span class="fc" id="L308">        createNotification(requester, withLeaveToken(conge, builder.toString()));</span>
+<span class="fc" id="L309">    }</span>
+
+    private void notifyReviewersOfCancellation(Conge conge, Utilisateur requester) {
+<span class="fc" id="L312">        String message = &quot;La demande de congé de &quot; + requester.getPrenom() + &quot; &quot; + requester.getNom()</span>
+            + &quot; a été annulée ou supprimée.&quot;;
+<span class="fc" id="L314">        resolveReviewers(conge).forEach(recipient -&gt; createNotification(recipient, withLeaveToken(conge, message)));</span>
+<span class="fc" id="L315">    }</span>
+
+    private List&lt;Utilisateur&gt; resolveReviewers(Conge conge) {
+<span class="fc" id="L318">        List&lt;Utilisateur&gt; reviewers = new ArrayList&lt;&gt;();</span>
+
+<span class="fc bfc" id="L320" title="All 2 branches covered.">        if (conge.getChauffeur() != null) {</span>
+<span class="fc bfc" id="L321" title="All 2 branches covered.">            if (conge.getChauffeur().getManager() != null) {</span>
+<span class="fc" id="L322">                reviewers.add(conge.getChauffeur().getManager());</span>
+            }
+<span class="fc" id="L324">            return reviewers;</span>
+        }
+
+<span class="fc bfc" id="L327" title="All 2 branches covered.">        if (conge.getManager() != null) {</span>
+<span class="fc" id="L328">            reviewers.addAll(utilisateurRepository.findByRole(Role.SUPERADMIN));</span>
+        }
+
+<span class="fc" id="L331">        return reviewers;</span>
+    }
+
+    private Utilisateur resolveRequester(Conge conge) {
+<span class="fc bfc" id="L335" title="All 2 branches covered.">        if (conge.getChauffeur() != null) {</span>
+<span class="fc" id="L336">            return conge.getChauffeur();</span>
+        }
+
+<span class="fc" id="L339">        return conge.getManager();</span>
+    }
+
+    private void createNotification(Utilisateur recipient, String message) {
+<span class="fc bfc" id="L343" title="All 2 branches covered.">        if (recipient == null) {</span>
+<span class="fc" id="L344">            return;</span>
+        }
+
+<span class="fc" id="L347">        Notification notification = Notification.builder()</span>
+<span class="fc" id="L348">            .type(TypeNotif.NOTIF_CONGE)</span>
+<span class="fc" id="L349">            .message(message)</span>
+<span class="fc" id="L350">            .utilisateur(recipient)</span>
+<span class="fc" id="L351">            .build();</span>
+
+<span class="fc" id="L353">        notificationRepository.save(notification);</span>
+<span class="fc" id="L354">        notificationRealtimeService.publishToUsers(List.of(recipient.getId()), notification);</span>
+<span class="fc" id="L355">    }</span>
+
+    private String buildRequestMessage(Conge conge, Utilisateur requester) {
+<span class="fc" id="L358">        String requesterLabel = (requester.getPrenom() + &quot; &quot; + requester.getNom()).trim();</span>
+<span class="fc" id="L359">        String message = &quot;Nouvelle demande de congé de &quot; + requesterLabel</span>
+<span class="fc" id="L360">            + &quot; | type: &quot; + conge.getType()</span>
+<span class="fc" id="L361">            + &quot; | du &quot; + conge.getDateDebut()</span>
+<span class="fc" id="L362">            + &quot; au &quot; + conge.getDateFin()</span>
+<span class="fc" id="L363">            + &quot; | motif: &quot; + conge.getMotif();</span>
+<span class="fc" id="L364">        return withLeaveToken(conge, message);</span>
+    }
+
+    private String withLeaveToken(Conge conge, String message) {
+<span class="fc bfc" id="L368" title="All 4 branches covered.">        if (conge == null || conge.getId() == null) {</span>
+<span class="fc" id="L369">            return message;</span>
+        }
+
+<span class="fc" id="L372">        return &quot;[CONGE_ID:&quot; + conge.getId() + &quot;] &quot; + message;</span>
+    }
+
+    private void markDecisionNotificationAsHandled(Utilisateur actor, Long notificationId, Conge conge, boolean approved) {
+<span class="pc bpc" id="L376" title="1 of 6 branches missed.">        if (actor == null || notificationId == null || conge == null) {</span>
+<span class="fc" id="L377">            return;</span>
+        }
+
+<span class="fc" id="L380">        notificationRepository.findById(notificationId).ifPresent(notification -&gt; {</span>
+<span class="fc bfc" id="L381" title="All 4 branches covered.">            if (notification.getUtilisateur() == null || !Objects.equals(notification.getUtilisateur().getId(), actor.getId())) {</span>
+<span class="fc" id="L382">                return;</span>
+            }
+
+<span class="fc bfc" id="L385" title="All 2 branches covered.">            if (notification.getType() != TypeNotif.NOTIF_CONGE) {</span>
+<span class="fc" id="L386">                return;</span>
+            }
+
+<span class="fc bfc" id="L389" title="All 2 branches covered.">            String verb = approved ? &quot;approuvée&quot; : &quot;rejetée&quot;;</span>
+<span class="fc" id="L390">            String updatedMessage = &quot;[CONGE_ID:&quot; + conge.getId() + &quot;] Demande de congé traitée: &quot; + verb</span>
+<span class="fc" id="L391">                + &quot; | période: &quot; + conge.getDateDebut() + &quot; au &quot; + conge.getDateFin();</span>
+
+<span class="fc" id="L393">            notification.setMessage(updatedMessage);</span>
+<span class="fc" id="L394">            notification.setEstLu(Boolean.TRUE);</span>
+<span class="fc" id="L395">            notificationRepository.save(notification);</span>
+<span class="fc" id="L396">            notificationRealtimeService.publishToUsers(List.of(actor.getId()), notification);</span>
+<span class="fc" id="L397">        });</span>
+<span class="fc" id="L398">    }</span>
+
+    private String normalizeComment(String comment) {
+<span class="fc bfc" id="L401" title="All 4 branches covered.">        if (comment == null || comment.isBlank()) {</span>
+<span class="fc" id="L402">            return null;</span>
+        }
+
+<span class="fc" id="L405">        return comment.trim();</span>
+    }
+
+    private CongeResponse toResponse(Conge conge) {
+<span class="fc" id="L409">        Utilisateur requester = resolveRequester(conge);</span>
+<span class="fc" id="L410">        return new CongeResponse(</span>
+<span class="fc" id="L411">            conge.getId(),</span>
+<span class="fc" id="L412">            conge.getType(),</span>
+<span class="fc" id="L413">            conge.getDateDebut(),</span>
+<span class="fc" id="L414">            conge.getDateFin(),</span>
+<span class="fc" id="L415">            conge.getPeriode(),</span>
+<span class="fc" id="L416">            conge.getMotif(),</span>
+<span class="fc" id="L417">            conge.getStatut(),</span>
+<span class="fc" id="L418">            conge.getCommentaireValidation(),</span>
+<span class="fc bfc" id="L419" title="All 2 branches covered.">            requester != null ? requester.getId() : null,</span>
+<span class="fc bfc" id="L420" title="All 2 branches covered.">            requester != null ? fullName(requester) : null,</span>
+<span class="fc bfc" id="L421" title="All 2 branches covered.">            requester != null ? requester.getEmail() : null,</span>
+<span class="fc bfc" id="L422" title="All 2 branches covered.">            requester != null ? requester.getRole() : null,</span>
+<span class="fc bfc" id="L423" title="All 2 branches covered.">            conge.getManager() != null ? conge.getManager().getId() : null,</span>
+<span class="fc bfc" id="L424" title="All 2 branches covered.">            conge.getManager() != null ? fullName(conge.getManager()) : null,</span>
+<span class="fc bfc" id="L425" title="All 2 branches covered.">            conge.getManager() != null ? conge.getManager().getEmail() : null,</span>
+<span class="fc bfc" id="L426" title="All 2 branches covered.">            conge.getChauffeur() != null ? conge.getChauffeur().getId() : null,</span>
+<span class="fc bfc" id="L427" title="All 2 branches covered.">            conge.getChauffeur() != null ? fullName(conge.getChauffeur()) : null,</span>
+<span class="fc bfc" id="L428" title="All 2 branches covered.">            conge.getChauffeur() != null ? conge.getChauffeur().getEmail() : null,</span>
+<span class="fc" id="L429">            conge.getDateCreation(),</span>
+<span class="fc" id="L430">            conge.getDateMiseAJour()</span>
+        );
+    }
+
+    private String fullName(Utilisateur utilisateur) {
+<span class="fc" id="L435">        return (safe(utilisateur.getPrenom()) + &quot; &quot; + safe(utilisateur.getNom())).trim();</span>
+    }
+
+    private String safe(String value) {
+<span class="fc bfc" id="L439" title="All 2 branches covered.">        return value == null ? &quot;&quot; : value;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

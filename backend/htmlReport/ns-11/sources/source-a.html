@@ -1,0 +1,290 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > NotificationRealtimeServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: NotificationRealtimeServiceImpl (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Class, %
+</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">NotificationRealtimeServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (1/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (8/8)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (64/64)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (62/62)
+  </span>
+</td>
+</tr>
+
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services.impl;
+&nbsp;
+&nbsp;import com.logiway.dto.response.NotificationResponse;
+&nbsp;import com.logiway.entities.Chauffeur;
+&nbsp;import com.logiway.entities.Notification;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.enums.Role;
+&nbsp;import com.logiway.entities.enums.TypeNotif;
+&nbsp;import com.logiway.repositories.UtilisateurRepository;
+&nbsp;import com.logiway.services.NotificationRealtimeService;
+&nbsp;import com.logiway.utils.NotificationMessageResolver;
+&nbsp;import com.logiway.utils.NotificationToneResolver;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.time.Duration;
+&nbsp;import java.util.Collection;
+&nbsp;import java.util.LinkedHashSet;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Set;
+&nbsp;import java.util.concurrent.ConcurrentHashMap;
+&nbsp;import java.util.concurrent.CopyOnWriteArrayList;
+&nbsp;
+&nbsp;@Service
+&nbsp;@RequiredArgsConstructor
+&nbsp;public class NotificationRealtimeServiceImpl implements NotificationRealtimeService {
+&nbsp;
+<b class="fc">&nbsp;    private static final long EMITTER_TIMEOUT_MS = Duration.ofMinutes(30).toMillis();</b>
+&nbsp;
+&nbsp;    private final UtilisateurRepository utilisateurRepository;
+&nbsp;    private final Map&lt;Long, CopyOnWriteArrayList&lt;SseEmitter&gt;&gt; emittersByUser = new ConcurrentHashMap&lt;&gt;();
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public SseEmitter register(Long userId) {
+<b class="fc">&nbsp;        if (userId == null) {</b>
+<b class="fc">&nbsp;            throw new com.logiway.exceptions.UnauthorizedException(&quot;User id is missing for realtime registration&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);</b>
+<b class="fc">&nbsp;        emittersByUser.computeIfAbsent(userId, key -&gt; new CopyOnWriteArrayList&lt;&gt;()).add(emitter);</b>
+&nbsp;
+<b class="fc">&nbsp;        emitter.onCompletion(() -&gt; removeEmitter(userId, emitter));</b>
+<b class="fc">&nbsp;        emitter.onTimeout(() -&gt; removeEmitter(userId, emitter));</b>
+<b class="fc">&nbsp;        emitter.onError((ignored) -&gt; removeEmitter(userId, emitter));</b>
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            emitter.send(SseEmitter.event().name(&quot;connected&quot;).data(&quot;ok&quot;));</b>
+&nbsp;        } catch (IOException ex) {
+<b class="fc">&nbsp;            removeEmitter(userId, emitter);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return emitter;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void publishToUsers(Collection&lt;Long&gt; userIds, Notification notification) {
+<b class="fc">&nbsp;        if (userIds == null || userIds.isEmpty() || notification == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Set&lt;Long&gt; audience = new LinkedHashSet&lt;&gt;(userIds);</b>
+<b class="fc">&nbsp;        audience.addAll(resolveAuditAudience(notification));</b>
+<b class="fc">&nbsp;        Map&lt;Long, Utilisateur&gt; audienceUsers = utilisateurRepository.findAllById(audience).stream()</b>
+<b class="fc">&nbsp;            .collect(java.util.stream.Collectors.toMap(Utilisateur::getId, user -&gt; user));</b>
+&nbsp;
+<b class="fc">&nbsp;        for (Long userId : audience) {</b>
+<b class="fc">&nbsp;            List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</b>
+<b class="fc">&nbsp;            if (emitters == null || emitters.isEmpty()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            NotificationResponse response = toResponse(notification, audienceUsers.get(userId));</b>
+&nbsp;
+<b class="fc">&nbsp;            for (SseEmitter emitter : emitters) {</b>
+&nbsp;                try {
+<b class="fc">&nbsp;                    emitter.send(SseEmitter.event().name(&quot;notification&quot;).data(response));</b>
+&nbsp;                } catch (IOException ex) {
+<b class="fc">&nbsp;                    removeEmitter(userId, emitter);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void publishNamedEventToUsers(Collection&lt;Long&gt; userIds, String eventName, Object payload) {
+<b class="fc">&nbsp;        if (userIds == null || userIds.isEmpty() || eventName == null || eventName.isBlank() || payload == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Set&lt;Long&gt; audience = new LinkedHashSet&lt;&gt;(userIds);</b>
+&nbsp;
+<b class="fc">&nbsp;        for (Long userId : audience) {</b>
+<b class="fc">&nbsp;            List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</b>
+<b class="fc">&nbsp;            if (emitters == null || emitters.isEmpty()) {</b>
+&nbsp;                continue;
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            for (SseEmitter emitter : emitters) {</b>
+&nbsp;                try {
+<b class="fc">&nbsp;                    emitter.send(SseEmitter.event().name(eventName).data(payload));</b>
+&nbsp;                } catch (Exception ex) {
+&nbsp;                    // Catch any exception (IO or otherwise) to ensure one bad emitter doesn&#39;t break the loop
+<b class="fc">&nbsp;                    removeEmitter(userId, emitter);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void disconnectUser(Long userId) {
+<b class="fc">&nbsp;        List&lt;SseEmitter&gt; emitters = emittersByUser.remove(userId);</b>
+<b class="fc">&nbsp;        if (emitters == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        for (SseEmitter emitter : emitters) {</b>
+<b class="fc">&nbsp;            emitter.complete();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void removeEmitter(Long userId, SseEmitter emitter) {
+<b class="fc">&nbsp;        List&lt;SseEmitter&gt; emitters = emittersByUser.get(userId);</b>
+<b class="fc">&nbsp;        if (emitters == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        emitters.remove(emitter);</b>
+<b class="fc">&nbsp;        if (emitters.isEmpty()) {</b>
+<b class="fc">&nbsp;            emittersByUser.remove(userId);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private NotificationResponse toResponse(Notification notification, Utilisateur recipient) {
+<b class="fc">&nbsp;        String message = NotificationMessageResolver.resolveForRecipient(recipient, notification);</b>
+<b class="fc">&nbsp;        String tone = NotificationToneResolver.resolve(notification.getType(), message);</b>
+<b class="fc">&nbsp;        return new NotificationResponse(</b>
+<b class="fc">&nbsp;            notification.getId(),</b>
+<b class="fc">&nbsp;            notification.getType(),</b>
+<b class="fc">&nbsp;            message,</b>
+<b class="fc">&nbsp;            notification.getDateCreation(),</b>
+<b class="fc">&nbsp;            notification.getEstLu(),</b>
+<b class="fc">&nbsp;            tone</b>
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    private Set&lt;Long&gt; resolveAuditAudience(Notification notification) {
+<b class="fc">&nbsp;        Set&lt;Long&gt; audience = new LinkedHashSet&lt;&gt;();</b>
+&nbsp;
+&nbsp;        // Do not broadcast message notifications to audit audience (SuperAdmins).
+&nbsp;        // Only keep audit audience for specific notification types when needed.
+<b class="fc">&nbsp;        if (notification.getType() == TypeNotif.NOTIF_VEHICULE || notification.getType() == TypeNotif.NOTIF_RECLAMATION || notification.getType() == TypeNotif.NOTIF_ENTREPRISE) {</b>
+<b class="fc">&nbsp;            utilisateurRepository.findByRole(Role.SUPERADMIN)</b>
+<b class="fc">&nbsp;                .forEach(superAdmin -&gt; audience.add(superAdmin.getId()));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Utilisateur target = notification.getUtilisateur();</b>
+<b class="fc">&nbsp;        if (target instanceof Chauffeur chauffeur &amp;&amp; chauffeur.getManager() != null) {</b>
+<b class="fc">&nbsp;            if (chauffeur.getManager().getEntreprise() == null</b>
+<b class="fc">&nbsp;                || chauffeur.getEntreprise() == null</b>
+<b class="fc">&nbsp;                || chauffeur.getManager().getEntreprise().getId().equals(chauffeur.getEntreprise().getId())) {</b>
+<b class="fc">&nbsp;                audience.add(chauffeur.getManager().getId());</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (target != null &amp;&amp; target.getCreatedBy() != null &amp;&amp; target.getCreatedBy().getRole() == Role.MANAGER) {</b>
+<b class="fc">&nbsp;            audience.add(target.getCreatedBy().getId());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return audience;</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

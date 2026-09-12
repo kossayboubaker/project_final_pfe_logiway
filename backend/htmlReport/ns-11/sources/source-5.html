@@ -1,0 +1,522 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > GoogleCalendarLeaveSyncService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: GoogleCalendarLeaveSyncService (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">GoogleCalendarLeaveSyncService</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (20/20)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (116/116)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (159/159)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">GoogleCalendarLeaveSyncService$CachedToken</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">GoogleCalendarLeaveSyncService$ServiceAccountCredentials</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (24/24)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (116/116)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (163/163)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode"><b class="fc">&nbsp;package com.logiway.services.impl;</b>
+&nbsp;
+&nbsp;import com.fasterxml.jackson.databind.JsonNode;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import com.logiway.entities.Conge;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Value;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.io.IOException;
+&nbsp;import java.net.URI;
+&nbsp;import java.net.URLEncoder;
+&nbsp;import java.net.http.HttpClient;
+&nbsp;import java.net.http.HttpRequest;
+&nbsp;import java.net.http.HttpResponse;
+&nbsp;import java.nio.charset.StandardCharsets;
+&nbsp;import java.nio.file.Files;
+&nbsp;import java.nio.file.Path;
+&nbsp;import java.security.KeyFactory;
+&nbsp;import java.security.PrivateKey;
+&nbsp;import java.security.Signature;
+&nbsp;import java.security.spec.PKCS8EncodedKeySpec;
+&nbsp;import java.time.Instant;
+&nbsp;import java.time.format.DateTimeFormatter;
+&nbsp;import java.util.Base64;
+&nbsp;import java.util.LinkedHashMap;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Optional;
+&nbsp;import java.util.UUID;
+&nbsp;import java.util.concurrent.atomic.AtomicReference;
+&nbsp;
+&nbsp;@Service
+&nbsp;@RequiredArgsConstructor
+<b class="fc">&nbsp;@Slf4j</b>
+&nbsp;public class GoogleCalendarLeaveSyncService {
+&nbsp;
+<b class="fc">&nbsp;    private static final DateTimeFormatter ISO_DATE = DateTimeFormatter.ISO_LOCAL_DATE;</b>
+&nbsp;    private static final String CALENDAR_SCOPE = &quot;https://www.googleapis.com/auth/calendar&quot;;
+&nbsp;    private static final String GOOGLE_TOKEN_URI = &quot;https://oauth2.googleapis.com/token&quot;;
+&nbsp;
+&nbsp;    private final ObjectMapper objectMapper;
+&nbsp;    private final HttpClient httpClient = HttpClient.newHttpClient();
+&nbsp;    private final AtomicReference&lt;CachedToken&gt; cachedTokenRef = new AtomicReference&lt;&gt;();
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.enabled:false}&quot;)
+&nbsp;    private boolean enabled;
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.calendar-id:}&quot;)
+&nbsp;    private String calendarId;
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.service-account.client-email:}&quot;)
+&nbsp;    private String serviceAccountEmail;
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.service-account.private-key:}&quot;)
+&nbsp;    private String serviceAccountPrivateKey;
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.service-account.credentials-json:}&quot;)
+&nbsp;    private String serviceAccountCredentialsJson;
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.service-account.delegated-user:}&quot;)
+&nbsp;    private String delegatedUser;
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.access-token:}&quot;)
+&nbsp;    private String accessToken;
+&nbsp;
+&nbsp;    @Value(&quot;${app.google-calendar.time-zone:Africa/Tunis}&quot;)
+&nbsp;    private String timeZone;
+&nbsp;
+&nbsp;    public Optional&lt;String&gt; syncApprovedLeave(Conge conge) {
+<b class="fc">&nbsp;        if (!isConfigured() || conge == null || conge.getDateDebut() == null || conge.getDateFin() == null) {</b>
+<b class="fc">&nbsp;            return Optional.empty();</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            if (conge.getCalendarEventId() != null &amp;&amp; !conge.getCalendarEventId().isBlank()) {</b>
+<b class="fc">&nbsp;                deleteEvent(conge.getCalendarEventId());</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            String eventId = createEvent(conge);</b>
+<b class="fc">&nbsp;            return Optional.ofNullable(eventId);</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            log.warn(&quot;Google Calendar sync failed for leave {}&quot;, conge.getId(), ex);</b>
+<b class="fc">&nbsp;            return Optional.empty();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    public void deleteLeaveEvent(Conge conge) {
+<b class="fc">&nbsp;        if (!isConfigured() || conge == null || conge.getCalendarEventId() == null || conge.getCalendarEventId().isBlank()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            deleteEvent(conge.getCalendarEventId());</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            log.warn(&quot;Google Calendar event deletion failed for leave {}&quot;, conge.getId(), ex);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private boolean isConfigured() {
+<b class="fc">&nbsp;        if (!enabled || calendarId == null || calendarId.isBlank()) {</b>
+<b class="fc">&nbsp;            return false;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (accessToken != null &amp;&amp; !accessToken.isBlank()) {</b>
+<b class="fc">&nbsp;            return true;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (serviceAccountCredentialsJson != null &amp;&amp; !serviceAccountCredentialsJson.isBlank()) {</b>
+<b class="fc">&nbsp;            return true;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return serviceAccountEmail != null &amp;&amp; !serviceAccountEmail.isBlank()</b>
+<b class="fc">&nbsp;            &amp;&amp; serviceAccountPrivateKey != null &amp;&amp; !serviceAccountPrivateKey.isBlank();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String createEvent(Conge conge) throws IOException, InterruptedException {
+<b class="fc">&nbsp;        Map&lt;String, Object&gt; payload = new LinkedHashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;        payload.put(&quot;summary&quot;, buildSummary(conge));</b>
+<b class="fc">&nbsp;        payload.put(&quot;description&quot;, buildDescription(conge));</b>
+<b class="fc">&nbsp;        payload.put(&quot;start&quot;, Map.of(&quot;date&quot;, ISO_DATE.format(conge.getDateDebut()), &quot;timeZone&quot;, timeZone));</b>
+<b class="fc">&nbsp;        payload.put(&quot;end&quot;, Map.of(&quot;date&quot;, ISO_DATE.format(conge.getDateFin().plusDays(1)), &quot;timeZone&quot;, timeZone));</b>
+<b class="fc">&nbsp;        payload.put(&quot;transparency&quot;, &quot;transparent&quot;);</b>
+<b class="fc">&nbsp;        payload.put(&quot;extendedProperties&quot;, Map.of(&quot;private&quot;, buildPrivateMetadata(conge)));</b>
+&nbsp;
+<b class="fc">&nbsp;        String body = objectMapper.writeValueAsString(payload);</b>
+<b class="fc">&nbsp;        HttpRequest request = HttpRequest.newBuilder()</b>
+<b class="fc">&nbsp;            .uri(URI.create(&quot;https://www.googleapis.com/calendar/v3/calendars/&quot; + encodeCalendarId(calendarId) + &quot;/events&quot;))</b>
+<b class="fc">&nbsp;            .header(&quot;Authorization&quot;, &quot;Bearer &quot; + resolveAccessToken())</b>
+<b class="fc">&nbsp;            .header(&quot;Content-Type&quot;, &quot;application/json&quot;)</b>
+<b class="fc">&nbsp;            .POST(HttpRequest.BodyPublishers.ofString(body))</b>
+<b class="fc">&nbsp;            .build();</b>
+&nbsp;
+<b class="fc">&nbsp;        HttpResponse&lt;String&gt; response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());</b>
+<b class="fc">&nbsp;        if (response.statusCode() &gt;= 200 &amp;&amp; response.statusCode() &lt; 300) {</b>
+<b class="fc">&nbsp;            JsonNode node = objectMapper.readTree(response.body());</b>
+<b class="fc">&nbsp;            return node.path(&quot;id&quot;).asText(null);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        throw new IOException(&quot;Unexpected calendar response: &quot; + response.statusCode());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void deleteEvent(String eventId) throws IOException, InterruptedException {
+<b class="fc">&nbsp;        HttpRequest request = HttpRequest.newBuilder()</b>
+<b class="fc">&nbsp;            .uri(URI.create(&quot;https://www.googleapis.com/calendar/v3/calendars/&quot; + encodeCalendarId(calendarId) + &quot;/events/&quot; + eventId))</b>
+<b class="fc">&nbsp;            .header(&quot;Authorization&quot;, &quot;Bearer &quot; + resolveAccessToken())</b>
+<b class="fc">&nbsp;            .DELETE()</b>
+<b class="fc">&nbsp;            .build();</b>
+&nbsp;
+<b class="fc">&nbsp;        HttpResponse&lt;String&gt; response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());</b>
+<b class="fc">&nbsp;        if (response.statusCode() == 404) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (response.statusCode() &lt; 200 || response.statusCode() &gt;= 300) {</b>
+<b class="fc">&nbsp;            throw new IOException(&quot;Unexpected delete response: &quot; + response.statusCode());</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildSummary(Conge conge) {
+<b class="fc">&nbsp;        String owner = conge.getChauffeur() != null</b>
+<b class="fc">&nbsp;            ? conge.getChauffeur().getPrenom() + &quot; &quot; + conge.getChauffeur().getNom()</b>
+<b class="fc">&nbsp;            : conge.getManager() != null</b>
+<b class="fc">&nbsp;                ? conge.getManager().getPrenom() + &quot; &quot; + conge.getManager().getNom()</b>
+<b class="fc">&nbsp;                : &quot;Utilisateur&quot;;</b>
+&nbsp;
+<b class="fc">&nbsp;        return &quot;Absence &quot; + owner.trim() + &quot; - &quot; + conge.getType();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildDescription(Conge conge) {
+<b class="fc">&nbsp;        Utilisateur owner = conge.getChauffeur() != null ? conge.getChauffeur() : conge.getManager();</b>
+<b class="fc">&nbsp;        String ownerName = owner != null ? (safe(owner.getPrenom()) + &quot; &quot; + safe(owner.getNom())).trim() : &quot;Utilisateur&quot;;</b>
+<b class="fc">&nbsp;        String ownerRole = owner != null ? owner.getRole().name() : &quot;INCONNU&quot;;</b>
+<b class="fc">&nbsp;        String managerName = conge.getManager() != null ? (safe(conge.getManager().getPrenom()) + &quot; &quot; + safe(conge.getManager().getNom())).trim() : &quot;N/A&quot;;</b>
+<b class="fc">&nbsp;        String driverName = conge.getChauffeur() != null ? (safe(conge.getChauffeur().getPrenom()) + &quot; &quot; + safe(conge.getChauffeur().getNom())).trim() : &quot;N/A&quot;;</b>
+&nbsp;
+<b class="fc">&nbsp;        return &quot;Absence LogiWay\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- ID congé: &quot; + safe(conge.getId()) + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Utilisateur: &quot; + ownerName + &quot; (&quot; + ownerRole + &quot;)\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Type: &quot; + conge.getType() + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Début: &quot; + conge.getDateDebut() + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Fin: &quot; + conge.getDateFin() + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Durée: &quot; + (conge.getPeriode() != null ? conge.getPeriode() + &quot; jour(s)&quot; : &quot;N/A&quot;) + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Motif: &quot; + safe(conge.getMotif()) + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Manager: &quot; + managerName + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Chauffeur: &quot; + driverName + &quot;\n&quot;</b>
+<b class="fc">&nbsp;            + &quot;- Statut: &quot; + conge.getStatut();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Map&lt;String, String&gt; buildPrivateMetadata(Conge conge) {
+<b class="fc">&nbsp;        Map&lt;String, String&gt; metadata = new LinkedHashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;        metadata.put(&quot;leaveId&quot;, safe(conge.getId()));</b>
+<b class="fc">&nbsp;        metadata.put(&quot;leaveType&quot;, conge.getType() != null ? conge.getType().name() : &quot;&quot;);</b>
+<b class="fc">&nbsp;        metadata.put(&quot;leaveStatus&quot;, conge.getStatut() != null ? conge.getStatut().name() : &quot;&quot;);</b>
+<b class="fc">&nbsp;        metadata.put(&quot;managerId&quot;, conge.getManager() != null &amp;&amp; conge.getManager().getId() != null ? String.valueOf(conge.getManager().getId()) : &quot;&quot;);</b>
+<b class="fc">&nbsp;        metadata.put(&quot;driverId&quot;, conge.getChauffeur() != null &amp;&amp; conge.getChauffeur().getId() != null ? String.valueOf(conge.getChauffeur().getId()) : &quot;&quot;);</b>
+<b class="fc">&nbsp;        return metadata;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String resolveAccessToken() throws IOException, InterruptedException {
+<b class="fc">&nbsp;        if (accessToken != null &amp;&amp; !accessToken.isBlank()) {</b>
+<b class="fc">&nbsp;            return accessToken;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        CachedToken cached = cachedTokenRef.get();</b>
+<b class="fc">&nbsp;        long now = Instant.now().getEpochSecond();</b>
+<b class="fc">&nbsp;        if (cached != null &amp;&amp; cached.expiresAtEpochSeconds - 60 &gt; now) {</b>
+<b class="fc">&nbsp;            return cached.value;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String freshToken = requestServiceAccountToken();</b>
+<b class="fc">&nbsp;        return freshToken;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String requestServiceAccountToken() throws IOException, InterruptedException {
+&nbsp;        try {
+<b class="fc">&nbsp;            long now = Instant.now().getEpochSecond();</b>
+<b class="fc">&nbsp;            long expiresAt = now + 3600;</b>
+<b class="fc">&nbsp;            ServiceAccountCredentials credentials = resolveServiceAccountCredentials();</b>
+<b class="fc">&nbsp;            String assertion = buildJwtAssertion(credentials, now, expiresAt);</b>
+&nbsp;
+<b class="fc">&nbsp;            String payload = &quot;grant_type=&quot; + urlEncode(&quot;urn:ietf:params:oauth:grant-type:jwt-bearer&quot;)</b>
+<b class="fc">&nbsp;                + &quot;&amp;assertion=&quot; + urlEncode(assertion);</b>
+&nbsp;
+<b class="fc">&nbsp;            HttpRequest request = HttpRequest.newBuilder()</b>
+<b class="fc">&nbsp;                .uri(URI.create(GOOGLE_TOKEN_URI))</b>
+<b class="fc">&nbsp;                .header(&quot;Content-Type&quot;, &quot;application/x-www-form-urlencoded&quot;)</b>
+<b class="fc">&nbsp;                .POST(HttpRequest.BodyPublishers.ofString(payload))</b>
+<b class="fc">&nbsp;                .build();</b>
+&nbsp;
+<b class="fc">&nbsp;            HttpResponse&lt;String&gt; response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());</b>
+<b class="fc">&nbsp;            if (response.statusCode() &lt; 200 || response.statusCode() &gt;= 300) {</b>
+<b class="fc">&nbsp;                throw new IOException(&quot;Token endpoint returned &quot; + response.statusCode());</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            JsonNode node = objectMapper.readTree(response.body());</b>
+<b class="fc">&nbsp;            String token = node.path(&quot;access_token&quot;).asText(null);</b>
+<b class="fc">&nbsp;            long ttl = node.path(&quot;expires_in&quot;).asLong(3600);</b>
+<b class="fc">&nbsp;            if (token == null || token.isBlank()) {</b>
+<b class="fc">&nbsp;                throw new IOException(&quot;Google access_token is missing&quot;);</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            cachedTokenRef.set(new CachedToken(token, Instant.now().getEpochSecond() + ttl));</b>
+<b class="fc">&nbsp;            return token;</b>
+&nbsp;        } catch (RuntimeException ex) {
+<b class="fc">&nbsp;            throw new IOException(&quot;Failed to create Google service-account token&quot;, ex);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildJwtAssertion(ServiceAccountCredentials credentials, long issuedAt, long expiresAt) throws IOException {
+<b class="fc">&nbsp;        Map&lt;String, Object&gt; header = Map.of(</b>
+<b class="fc">&nbsp;            &quot;alg&quot;, &quot;RS256&quot;,</b>
+<b class="fc">&nbsp;            &quot;typ&quot;, &quot;JWT&quot;</b>
+&nbsp;        );
+&nbsp;
+<b class="fc">&nbsp;        Map&lt;String, Object&gt; claims = new LinkedHashMap&lt;&gt;();</b>
+<b class="fc">&nbsp;        claims.put(&quot;iss&quot;, credentials.clientEmail());</b>
+<b class="fc">&nbsp;        claims.put(&quot;scope&quot;, CALENDAR_SCOPE);</b>
+<b class="fc">&nbsp;        claims.put(&quot;aud&quot;, GOOGLE_TOKEN_URI);</b>
+<b class="fc">&nbsp;        claims.put(&quot;iat&quot;, issuedAt);</b>
+<b class="fc">&nbsp;        claims.put(&quot;exp&quot;, expiresAt);</b>
+<b class="fc">&nbsp;        claims.put(&quot;jti&quot;, UUID.randomUUID().toString());</b>
+<b class="fc">&nbsp;        if (delegatedUser != null &amp;&amp; !delegatedUser.isBlank()) {</b>
+<b class="fc">&nbsp;            claims.put(&quot;sub&quot;, delegatedUser.trim());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String encodedHeader = base64Url(objectMapper.writeValueAsBytes(header));</b>
+<b class="fc">&nbsp;        String encodedClaims = base64Url(objectMapper.writeValueAsBytes(claims));</b>
+<b class="fc">&nbsp;        String signingInput = encodedHeader + &quot;.&quot; + encodedClaims;</b>
+&nbsp;
+<b class="fc">&nbsp;        byte[] signature = sign(signingInput.getBytes(StandardCharsets.UTF_8), parsePrivateKey(credentials.privateKey()));</b>
+<b class="fc">&nbsp;        return signingInput + &quot;.&quot; + base64Url(signature);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private ServiceAccountCredentials resolveServiceAccountCredentials() throws IOException {
+<b class="fc">&nbsp;        if (serviceAccountCredentialsJson != null &amp;&amp; !serviceAccountCredentialsJson.isBlank()) {</b>
+<b class="fc">&nbsp;            String jsonContent = readCredentialsJson(serviceAccountCredentialsJson.trim());</b>
+<b class="fc">&nbsp;            JsonNode node = objectMapper.readTree(jsonContent);</b>
+<b class="fc">&nbsp;            String email = node.path(&quot;client_email&quot;).asText(&quot;&quot;).trim();</b>
+<b class="fc">&nbsp;            String privateKey = node.path(&quot;private_key&quot;).asText(&quot;&quot;).trim();</b>
+&nbsp;
+<b class="fc">&nbsp;            if (!email.isBlank() &amp;&amp; !privateKey.isBlank()) {</b>
+<b class="fc">&nbsp;                return new ServiceAccountCredentials(email, privateKey);</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String email = safe(serviceAccountEmail).trim();</b>
+<b class="fc">&nbsp;        String privateKey = safe(serviceAccountPrivateKey).trim();</b>
+<b class="fc">&nbsp;        if (email.isBlank() || privateKey.isBlank()) {</b>
+<b class="fc">&nbsp;            throw new IOException(&quot;Google service account credentials are missing&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return new ServiceAccountCredentials(email, privateKey);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String readCredentialsJson(String value) throws IOException {
+<b class="fc">&nbsp;        String trimmed = value.trim();</b>
+<b class="fc">&nbsp;        if (trimmed.startsWith(&quot;{&quot;)) {</b>
+<b class="fc">&nbsp;            return trimmed;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return Files.readString(Path.of(trimmed), StandardCharsets.UTF_8);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private byte[] sign(byte[] data, PrivateKey privateKey) throws IOException {
+&nbsp;        try {
+<b class="fc">&nbsp;            Signature signature = Signature.getInstance(&quot;SHA256withRSA&quot;);</b>
+<b class="fc">&nbsp;            signature.initSign(privateKey);</b>
+<b class="fc">&nbsp;            signature.update(data);</b>
+<b class="fc">&nbsp;            return signature.sign();</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            throw new IOException(&quot;Unable to sign JWT with service account key&quot;, ex);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private PrivateKey parsePrivateKey(String rawKey) throws IOException {
+&nbsp;        try {
+<b class="fc">&nbsp;            String normalized = rawKey</b>
+<b class="fc">&nbsp;                .replace(&quot;\\n&quot;, &quot;\n&quot;)</b>
+<b class="fc">&nbsp;                .replace(&quot;-----BEGIN PRIVATE KEY-----&quot;, &quot;&quot;)</b>
+<b class="fc">&nbsp;                .replace(&quot;-----END PRIVATE KEY-----&quot;, &quot;&quot;)</b>
+<b class="fc">&nbsp;                .replaceAll(&quot;\\s+&quot;, &quot;&quot;);</b>
+<b class="fc">&nbsp;            byte[] decoded = Base64.getDecoder().decode(normalized);</b>
+<b class="fc">&nbsp;            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(decoded);</b>
+<b class="fc">&nbsp;            return KeyFactory.getInstance(&quot;RSA&quot;).generatePrivate(keySpec);</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            throw new IOException(&quot;Unable to parse service account private key&quot;, ex);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String base64Url(byte[] value) {
+<b class="fc">&nbsp;        return Base64.getUrlEncoder().withoutPadding().encodeToString(value);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String urlEncode(String value) {
+<b class="fc">&nbsp;        return URLEncoder.encode(value, StandardCharsets.UTF_8);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String encodeCalendarId(String value) {
+<b class="fc">&nbsp;        return URLEncoder.encode(value, StandardCharsets.UTF_8);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String safe(Object value) {
+<b class="fc">&nbsp;        return value == null ? &quot;&quot; : String.valueOf(value);</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    private record CachedToken(String value, long expiresAtEpochSeconds) {</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    private record ServiceAccountCredentials(String clientEmail, String privateKey) {</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

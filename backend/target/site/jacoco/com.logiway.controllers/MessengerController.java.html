@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MessengerController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">MessengerController.java</span></div><h1>MessengerController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.request.MessengerTextRequest;
+import com.logiway.dto.request.MessengerMessageUpdateRequest;
+import com.logiway.dto.response.MessengerConversationResponse;
+import com.logiway.dto.response.MessengerMessagePageResponse;
+import com.logiway.dto.response.MessengerMessageResponse;
+import com.logiway.dto.response.MessengerPresenceResponse;
+import com.logiway.dto.response.MessengerReadResponse;
+import com.logiway.dto.response.MessengerUserResponse;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.MessengerRealtimeService;
+import com.logiway.services.MessengerService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.List;
+
+@RestController
+@RequestMapping(&quot;/api/messenger&quot;)
+<span class="fc" id="L31">@RequiredArgsConstructor</span>
+@PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+public class MessengerController {
+
+    private final MessengerService messengerService;
+    private final MessengerRealtimeService messengerRealtimeService;
+    private final AuthenticatedUserService authenticatedUserService;
+
+    @GetMapping(&quot;/conversations&quot;)
+    public ResponseEntity&lt;List&lt;MessengerConversationResponse&gt;&gt; getConversations(@RequestParam(required = false) String search) {
+<span class="fc" id="L41">        return ResponseEntity.ok(messengerService.getConversations(search));</span>
+    }
+
+    @GetMapping(&quot;/conversations/{destinataireId}/messages&quot;)
+    public ResponseEntity&lt;MessengerMessagePageResponse&gt; getConversationMessages(@PathVariable Long destinataireId,
+                                                                                @RequestParam(defaultValue = &quot;0&quot;) int page,
+                                                                                @RequestParam(defaultValue = &quot;30&quot;) int size) {
+<span class="fc" id="L48">        return ResponseEntity.ok(messengerService.getConversationMessages(destinataireId, page, size));</span>
+    }
+
+    @PostMapping(&quot;/messages&quot;)
+    public ResponseEntity&lt;MessengerMessageResponse&gt; sendTextMessage(@Valid @RequestBody MessengerTextRequest request) {
+<span class="fc" id="L53">        return ResponseEntity.status(HttpStatus.CREATED).body(messengerService.sendTextMessage(request));</span>
+    }
+
+    @PostMapping(value = &quot;/messages/fichiers&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity&lt;MessengerMessageResponse&gt; sendFileMessage(@RequestParam Long destinataireId,
+                                                                    @RequestParam MultipartFile fichier) {
+<span class="fc" id="L59">        return ResponseEntity.status(HttpStatus.CREATED).body(messengerService.sendFileMessage(destinataireId, fichier));</span>
+    }
+
+    @PostMapping(value = &quot;/messages/vocal&quot;, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity&lt;MessengerMessageResponse&gt; sendVocalMessage(@RequestParam Long destinataireId,
+                                                                     @RequestParam MultipartFile fichier,
+                                                                     @RequestParam(required = false) Integer dureeVocale) {
+<span class="fc" id="L66">        return ResponseEntity.status(HttpStatus.CREATED).body(messengerService.sendVocalMessage(destinataireId, fichier, dureeVocale));</span>
+    }
+
+    @PutMapping(&quot;/messages/{messageId}&quot;)
+    public ResponseEntity&lt;MessengerMessageResponse&gt; updateMessage(@PathVariable Long messageId,
+                                                                  @Valid @RequestBody MessengerMessageUpdateRequest request) {
+<span class="fc" id="L72">        return ResponseEntity.ok(messengerService.updateMessage(messageId, request));</span>
+    }
+
+    @DeleteMapping(&quot;/messages/{messageId}&quot;)
+    public ResponseEntity&lt;Void&gt; deleteMessage(@PathVariable Long messageId) {
+<span class="fc" id="L77">        messengerService.deleteMessage(messageId);</span>
+<span class="fc" id="L78">        return ResponseEntity.noContent().build();</span>
+    }
+
+    @GetMapping(&quot;/fichiers/{filename}&quot;)
+    public ResponseEntity&lt;Resource&gt; getFile(@PathVariable String filename) {
+<span class="fc" id="L83">        Resource resource = messengerService.loadFile(filename);</span>
+<span class="fc" id="L84">        String contentType = &quot;application/octet-stream&quot;;</span>
+        try {
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            contentType = resource.getURL().toString().toLowerCase().endsWith(&quot;.pdf&quot;) ? MediaType.APPLICATION_PDF_VALUE : contentType;</span>
+<span class="fc" id="L87">        } catch (IOException ignored) {</span>
+            // Fallback to octet-stream.
+<span class="fc" id="L89">        }</span>
+
+<span class="fc" id="L91">        return ResponseEntity.ok()</span>
+<span class="fc" id="L92">            .header(HttpHeaders.CONTENT_DISPOSITION, &quot;inline; filename=\&quot;&quot; + filename + &quot;\&quot;&quot;)</span>
+<span class="fc" id="L93">            .contentType(MediaType.parseMediaType(contentType))</span>
+<span class="fc" id="L94">            .body(resource);</span>
+    }
+
+    @PutMapping(&quot;/conversations/{destinataireId}/lu&quot;)
+    public ResponseEntity&lt;MessengerReadResponse&gt; markAsRead(@PathVariable Long destinataireId) {
+<span class="fc" id="L99">        return ResponseEntity.ok(messengerService.markConversationAsRead(destinataireId));</span>
+    }
+
+    @GetMapping(&quot;/utilisateurs&quot;)
+    public ResponseEntity&lt;List&lt;MessengerUserResponse&gt;&gt; getAuthorizedUsers(@RequestParam(required = false) String search) {
+<span class="fc" id="L104">        return ResponseEntity.ok(messengerService.getAuthorizedUsers(search));</span>
+    }
+
+    @GetMapping(value = &quot;/stream&quot;, produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream() {
+<span class="fc" id="L109">        Long currentUserId = authenticatedUserService.getCurrentUser().getId();</span>
+<span class="fc bfc" id="L110" title="All 2 branches covered.">        if (currentUserId == null) {</span>
+<span class="fc" id="L111">            throw new com.logiway.exceptions.UnauthorizedException(&quot;User id is missing&quot;);</span>
+        }
+<span class="fc" id="L113">        return messengerRealtimeService.register(currentUserId);</span>
+    }
+
+    @PostMapping(&quot;/presence&quot;)
+    public ResponseEntity&lt;MessengerPresenceResponse&gt; heartbeat() {
+<span class="fc" id="L118">        return ResponseEntity.ok(messengerService.heartbeat());</span>
+    }
+
+    @PostMapping(&quot;/presence/disconnect&quot;)
+    public ResponseEntity&lt;MessengerPresenceResponse&gt; disconnectPresence() {
+<span class="fc" id="L123">        messengerService.disconnectPresence();</span>
+<span class="fc" id="L124">        return ResponseEntity.ok(new MessengerPresenceResponse(authenticatedUserService.getCurrentUser().getId(), false, java.time.LocalDateTime.now()));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

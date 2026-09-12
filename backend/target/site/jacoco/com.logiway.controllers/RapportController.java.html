@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RapportController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">RapportController.java</span></div><h1>RapportController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.response.RapportResponse;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.RapportService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+
+@RestController
+@RequestMapping(&quot;/api/rapports&quot;)
+<span class="fc" id="L16">@RequiredArgsConstructor</span>
+@CrossOrigin(origins = &quot;${app.cors.allowed-origins:http://localhost:4200}&quot;)
+public class RapportController {
+
+    private final RapportService rapportService;
+    private final AuthenticatedUserService authenticatedUserService;
+
+    /**
+     * Génère un rapport sur les congés de la semaine
+     */
+    @GetMapping(&quot;/conges/semaine&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;RapportResponse&gt; genererRapportCongesSemaine() {
+        try {
+<span class="fc" id="L30">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L31">            RapportResponse rapport = rapportService.genererRapportCongesSemaine(utilisateur.getId());</span>
+<span class="fc" id="L32">            return ResponseEntity.ok(rapport);</span>
+<span class="fc" id="L33">        } catch (Exception e) {</span>
+<span class="fc" id="L34">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Génère un rapport sur les congés d'une période donnée
+     */
+    @GetMapping(&quot;/conges/periode&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;RapportResponse&gt; genererRapportCongesPeriode(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate debut,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
+        try {
+<span class="fc" id="L47">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L48">            RapportResponse rapport = rapportService.genererRapportCongesPeriode(debut, fin, utilisateur.getId());</span>
+<span class="fc" id="L49">            return ResponseEntity.ok(rapport);</span>
+<span class="fc" id="L50">        } catch (Exception e) {</span>
+<span class="fc" id="L51">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Génère un rapport sur le taux d'absence des chauffeurs
+     */
+    @GetMapping(&quot;/absences&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER')&quot;)
+    public ResponseEntity&lt;RapportResponse&gt; genererRapportTauxAbsences(
+        @RequestParam int mois,
+        @RequestParam int annee) {
+        try {
+<span class="fc" id="L64">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L65">            RapportResponse rapport = rapportService.genererRapportTauxAbsences(mois, annee, utilisateur.getId());</span>
+<span class="fc" id="L66">            return ResponseEntity.ok(rapport);</span>
+<span class="fc" id="L67">        } catch (Exception e) {</span>
+<span class="fc" id="L68">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Génère un rapport sur les réclamations
+     */
+    @GetMapping(&quot;/reclamations&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;RapportResponse&gt; genererRapportReclamations() {
+        try {
+<span class="fc" id="L79">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L80">            RapportResponse rapport = rapportService.genererRapportReclamations(utilisateur.getId());</span>
+<span class="fc" id="L81">            return ResponseEntity.ok(rapport);</span>
+<span class="fc" id="L82">        } catch (Exception e) {</span>
+<span class="fc" id="L83">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Génère un rapport complet sur les véhicules
+     */
+    @GetMapping(&quot;/vehicules&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;RapportResponse&gt; genererRapportVehicules() {
+        try {
+<span class="fc" id="L94">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L95">            RapportResponse rapport = rapportService.genererRapportVehicules(utilisateur.getId());</span>
+<span class="fc" id="L96">            return ResponseEntity.ok(rapport);</span>
+<span class="fc" id="L97">        } catch (Exception e) {</span>
+<span class="fc" id="L98">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Génère un rapport complet sur les trajets d'une période
+     */
+    @GetMapping(&quot;/trajets&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;RapportResponse&gt; genererRapportTrajets(
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate debut,
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fin) {
+        try {
+<span class="fc" id="L111">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L112">            RapportResponse rapport = rapportService.genererRapportTrajets(debut, fin, utilisateur.getId());</span>
+<span class="fc" id="L113">            return ResponseEntity.ok(rapport);</span>
+<span class="fc" id="L114">        } catch (Exception e) {</span>
+<span class="fc" id="L115">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+
+    /**
+     * Génère un rapport global sur toutes les gestions
+     */
+    @GetMapping(&quot;/global&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;RapportResponse&gt; genererRapportGlobal() {
+        try {
+<span class="fc" id="L126">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L127">            RapportResponse rapport = rapportService.genererRapportGlobal(utilisateur.getId());</span>
+<span class="fc" id="L128">            return ResponseEntity.ok(rapport);</span>
+<span class="fc" id="L129">        } catch (Exception e) {</span>
+<span class="fc" id="L130">            return ResponseEntity.internalServerError().build();</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Conge.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.entities</a> &gt; <span class="el_source">Conge.java</span></div><h1>Conge.java</h1><pre class="source lang-java linenums">package com.logiway.entities;
+
+import com.logiway.entities.enums.StatutConge;
+import com.logiway.entities.enums.TypeConge;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
+@Entity
+@Table(name = &quot;conges&quot;)
+@Getter
+<span class="pc" id="L15">@Setter</span>
+<span class="fc" id="L16">@NoArgsConstructor</span>
+<span class="fc" id="L17">@AllArgsConstructor</span>
+<span class="pc" id="L18">@Builder</span>
+public class Conge {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+<span class="fc" id="L23">    private Long id;</span>
+
+    @Column(name = &quot;date_debut&quot;)
+<span class="fc" id="L26">    private LocalDate dateDebut;</span>
+
+    @Column(name = &quot;date_fin&quot;)
+<span class="fc" id="L29">    private LocalDate dateFin;</span>
+
+<span class="fc" id="L31">    private Integer periode;</span>
+
+    @Column(length = 500)
+<span class="fc" id="L34">    private String motif;</span>
+
+    @Column(length = 1000)
+<span class="fc" id="L37">    private String commentaireValidation;</span>
+
+    @Column(name = &quot;calendar_event_id&quot;, length = 255)
+<span class="fc" id="L40">    private String calendarEventId;</span>
+
+    @Column(name = &quot;date_creation&quot;)
+<span class="fc" id="L43">    private LocalDateTime dateCreation;</span>
+
+    @Column(name = &quot;date_mise_a_jour&quot;)
+<span class="fc" id="L46">    private LocalDateTime dateMiseAJour;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+<span class="fc" id="L50">    private TypeConge type;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+<span class="fc" id="L54">    private StatutConge statut;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;chauffeur_id&quot;)
+<span class="fc" id="L58">    private Chauffeur chauffeur;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;manager_id&quot;)
+<span class="fc" id="L62">    private Manager manager;</span>
+
+    @PrePersist
+    @PreUpdate
+    void computePeriode() {
+<span class="fc" id="L67">        dateMiseAJour = LocalDateTime.now();</span>
+
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        if (dateCreation == null) {</span>
+<span class="fc" id="L70">            dateCreation = dateMiseAJour;</span>
+        }
+
+<span class="fc bfc" id="L73" title="All 6 branches covered.">        if (dateDebut != null &amp;&amp; dateFin != null &amp;&amp; !dateFin.isBefore(dateDebut)) {</span>
+<span class="fc" id="L74">            this.periode = (int) ChronoUnit.DAYS.between(dateDebut, dateFin) + 1;</span>
+        }
+<span class="fc" id="L76">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>KpiOverviewResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.dto.admin</a> &gt; <span class="el_source">KpiOverviewResponse.java</span></div><h1>KpiOverviewResponse.java</h1><pre class="source lang-java linenums">package com.logiway.dto.admin;
+
+import java.util.List;
+
+<span class="fc" id="L5">public class KpiOverviewResponse {</span>
+
+<span class="fc" id="L7">    public static class Cards {</span>
+        public long chauffeursActifs;
+        public long chauffeursTotal;
+        public long vehiculesEnService;
+        public long vehiculesEnMaintenance;
+        public long vehiculesHorsService;
+        public long vehiculesTotal;
+        public String vehiculesStatusSummary;
+        public long missionsEnCours;
+        public long missionsALheure;
+        public long missionsEnRetard;
+        public long missionsTerminees;
+        public long congesEnAttente;
+        public long congesApprouves;
+        public long congesRefuses;
+        public long reclamationsOuvertes;
+        public long reclamationsResolues;
+        public long reclamationsTotal;
+        public long administrateurs;
+        public long managers;
+        public long chauffeurs;
+    }
+
+<span class="fc" id="L30">    public static class PunctualityEntry {</span>
+        public String month;
+        public long onTime;
+        public long lateLess30;
+        public long lateMore30;
+        public long totalMissions;
+        public double punctualityPercent;
+    }
+
+<span class="fc" id="L39">    public static class IncidentEntry {</span>
+        public String category;
+        public long count;
+        public double percent;
+    }
+
+<span class="fc" id="L45">    public static class FuelOverview {</span>
+        public Double averageLPer100km;
+        public long vehiclesTracked;
+        public long lowFuelAlerts;
+        public double targetLPer100km;
+        public double deltaToTarget;
+    }
+
+<span class="fc" id="L53">    public static class CapacityDistributionEntry {</span>
+        public String vehicleType;
+        public double minPercent;
+        public double avgPercent;
+        public double maxPercent;
+        public double minTons;
+        public double avgTons;
+        public double maxTons;
+    }
+
+<span class="fc" id="L63">    public static class TopDriverEntry {</span>
+        public int rank;
+        public Long chauffeurId;
+        public String chauffeurName;
+        public long missionsCompleted;
+        public double performanceScore;
+        public double punctualityPercent;
+        public long incidents;
+        public String badge;
+        public double drivingHours;
+        public double availabilityScore;
+        public long totalTrips;
+        public double avgDelayMinutes;
+    }
+
+<span class="fc" id="L78">    public static class UserBreakdownEntry {</span>
+        public String role;
+        public long count;
+        public long actifs;
+    }
+
+<span class="fc" id="L84">    public static class ReclamationStatEntry {</span>
+        public String statut;
+        public long count;
+    }
+
+<span class="fc" id="L89">    public static class CongeStatEntry {</span>
+        public String statut;
+        public long count;
+    }
+
+<span class="fc" id="L94">    public Cards cards = new Cards();</span>
+    public List&lt;PunctualityEntry&gt; punctualityLast12Months;
+    public List&lt;IncidentEntry&gt; incidentsThisMonth;
+    public FuelOverview fuelOverview;
+    public List&lt;CapacityDistributionEntry&gt; capacityDistribution;
+    public List&lt;TopDriverEntry&gt; topDrivers;
+    public List&lt;UserBreakdownEntry&gt; usersBreakdown;
+    public List&lt;ReclamationStatEntry&gt; reclamationsStats;
+    public List&lt;CongeStatEntry&gt; congesStats;
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

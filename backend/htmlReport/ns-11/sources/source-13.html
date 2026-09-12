@@ -1,0 +1,1025 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > TrajetServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: TrajetServiceImpl (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">TrajetServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (44/44)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    86,6%
+  </span>
+  <span class="absValue">
+    (329/380)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    99,4%
+  </span>
+  <span class="absValue">
+    (479/482)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">TrajetServiceImpl$TripTimingMetrics</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (2/2)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    100%
+  </span>
+  <span class="absValue">
+    (46/46)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    86,6%
+  </span>
+  <span class="absValue">
+    (329/380)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    99,4%
+  </span>
+  <span class="absValue">
+    (481/484)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode"><b class="fc">&nbsp;package com.logiway.services.impl;</b>
+&nbsp;
+&nbsp;import com.logiway.dto.trajet.TourneeOptimiseeResponse;
+&nbsp;import com.logiway.dto.meteo.MeteoResponse;
+&nbsp;import com.logiway.dto.trajet.TrajetCarteResponse;
+&nbsp;import com.logiway.dto.trajet.TrajetOptimisationRequest;
+&nbsp;import com.logiway.dto.trajet.TrajetPositionRequest;
+&nbsp;import com.logiway.dto.trajet.TrajetRequest;
+&nbsp;import com.logiway.dto.trajet.TrajetResponse;
+&nbsp;import com.logiway.entities.Chauffeur;
+&nbsp;import com.logiway.entities.Manager;
+&nbsp;import com.logiway.entities.Notification;
+&nbsp;import com.logiway.entities.Trajet;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.Vehicule;
+&nbsp;import com.logiway.entities.enums.Role;
+&nbsp;import com.logiway.entities.enums.StatutChauffeur;
+&nbsp;import com.logiway.entities.enums.StatutTrajet;
+&nbsp;import com.logiway.entities.enums.StatutVehicule;
+&nbsp;import com.logiway.entities.enums.TypeNotif;
+&nbsp;import com.logiway.exceptions.ResourceNotFoundException;
+&nbsp;import com.logiway.repositories.NotificationRepository;
+&nbsp;import com.logiway.repositories.TrajetRepository;
+&nbsp;import com.logiway.repositories.UtilisateurRepository;
+&nbsp;import com.logiway.repositories.VehiculeRepository;
+&nbsp;import com.logiway.repositories.ChauffeurRepository;
+&nbsp;import com.logiway.security.AuthenticatedUserService;
+&nbsp;import com.logiway.services.NotificationRealtimeService;
+&nbsp;import com.logiway.services.MeteoService;
+&nbsp;import com.logiway.services.OsrmService;
+&nbsp;import com.logiway.services.PauseReglementaireService;
+&nbsp;import com.logiway.services.TrajetOptimisationService;
+&nbsp;
+&nbsp;import com.logiway.services.TrajetService;
+&nbsp;import jakarta.transaction.Transactional;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.data.domain.Page;
+&nbsp;import org.springframework.data.domain.PageImpl;
+&nbsp;import org.springframework.data.domain.Pageable;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.time.format.DateTimeFormatter;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.Comparator;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Locale;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.Set;
+&nbsp;import java.util.concurrent.ConcurrentHashMap;
+&nbsp;
+&nbsp;@Service
+&nbsp;@RequiredArgsConstructor
+&nbsp;@Transactional
+<b class="fc">&nbsp;@Slf4j</b>
+<b class="fc">&nbsp;public class TrajetServiceImpl implements TrajetService {</b>
+&nbsp;
+&nbsp;    private final TrajetRepository trajetRepository;
+&nbsp;    private final VehiculeRepository vehiculeRepository;
+&nbsp;    private final ChauffeurRepository chauffeurRepository;
+&nbsp;    private final UtilisateurRepository utilisateurRepository;
+&nbsp;    private final NotificationRepository notificationRepository;
+&nbsp;    private final NotificationRealtimeService notificationRealtimeService;
+&nbsp;    private final MeteoService meteoService;
+&nbsp;    private final AuthenticatedUserService authenticatedUserService;
+&nbsp;    private final OsrmService osrmService;
+&nbsp;    private final PauseReglementaireService pauseReglementaireService;
+&nbsp;    private final TrajetOptimisationService trajetOptimisationService;
+&nbsp;    private final Map&lt;Long, String&gt; weatherAlertHistory = new ConcurrentHashMap&lt;&gt;();
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public Page&lt;TrajetResponse&gt; getTrajets(String search, StatutTrajet statut, Pageable pageable) {
+<b class="fc">&nbsp;        List&lt;Trajet&gt; trajets = resolveVisibleTrajets();</b>
+<b class="fc">&nbsp;        if (statut != null) {</b>
+<b class="fc">&nbsp;            trajets = trajets.stream().filter(trajet -&gt; statut == trajet.getStatut()).toList();</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (search != null &amp;&amp; !search.isBlank()) {</b>
+<b class="fc">&nbsp;            String needle = search.toLowerCase(Locale.ROOT);</b>
+<b class="fc">&nbsp;            trajets = trajets.stream().filter(trajet -&gt;</b>
+<b class="fc">&nbsp;                contains(trajet.getPointDepart(), needle)</b>
+<b class="fc">&nbsp;                    || contains(trajet.getDestination(), needle)</b>
+<b class="fc">&nbsp;                    || contains(trajet.getVehicule() != null ? trajet.getVehicule().getMatricule() : null, needle)</b>
+<b class="fc">&nbsp;                    || contains(trajet.getChauffeur() != null ? trajet.getChauffeur().getNom() + &quot; &quot; + trajet.getChauffeur().getPrenom() : null, needle)</b>
+<b class="fc">&nbsp;            ).toList();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;TrajetResponse&gt; responses = trajets.stream().map(this::toResponse).toList();</b>
+<b class="fc">&nbsp;        if (pageable == null) {</b>
+<b class="fc">&nbsp;            return new PageImpl&lt;&gt;(responses);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        int start = Math.min((int) pageable.getOffset(), responses.size());</b>
+<b class="fc">&nbsp;        int end = Math.min(start + pageable.getPageSize(), responses.size());</b>
+<b class="fc">&nbsp;        return new PageImpl&lt;&gt;(responses.subList(start, end), pageable, responses.size());</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    public List&lt;TrajetCarteResponse&gt; getTrajetsCarte() {
+&nbsp;        List&lt;Trajet&gt; trajets;
+&nbsp;        try {
+<b class="fc">&nbsp;            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+&nbsp;
+<b class="fc">&nbsp;            if (currentUser.getRole() == Role.SUPERADMIN) {</b>
+&nbsp;                // SuperAdmin — tous les trajets EN_COURS de toutes les entreprises
+<b class="fc">&nbsp;                trajets = trajetRepository.findAll().stream()</b>
+<b class="fc">&nbsp;                        .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS)</b>
+<b class="fc">&nbsp;                        .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;            } else if (currentUser.getRole() == Role.CHAUFFEUR) {</b>
+&nbsp;                // Chauffeur — tous ses trajets visibles sur la carte (EN_COURS + ACTIF)
+&nbsp;                // Le Chauffeur doit voir son trajet actif ET son trajet en cours
+<b class="fc">&nbsp;                trajets = trajetRepository.findByChauffeurIdWithFetch(currentUser.getId()).stream()</b>
+<b class="fc">&nbsp;                        .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS</b>
+<b class="pc">&nbsp;                                || t.getStatut() == StatutTrajet.ACTIF)</b>
+<b class="fc">&nbsp;                        .toList();</b>
+&nbsp;
+<b class="fc">&nbsp;            } else if (currentUser instanceof Manager manager) {</b>
+&nbsp;                // Manager — trajets EN_COURS de TOUS ses chauffeurs supervisés
+&nbsp;                // On filtre par chauffeur.manager_id pour couvrir tous les cas,
+&nbsp;                // même si trajet.manager_id est null ou différent.
+<b class="fc">&nbsp;                trajets = trajetRepository.findByChauffeurManagerIdWithFetch(manager.getId())</b>
+<b class="fc">&nbsp;                        .stream()</b>
+<b class="pc">&nbsp;                        .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS)</b>
+<b class="fc">&nbsp;                        .toList();</b>
+&nbsp;            } else {
+<b class="fc">&nbsp;                trajets = List.of();</b>
+&nbsp;            }
+&nbsp;
+&nbsp;        } catch (Exception ex) {
+&nbsp;            // Accès non authentifié (simulateur GPS/Python) — retourne uniquement les EN_COURS
+&nbsp;            // sans exposer les données de tous les utilisateurs
+<b class="fc">&nbsp;            log.warn(&quot;getTrajetsCarte called without authentication, falling back to EN_COURS only: {}&quot;, ex.getMessage());</b>
+<b class="fc">&nbsp;            trajets = trajetRepository.findAll().stream()</b>
+<b class="pc">&nbsp;                    .filter(t -&gt; t.getStatut() == StatutTrajet.EN_COURS)</b>
+<b class="fc">&nbsp;                    .toList();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return trajets.stream()</b>
+<b class="fc">&nbsp;                .map(this::toCarteResponse)</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;    }
+&nbsp;    @Override
+&nbsp;    public TrajetResponse getTrajet(Long id) {
+<b class="fc">&nbsp;        Trajet trajet = trajetRepository.findById(id)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+<b class="fc">&nbsp;        return toResponse(trajet);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public TrajetResponse createTrajet(TrajetRequest request) {
+<b class="fc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="fc">&nbsp;        Trajet trajet = buildTrajet(new Trajet(), request, currentUser);</b>
+<b class="fc">&nbsp;        trajet.setStatut(request.statut() != null ? request.statut() : StatutTrajet.ACTIF);</b>
+&nbsp;
+<b class="fc">&nbsp;        validateDriverAvailability(trajet);</b>
+&nbsp;
+<b class="fc">&nbsp;        enrichRoute(trajet);</b>
+&nbsp;
+<b class="fc">&nbsp;        Trajet saved = trajetRepository.saveAndFlush(trajet);</b>
+&nbsp;        try {
+<b class="fc">&nbsp;            if (saved.getVehicule() != null) {</b>
+<b class="fc">&nbsp;                validateAssignment(saved.getVehicule());</b>
+<b class="fc">&nbsp;                activateAssignment(saved);</b>
+&nbsp;            }
+<b class="fc">&nbsp;            notifyTripChange(saved, &quot;Nouveau trajet assigné&quot;);</b>
+&nbsp;        } catch (RuntimeException ex) {
+<b class="fc">&nbsp;            log.warn(&quot;Trajet {} persisted but post-save processing failed: {}&quot;, saved.getId(), ex.getMessage());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public TrajetResponse updateTrajet(Long id, TrajetRequest request) {
+<b class="fc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="fc">&nbsp;        Trajet trajet = trajetRepository.findById(id)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        buildTrajet(trajet, request, currentUser);</b>
+<b class="fc">&nbsp;        enrichRoute(trajet);</b>
+&nbsp;
+<b class="fc">&nbsp;        Trajet saved = trajetRepository.saveAndFlush(trajet);</b>
+&nbsp;        try {
+<b class="fc">&nbsp;            notifyTripChange(saved, &quot;Trajet mis à jour&quot;);</b>
+&nbsp;        } catch (RuntimeException ex) {
+<b class="fc">&nbsp;            log.warn(&quot;Trajet {} updated but notification failed: {}&quot;, saved.getId(), ex.getMessage());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public void deleteTrajet(Long id) {
+<b class="fc">&nbsp;        Trajet trajet = trajetRepository.findById(id)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        if (trajet.getVehicule() != null) {</b>
+<b class="fc">&nbsp;            Vehicule vehicule = trajet.getVehicule();</b>
+<b class="fc">&nbsp;            vehicule.setChauffeurActuel(null);</b>
+<b class="fc">&nbsp;            vehicule.setStatut(StatutVehicule.EN_SERVICE);</b>
+<b class="fc">&nbsp;            vehiculeRepository.save(vehicule);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (trajet.getChauffeur() != null) {</b>
+<b class="fc">&nbsp;            Chauffeur chauffeur = trajet.getChauffeur();</b>
+<b class="fc">&nbsp;            chauffeur.setVehiculeActuel(null);</b>
+<b class="fc">&nbsp;            chauffeur.setStatutConducteur(trajetRepository.existsByChauffeurIdAndStatutIn(chauffeur.getId(), Set.of(StatutTrajet.ACTIF, StatutTrajet.EN_COURS))</b>
+<b class="fc">&nbsp;                ? StatutChauffeur.EN_SERVICE</b>
+<b class="fc">&nbsp;                : StatutChauffeur.LIBRE);</b>
+<b class="fc">&nbsp;            chauffeurRepository.save(chauffeur);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        trajetRepository.delete(trajet);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public TrajetResponse demarrerTrajet(Long id) {
+<b class="fc">&nbsp;        Trajet trajet = trajetRepository.findById(id)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+<b class="fc">&nbsp;        trajet.setStatut(StatutTrajet.EN_COURS);</b>
+<b class="fc">&nbsp;        if (trajet.getDateDepart() == null) {</b>
+<b class="fc">&nbsp;            trajet.setDateDepart(LocalDateTime.now());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (trajet.getVehicule() != null) {</b>
+<b class="fc">&nbsp;            trajet.getVehicule().setStatut(StatutVehicule.EN_SERVICE);</b>
+<b class="fc">&nbsp;            vehiculeRepository.save(trajet.getVehicule());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (trajet.getChauffeur() != null) {</b>
+<b class="fc">&nbsp;            trajet.getChauffeur().setStatutConducteur(StatutChauffeur.EN_SERVICE);</b>
+<b class="fc">&nbsp;            chauffeurRepository.save(trajet.getChauffeur());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Trajet saved = trajetRepository.save(trajet);</b>
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            log.info(&quot;[TRAJET] Génération des pauses réglementaires lancée pour le trajet {}&quot;, saved.getId());</b>
+<b class="fc">&nbsp;            pauseReglementaireService.genererPauses(saved.getId());</b>
+&nbsp;        } catch (Exception ex) {
+<b class="fc">&nbsp;            log.warn(&quot;[TRAJET] Impossible de générer les pauses réglementaires pour le trajet {}: {}&quot;, saved.getId(), ex.getMessage(), ex);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        notifyTripChange(saved, &quot;Trajet démarré&quot;);</b>
+&nbsp;
+<b class="fc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public TrajetResponse terminerTrajet(Long id) {
+<b class="fc">&nbsp;        Trajet trajet = trajetRepository.findById(id)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        trajet.setStatut(StatutTrajet.COMPLETE);</b>
+<b class="fc">&nbsp;        trajet.setDateArriveeReelle(LocalDateTime.now());</b>
+&nbsp;
+<b class="fc">&nbsp;        if (trajet.getVehicule() != null) {</b>
+<b class="fc">&nbsp;            trajet.getVehicule().setStatut(StatutVehicule.EN_SERVICE);</b>
+<b class="fc">&nbsp;            trajet.getVehicule().setChauffeurActuel(null);</b>
+<b class="fc">&nbsp;            vehiculeRepository.save(trajet.getVehicule());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (trajet.getChauffeur() != null) {</b>
+<b class="fc">&nbsp;            trajet.getChauffeur().setVehiculeActuel(null);</b>
+<b class="fc">&nbsp;            trajet.getChauffeur().setStatutConducteur(StatutChauffeur.LIBRE);</b>
+<b class="fc">&nbsp;            chauffeurRepository.save(trajet.getChauffeur());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Trajet saved = trajetRepository.save(trajet);</b>
+<b class="fc">&nbsp;        weatherAlertHistory.remove(saved.getId());</b>
+<b class="fc">&nbsp;        notifyTripChange(saved, &quot;Trajet terminé&quot;);</b>
+<b class="fc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public TrajetResponse updatePosition(Long id, TrajetPositionRequest request) {
+<b class="fc">&nbsp;        Trajet trajet = trajetRepository.findById(id)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+&nbsp;
+<b class="fc">&nbsp;        if (trajet.getVehicule() == null) {</b>
+<b class="fc">&nbsp;            throw new ResourceNotFoundException(&quot;Aucun véhicule lié à ce trajet&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Vehicule vehicule = trajet.getVehicule();</b>
+<b class="fc">&nbsp;        vehicule.setLatitudeActuelle(request.latitude());</b>
+<b class="fc">&nbsp;        vehicule.setLongitudeActuelle(request.longitude());</b>
+<b class="fc">&nbsp;        vehicule.setVitesseActuelle(request.vitesse());</b>
+<b class="fc">&nbsp;        vehicule.setNiveauCarburant(request.carburant());</b>
+<b class="fc">&nbsp;        vehicule.setDernierePositionMaj(request.datePosition() != null ? request.datePosition() : LocalDateTime.now());</b>
+<b class="fc">&nbsp;        vehiculeRepository.save(vehicule);</b>
+&nbsp;
+<b class="fc">&nbsp;        handleWeatherAlerts(trajet, request.latitude(), request.longitude());</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Long&gt; audience = buildNotificationAudience(trajet);</b>
+<b class="fc">&nbsp;        if (!audience.isEmpty()) {</b>
+<b class="fc">&nbsp;            notificationRealtimeService.publishNamedEventToUsers(audience, &quot;gps-position&quot;, toCarteResponse(trajet));</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return toResponse(trajet);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;TourneeOptimiseeResponse&gt; optimiserTrajets(TrajetOptimisationRequest request) {
+<b class="fc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="fc">&nbsp;        List&lt;TrajetRequest&gt; demandes = request != null &amp;&amp; request.trajets() != null ? request.trajets() : List.of();</b>
+<b class="fc">&nbsp;        if (demandes.isEmpty()) {</b>
+<b class="fc">&nbsp;            return List.of();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Vehicule&gt; vehicules = resolveVehiclesForOptimisation(currentUser, request);</b>
+<b class="fc">&nbsp;        List&lt;TrajetOptimisationService.OptimizationAssignment&gt; assignments = trajetOptimisationService.optimiser(demandes, vehicules);</b>
+&nbsp;
+<b class="fc">&nbsp;        List&lt;TourneeOptimiseeResponse&gt; result = new ArrayList&lt;&gt;();</b>
+<b class="fc">&nbsp;        for (TrajetOptimisationService.OptimizationAssignment assignment : assignments) {</b>
+<b class="fc">&nbsp;            Trajet trajet = buildTrajet(new Trajet(), assignment.trajet(), currentUser);</b>
+<b class="fc">&nbsp;            trajet.setVehicule(assignment.vehicule());</b>
+<b class="pc">&nbsp;            trajet.setStatut(assignment.trajet().statut() != null ? assignment.trajet().statut() : StatutTrajet.ACTIF);</b>
+<b class="fc">&nbsp;            if (assignment.route() != null) {</b>
+<b class="fc">&nbsp;                trajet.setDistanceKm(assignment.route().distanceKm());</b>
+<b class="fc">&nbsp;                trajet.setDureeEstimeeMinutes(assignment.route().durationMinutes());</b>
+<b class="fc">&nbsp;                trajet.setGeometrieItineraire(assignment.route().geometryJson());</b>
+&nbsp;            }
+&nbsp;
+<b class="fc">&nbsp;            enrichRoute(trajet);</b>
+<b class="fc">&nbsp;            validateAssignment(assignment.vehicule());</b>
+<b class="fc">&nbsp;            validateDriverAvailability(trajet);</b>
+<b class="fc">&nbsp;            Trajet saved = trajetRepository.save(trajet);</b>
+<b class="fc">&nbsp;            activateAssignment(saved);</b>
+<b class="fc">&nbsp;            notifyTripChange(saved, &quot;Trajet optimisé et assigné&quot;);</b>
+<b class="fc">&nbsp;            result.add(new TourneeOptimiseeResponse(</b>
+<b class="fc">&nbsp;                saved.getVehicule() != null ? saved.getVehicule().getId() : null,</b>
+<b class="fc">&nbsp;                saved.getVehicule() != null ? saved.getVehicule().getMatricule() : null,</b>
+<b class="fc">&nbsp;                saved.getVehicule() != null ? saved.getVehicule().getCouleur() : null,</b>
+<b class="fc">&nbsp;                saved.getVehicule() != null ? saved.getVehicule().getLatitudeActuelle() : null,</b>
+<b class="fc">&nbsp;                saved.getVehicule() != null ? saved.getVehicule().getLongitudeActuelle() : null,</b>
+<b class="fc">&nbsp;                List.of(toResponse(saved))</b>
+&nbsp;            ));
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return result;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Trajet buildTrajet(Trajet trajet, TrajetRequest request, Utilisateur currentUser) {
+<b class="fc">&nbsp;        trajet.setPointDepart(request.pointDepart());</b>
+<b class="fc">&nbsp;        trajet.setDestination(request.destination());</b>
+<b class="fc">&nbsp;        trajet.setLatitudeDepart(resolveLatitude(request.pointDepart(), request.latitudeDepart()));</b>
+<b class="fc">&nbsp;        trajet.setLongitudeDepart(resolveLongitude(request.pointDepart(), request.longitudeDepart()));</b>
+<b class="fc">&nbsp;        trajet.setLatitudeArrivee(resolveLatitude(request.destination(), request.latitudeArrivee()));</b>
+<b class="fc">&nbsp;        trajet.setLongitudeArrivee(resolveLongitude(request.destination(), request.longitudeArrivee()));</b>
+<b class="fc">&nbsp;        trajet.setDateDepart(request.dateDepart());</b>
+<b class="fc">&nbsp;        trajet.setDateArrivee(request.dateArrivee());</b>
+<b class="fc">&nbsp;        trajet.setChargeKg(request.chargeKg());</b>
+<b class="fc">&nbsp;        trajet.setPriorite(request.priorite());</b>
+<b class="fc">&nbsp;        trajet.setNotes(request.notes());</b>
+<b class="fc">&nbsp;        trajet.setChauffeur(resolveChauffeur(request.chauffeurId()));</b>
+<b class="fc">&nbsp;        trajet.setVehicule(resolveVehicule(request.vehiculeId()));</b>
+<b class="fc">&nbsp;        trajet.setManager(resolveManager(request.managerId(), currentUser));</b>
+<b class="fc">&nbsp;        trajet.setTypeOptimisation(request.typeOptimisation() != null ? request.typeOptimisation() : &quot;shortest&quot;);</b>
+<b class="fc">&nbsp;        return trajet;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void enrichRoute(Trajet trajet) {
+<b class="pc">&nbsp;        String opt = trajet.getTypeOptimisation() != null ? trajet.getTypeOptimisation() : &quot;shortest&quot;;</b>
+<b class="fc">&nbsp;        OsrmService.RouteEstimation route = osrmService.calculerItineraire(</b>
+<b class="fc">&nbsp;            trajet.getLatitudeDepart(), trajet.getLongitudeDepart(), trajet.getLatitudeArrivee(), trajet.getLongitudeArrivee(), opt);</b>
+&nbsp;
+<b class="fc">&nbsp;        if (route != null) {</b>
+<b class="fc">&nbsp;            trajet.setDistanceKm(route.distanceKm());</b>
+<b class="fc">&nbsp;            trajet.setDureeEstimeeMinutes(route.durationMinutes());</b>
+<b class="fc">&nbsp;            trajet.setGeometrieItineraire(route.geometryJson());</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateAssignment(Vehicule vehicule) {
+<b class="fc">&nbsp;        if (vehicule == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (vehicule.getStatut() != StatutVehicule.EN_SERVICE &amp;&amp; vehicule.getStatut() != StatutVehicule.HORS_SERVICE) {</b>
+<b class="fc">&nbsp;            throw new IllegalStateException(&quot;Le véhicule n&#39;est pas disponible&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        boolean busy = trajetRepository.existsByVehiculeIdAndStatutIn(vehicule.getId(), Set.of(StatutTrajet.ACTIF, StatutTrajet.EN_COURS));</b>
+<b class="fc">&nbsp;        if (busy) {</b>
+<b class="fc">&nbsp;            throw new IllegalStateException(&quot;Le véhicule est déjà affecté à un trajet actif&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void validateDriverAvailability(Trajet trajet) {
+<b class="fc">&nbsp;        if (trajet.getChauffeur() == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Chauffeur chauffeur = trajet.getChauffeur();</b>
+<b class="fc">&nbsp;        List&lt;Trajet&gt; trajetsChauffeur = trajetRepository.findByChauffeurIdWithFetch(chauffeur.getId());</b>
+<b class="fc">&nbsp;        Trajet latestComplete = trajetsChauffeur.stream()</b>
+<b class="pc">&nbsp;            .filter(item -&gt; item.getStatut() == StatutTrajet.COMPLETE &amp;&amp; item.getDateArriveeReelle() != null)</b>
+<b class="fc">&nbsp;            .findFirst()</b>
+<b class="fc">&nbsp;            .orElse(null);</b>
+&nbsp;
+<b class="fc">&nbsp;        if (latestComplete == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        LocalDateTime availableAt = latestComplete.getDateArriveeReelle().plusHours(12);</b>
+<b class="pc">&nbsp;        boolean hasActiveTrip = trajetsChauffeur.stream().anyMatch(item -&gt; item.getStatut() == StatutTrajet.ACTIF || item.getStatut() == StatutTrajet.EN_COURS);</b>
+<b class="fc">&nbsp;        if (hasActiveTrip || LocalDateTime.now().isBefore(availableAt)) {</b>
+<b class="fc">&nbsp;            String formattedDate = availableAt.format(DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy à HH:mm&quot;));</b>
+<b class="fc">&nbsp;            String driverName = (chauffeur.getPrenom() + &quot; &quot; + chauffeur.getNom()).trim();</b>
+<b class="fc">&nbsp;            String message = &quot;⚠️ Ce chauffeur n&#39;est pas encore disponible. Repos obligatoire de 12 heures après la dernière mission. Disponible le &quot; + formattedDate + &quot;.&quot;;</b>
+&nbsp;
+<b class="fc">&nbsp;            notifyAvailabilityBlock(trajet, String.format(&quot;⚠️ Impossible d&#39;assigner %s — Repos obligatoire en cours jusqu&#39;au %s.&quot;, driverName, formattedDate));</b>
+<b class="fc">&nbsp;            throw new IllegalStateException(message);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void notifyAvailabilityBlock(Trajet trajet, String message) {
+<b class="fc">&nbsp;        List&lt;Long&gt; audience = new ArrayList&lt;&gt;();</b>
+<b class="pc">&nbsp;        if (trajet.getManager() != null &amp;&amp; trajet.getManager().getId() != null) {</b>
+<b class="fc">&nbsp;            audience.add(trajet.getManager().getId());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        for (Long userId : audience) {</b>
+<b class="fc">&nbsp;            utilisateurRepository.findById(userId).ifPresent(user -&gt; {</b>
+<b class="fc">&nbsp;                Notification notification = Notification.builder()</b>
+<b class="fc">&nbsp;                    .type(TypeNotif.NOTIF_TRAJET)</b>
+<b class="fc">&nbsp;                    .message(message)</b>
+<b class="fc">&nbsp;                    .utilisateur(user)</b>
+<b class="fc">&nbsp;                    .estLu(false)</b>
+<b class="fc">&nbsp;                    .build();</b>
+<b class="fc">&nbsp;                notificationRepository.save(notification);</b>
+<b class="fc">&nbsp;                notificationRealtimeService.publishToUsers(List.of(userId), notification);</b>
+&nbsp;            });
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void activateAssignment(Trajet trajet) {
+<b class="fc">&nbsp;        if (trajet.getVehicule() != null &amp;&amp; trajet.getChauffeur() != null) {</b>
+<b class="fc">&nbsp;            Vehicule vehicule = trajet.getVehicule();</b>
+<b class="fc">&nbsp;            vehicule.setStatut(StatutVehicule.EN_SERVICE);</b>
+<b class="fc">&nbsp;            vehicule.setChauffeurActuel(trajet.getChauffeur());</b>
+<b class="fc">&nbsp;            vehiculeRepository.save(vehicule);</b>
+&nbsp;
+<b class="fc">&nbsp;            trajet.getChauffeur().setVehiculeActuel(vehicule);</b>
+<b class="fc">&nbsp;            trajet.getChauffeur().setStatutConducteur(StatutChauffeur.EN_SERVICE);</b>
+<b class="fc">&nbsp;            chauffeurRepository.save(trajet.getChauffeur());</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void notifyTripChange(Trajet trajet, String messagePrefix) {
+<b class="fc">&nbsp;        List&lt;Long&gt; audience = buildNotificationAudience(trajet);</b>
+<b class="fc">&nbsp;        if (audience.isEmpty()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String message = messagePrefix + &quot; : &quot; + trajet.getPointDepart() + &quot; -&gt; &quot; + trajet.getDestination();</b>
+<b class="fc">&nbsp;        for (Long userId : audience) {</b>
+<b class="fc">&nbsp;            utilisateurRepository.findById(userId).ifPresent(user -&gt; {</b>
+<b class="fc">&nbsp;                Notification notification = Notification.builder()</b>
+<b class="fc">&nbsp;                    .type(TypeNotif.NOTIF_TRAJET)</b>
+<b class="fc">&nbsp;                    .message(message)</b>
+<b class="fc">&nbsp;                    .utilisateur(user)</b>
+<b class="fc">&nbsp;                    .build();</b>
+<b class="fc">&nbsp;                notificationRepository.save(notification);</b>
+<b class="fc">&nbsp;                notificationRealtimeService.publishToUsers(List.of(userId), notification);</b>
+&nbsp;            });
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;Long&gt; buildNotificationAudience(Trajet trajet) {
+<b class="fc">&nbsp;        List&lt;Long&gt; audience = new ArrayList&lt;&gt;();</b>
+<b class="pc">&nbsp;        if (trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getId() != null) {</b>
+<b class="fc">&nbsp;            audience.add(trajet.getChauffeur().getId());</b>
+&nbsp;        }
+<b class="pc">&nbsp;        if (trajet.getManager() != null &amp;&amp; trajet.getManager().getId() != null) {</b>
+<b class="fc">&nbsp;            audience.add(trajet.getManager().getId());</b>
+&nbsp;        }
+<b class="fc">&nbsp;        utilisateurRepository.findByRole(Role.SUPERADMIN).stream()</b>
+<b class="fc">&nbsp;            .map(Utilisateur::getId)</b>
+<b class="fc">&nbsp;            .forEach(audience::add);</b>
+<b class="fc">&nbsp;        return audience.stream().distinct().toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;Vehicule&gt; resolveVehiclesForOptimisation(Utilisateur currentUser, TrajetOptimisationRequest request) {
+<b class="pc">&nbsp;        if (request != null &amp;&amp; request.vehiculeIds() != null &amp;&amp; !request.vehiculeIds().isEmpty()) {</b>
+<b class="fc">&nbsp;            return vehiculeRepository.findAllById(request.vehiculeIds());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (currentUser.getEntreprise() != null) {</b>
+<b class="fc">&nbsp;            return vehiculeRepository.findByEntreprise_Id(currentUser.getEntreprise().getId()).stream()</b>
+<b class="pc">&nbsp;                .filter(vehicule -&gt; vehicule.getStatut() == StatutVehicule.EN_SERVICE || vehicule.getStatut() == StatutVehicule.HORS_SERVICE)</b>
+<b class="fc">&nbsp;                .toList();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return vehiculeRepository.findAll().stream()</b>
+<b class="pc">&nbsp;            .filter(vehicule -&gt; vehicule.getStatut() == StatutVehicule.EN_SERVICE || vehicule.getStatut() == StatutVehicule.HORS_SERVICE)</b>
+<b class="fc">&nbsp;            .toList();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Chauffeur resolveChauffeur(Long chauffeurId) {
+<b class="fc">&nbsp;        if (chauffeurId == null) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        Utilisateur utilisateur = utilisateurRepository.findById(chauffeurId)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Chauffeur introuvable&quot;));</b>
+<b class="fc">&nbsp;        if (utilisateur instanceof Chauffeur chauffeur) {</b>
+<b class="fc">&nbsp;            return chauffeur;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        throw new ResourceNotFoundException(&quot;Chauffeur introuvable&quot;);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Vehicule resolveVehicule(Long vehiculeId) {
+<b class="fc">&nbsp;        if (vehiculeId == null) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return vehiculeRepository.findById(vehiculeId)</b>
+<b class="fc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Véhicule introuvable&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Manager resolveManager(Long managerId, Utilisateur currentUser) {
+<b class="fc">&nbsp;        if (managerId != null) {</b>
+<b class="fc">&nbsp;            Utilisateur utilisateur = utilisateurRepository.findById(managerId)</b>
+<b class="fc">&nbsp;                .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Manager introuvable&quot;));</b>
+<b class="fc">&nbsp;            if (utilisateur instanceof Manager manager) {</b>
+<b class="fc">&nbsp;                return manager;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            throw new ResourceNotFoundException(&quot;Manager introuvable&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        if (currentUser != null &amp;&amp; currentUser.getRole() == Role.MANAGER) {</b>
+<b class="pc">&nbsp;            return currentUser instanceof Manager manager ? manager : null;</b>
+&nbsp;        }
+&nbsp;
+<b class="pc">&nbsp;        return currentUser != null &amp;&amp; currentUser.getCreatedBy() instanceof Manager manager ? manager : null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Double resolveLatitude(String label, Double provided) {
+<b class="fc">&nbsp;        if (provided != null) {</b>
+<b class="fc">&nbsp;            return provided;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return parseCoordinate(label, true);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Double resolveLongitude(String label, Double provided) {
+<b class="fc">&nbsp;        if (provided != null) {</b>
+<b class="fc">&nbsp;            return provided;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return parseCoordinate(label, false);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private Double parseCoordinate(String value, boolean latitude) {
+<b class="pc">&nbsp;        if (value == null || value.isBlank()) {</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String normalized = value.trim();</b>
+<b class="fc">&nbsp;        String[] parts = normalized.split(&quot;,&quot;);</b>
+<b class="fc">&nbsp;        if (parts.length == 2) {</b>
+&nbsp;            try {
+<b class="fc">&nbsp;                return Double.parseDouble(parts[latitude ? 0 : 1].trim());</b>
+&nbsp;            } catch (NumberFormatException ignored) {
+&nbsp;                // fallback to geocoding below
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+<b class="fc">&nbsp;            OsrmService.GeoPoint point = osrmService.geocoder(value);</b>
+<b class="fc">&nbsp;            if (point == null) {</b>
+<b class="fc">&nbsp;                return null;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return latitude ? point.latitude() : point.longitude();</b>
+&nbsp;        } catch (RuntimeException ex) {
+<b class="fc">&nbsp;            log.warn(&quot;Coordinate resolution failed for &#39;{}&#39;: {}&quot;, value, ex.getMessage());</b>
+<b class="fc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private List&lt;Trajet&gt; resolveVisibleTrajets() {
+<b class="fc">&nbsp;        Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+&nbsp;
+<b class="fc">&nbsp;        if (currentUser.getRole() == Role.SUPERADMIN) {</b>
+<b class="fc">&nbsp;            return trajetRepository.findAll().stream()</b>
+<b class="fc">&nbsp;                    .sorted(Comparator.comparing(Trajet::getDateDepart,</b>
+<b class="fc">&nbsp;                            Comparator.nullsLast(Comparator.reverseOrder())))</b>
+<b class="fc">&nbsp;                    .toList();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (currentUser.getRole() == Role.CHAUFFEUR) {</b>
+<b class="fc">&nbsp;            return trajetRepository.findByChauffeurIdWithFetch(currentUser.getId());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (currentUser instanceof Manager manager) {</b>
+&nbsp;            // Manager — tous les trajets de ses chauffeurs supervisés (chauffeur.manager_id = manager.id)
+&nbsp;            // On utilise findByChauffeurManagerIdWithFetch pour couvrir les trajets
+&nbsp;            // même si trajet.manager_id est null ou pointe vers un autre manager.
+<b class="fc">&nbsp;            return trajetRepository.findByChauffeurManagerIdWithFetch(manager.getId());</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return List.of();</b>
+&nbsp;    }
+&nbsp;    private boolean contains(String value, String needle) {
+<b class="fc">&nbsp;        return value != null &amp;&amp; value.toLowerCase(Locale.ROOT).contains(needle);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private TrajetResponse toResponse(Trajet trajet) {
+<b class="fc">&nbsp;        TripTimingMetrics metrics = computeTripTimingMetrics(trajet);</b>
+<b class="fc">&nbsp;        Double distanceKm = trajet.getDistanceKm() != null ? trajet.getDistanceKm() : estimateDistanceKm(trajet);</b>
+<b class="fc">&nbsp;        return new TrajetResponse(</b>
+<b class="fc">&nbsp;            trajet.getId(),</b>
+<b class="fc">&nbsp;            trajet.getPointDepart(),</b>
+<b class="fc">&nbsp;            trajet.getDestination(),</b>
+<b class="fc">&nbsp;            trajet.getLatitudeDepart(),</b>
+<b class="fc">&nbsp;            trajet.getLongitudeDepart(),</b>
+<b class="fc">&nbsp;            trajet.getLatitudeArrivee(),</b>
+<b class="fc">&nbsp;            trajet.getLongitudeArrivee(),</b>
+<b class="fc">&nbsp;            distanceKm,</b>
+<b class="fc">&nbsp;            trajet.getDureeEstimeeMinutes(),</b>
+<b class="fc">&nbsp;            trajet.getGeometrieItineraire(),</b>
+<b class="fc">&nbsp;            trajet.getChargeKg(),</b>
+<b class="fc">&nbsp;            trajet.getPriorite(),</b>
+<b class="fc">&nbsp;            trajet.getNotes(),</b>
+<b class="fc">&nbsp;            trajet.getDateDepart(),</b>
+<b class="fc">&nbsp;            trajet.getDateArrivee(),</b>
+<b class="fc">&nbsp;            trajet.getDateArriveeReelle(),</b>
+<b class="fc">&nbsp;            metrics.dureeReelleMinutes(),</b>
+<b class="fc">&nbsp;            metrics.retardMinutes(),</b>
+<b class="fc">&nbsp;            metrics.statutPerformance(),</b>
+<b class="fc">&nbsp;            trajet.getStatut(),</b>
+<b class="fc">&nbsp;            trajet.getChauffeur() != null ? trajet.getChauffeur().getId() : null,</b>
+<b class="fc">&nbsp;            trajet.getChauffeur() != null ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getId() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getMatricule() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getCouleur() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getLatitudeActuelle() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getLongitudeActuelle() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getVitesseActuelle() : null,</b>
+<b class="fc">&nbsp;            trajet.getManager() != null ? trajet.getManager().getId() : null,</b>
+<b class="fc">&nbsp;            trajet.getManager() != null ? (trajet.getManager().getPrenom() + &quot; &quot; + trajet.getManager().getNom()).trim() : null</b>
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    private TripTimingMetrics computeTripTimingMetrics(Trajet trajet) {
+<b class="fc">&nbsp;        if (trajet.getDateDepart() == null) {</b>
+<b class="fc">&nbsp;            return new TripTimingMetrics(null, null, null);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        LocalDateTime referenceEnd = trajet.getDateArriveeReelle();</b>
+<b class="fc">&nbsp;        boolean isRunning = trajet.getStatut() == StatutTrajet.EN_COURS || trajet.getStatut() == StatutTrajet.ACTIF;</b>
+<b class="fc">&nbsp;        if (referenceEnd == null &amp;&amp; isRunning) {</b>
+<b class="fc">&nbsp;            referenceEnd = LocalDateTime.now();</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (referenceEnd == null) {</b>
+<b class="fc">&nbsp;            return new TripTimingMetrics(null, null, null);</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        long realMinutes = java.time.Duration.between(trajet.getDateDepart(), referenceEnd).toMinutes();</b>
+<b class="fc">&nbsp;        int realDuration = (int) Math.max(0, realMinutes);</b>
+<b class="fc">&nbsp;        int planned = trajet.getDureeEstimeeMinutes() != null ? trajet.getDureeEstimeeMinutes() : 0;</b>
+<b class="fc">&nbsp;        int retard = realDuration - planned;</b>
+&nbsp;
+<b class="fc">&nbsp;        return new TripTimingMetrics(</b>
+<b class="fc">&nbsp;            realDuration,</b>
+<b class="fc">&nbsp;            retard,</b>
+<b class="fc">&nbsp;            computePerformanceLabel(retard, isRunning, trajet.getDateArriveeReelle() == null)</b>
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    private Double estimateDistanceKm(Trajet trajet) {
+<b class="pc">&nbsp;        if (trajet.getLatitudeDepart() == null || trajet.getLongitudeDepart() == null || trajet.getLatitudeArrivee() == null || trajet.getLongitudeArrivee() == null) {</b>
+<b class="fc">&nbsp;            return 0.0;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        double earthRadiusKm = 6371.0;</b>
+<b class="fc">&nbsp;        double lat1 = Math.toRadians(trajet.getLatitudeDepart());</b>
+<b class="fc">&nbsp;        double lat2 = Math.toRadians(trajet.getLatitudeArrivee());</b>
+<b class="fc">&nbsp;        double deltaLat = Math.toRadians(trajet.getLatitudeArrivee() - trajet.getLatitudeDepart());</b>
+<b class="fc">&nbsp;        double deltaLon = Math.toRadians(trajet.getLongitudeArrivee() - trajet.getLongitudeDepart());</b>
+<b class="fc">&nbsp;        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2)</b>
+<b class="fc">&nbsp;            + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);</b>
+<b class="fc">&nbsp;        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));</b>
+<b class="fc">&nbsp;        return round(c * earthRadiusKm);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private double round(double value) {
+<b class="fc">&nbsp;        return Math.round(value * 100.0) / 100.0;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String computePerformanceLabel(int retardMinutes, boolean isRunning, boolean missingArrival) {
+<b class="pc">&nbsp;        if (missingArrival &amp;&amp; isRunning) {</b>
+<b class="fc">&nbsp;            if (retardMinutes &lt; 0) {</b>
+<b class="fc">&nbsp;                return &quot;En avance&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (retardMinutes &lt; 5) {</b>
+<b class="fc">&nbsp;                return &quot;À l&#39;heure&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            if (retardMinutes &lt;= 30) {</b>
+<b class="fc">&nbsp;                return &quot;Léger retard&quot;;</b>
+&nbsp;            }
+<b class="fc">&nbsp;            return &quot;Retard important&quot;;</b>
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        if (retardMinutes &lt; 0) {</b>
+<b class="fc">&nbsp;            return &quot;En avance&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (retardMinutes &lt; 5) {</b>
+<b class="fc">&nbsp;            return &quot;À l&#39;heure&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        if (retardMinutes &lt;= 30) {</b>
+<b class="fc">&nbsp;            return &quot;Léger retard&quot;;</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return &quot;Retard important&quot;;</b>
+&nbsp;    }
+&nbsp;
+<b class="fc">&nbsp;    private record TripTimingMetrics(Integer dureeReelleMinutes, Integer retardMinutes, String statutPerformance) { }</b>
+&nbsp;
+&nbsp;    private TrajetCarteResponse toCarteResponse(Trajet trajet) {
+<b class="fc">&nbsp;        String geometrieItineraire = trajet.getGeometrieItineraire();</b>
+<b class="pc">&nbsp;        if ((geometrieItineraire == null || geometrieItineraire.isBlank())</b>
+<b class="fc">&nbsp;            &amp;&amp; trajet.getLatitudeDepart() != null</b>
+<b class="pc">&nbsp;            &amp;&amp; trajet.getLongitudeDepart() != null</b>
+<b class="fc">&nbsp;            &amp;&amp; trajet.getLatitudeArrivee() != null</b>
+<b class="pc">&nbsp;            &amp;&amp; trajet.getLongitudeArrivee() != null) {</b>
+&nbsp;            try {
+<b class="fc">&nbsp;                OsrmService.RouteEstimation route = osrmService.calculerItineraire(</b>
+<b class="fc">&nbsp;                    trajet.getLatitudeDepart(),</b>
+<b class="fc">&nbsp;                    trajet.getLongitudeDepart(),</b>
+<b class="fc">&nbsp;                    trajet.getLatitudeArrivee(),</b>
+<b class="fc">&nbsp;                    trajet.getLongitudeArrivee(),</b>
+<b class="fc">&nbsp;                    trajet.getTypeOptimisation()</b>
+&nbsp;                );
+<b class="pc">&nbsp;                if (route != null &amp;&amp; route.geometryJson() != null &amp;&amp; !route.geometryJson().isBlank()) {</b>
+<b class="fc">&nbsp;                    geometrieItineraire = route.geometryJson();</b>
+&nbsp;                }
+&nbsp;            } catch (RuntimeException ex) {
+<b class="fc">&nbsp;                log.warn(&quot;OSRM geometry fallback failed for trajet {}: {}&quot;, trajet.getId(), ex.getMessage());</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        return new TrajetCarteResponse(</b>
+<b class="fc">&nbsp;            trajet.getId(),</b>
+<b class="fc">&nbsp;            trajet.getPointDepart(),</b>
+<b class="fc">&nbsp;            trajet.getDestination(),</b>
+<b class="fc">&nbsp;            trajet.getLatitudeDepart(),</b>
+<b class="fc">&nbsp;            trajet.getLongitudeDepart(),</b>
+<b class="fc">&nbsp;            trajet.getLatitudeArrivee(),</b>
+<b class="fc">&nbsp;            trajet.getLongitudeArrivee(),</b>
+<b class="fc">&nbsp;            trajet.getDistanceKm(),</b>
+<b class="fc">&nbsp;            trajet.getDureeEstimeeMinutes(),</b>
+<b class="fc">&nbsp;            geometrieItineraire,</b>
+<b class="fc">&nbsp;            trajet.getStatut(),</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getId() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getMatricule() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getCouleur() : null,</b>
+<b class="fc">&nbsp;            resolveVehiculeLatitude(trajet),</b>
+<b class="fc">&nbsp;            resolveVehiculeLongitude(trajet),</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getVitesseActuelle() : null,</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getNiveauCarburant() : null,</b>
+<b class="fc">&nbsp;            trajet.getChauffeur() != null ? trajet.getChauffeur().getId() : null,</b>
+<b class="fc">&nbsp;            trajet.getChauffeur() != null ? trajet.getChauffeur().getTelephone() : null,</b>
+<b class="fc">&nbsp;            trajet.getChauffeur() != null ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim() : null,</b>
+<b class="fc">&nbsp;            trajet.getChauffeur() != null ? trajet.getChauffeur().getImage() : null,</b>
+<b class="pc">&nbsp;            trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getRole() != null ? trajet.getChauffeur().getRole().name() : null,</b>
+<b class="pc">&nbsp;            trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getSecteur() != null ? trajet.getChauffeur().getSecteur().getNom() : null,</b>
+<b class="fc">&nbsp;            trajet.getTypeOptimisation(),</b>
+<b class="fc">&nbsp;            trajet.getChargeKg(),</b>
+<b class="fc">&nbsp;            trajet.getVehicule() != null ? trajet.getVehicule().getKilometrage() : null,</b>
+<b class="fc">&nbsp;            null</b>
+&nbsp;        );
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Résout la latitude réelle du véhicule pour l&#39;affichage carte.
+&nbsp;     * Si la dernière position GPS du véhicule est antérieure au démarrage du trajet
+&nbsp;     * (ou absente), on retourne le point de départ du trajet pour que le camion
+&nbsp;     * apparaisse au début de son itinéraire et non à sa position périmée.
+&nbsp;     */
+&nbsp;    private Double resolveVehiculeLatitude(Trajet trajet) {
+<b class="fc">&nbsp;        if (trajet.getVehicule() == null) return null;</b>
+<b class="fc">&nbsp;        Double lat = trajet.getVehicule().getLatitudeActuelle();</b>
+<b class="fc">&nbsp;        if (lat == null) return trajet.getLatitudeDepart();</b>
+&nbsp;        // Si la position GPS n&#39;a jamais été mise à jour après le démarrage du trajet,
+&nbsp;        // utiliser le point de départ du trajet
+<b class="fc">&nbsp;        LocalDateTime posMaj = trajet.getVehicule().getDernierePositionMaj();</b>
+<b class="fc">&nbsp;        LocalDateTime dateDepart = trajet.getDateDepart();</b>
+<b class="pc">&nbsp;        if (posMaj == null || (dateDepart != null &amp;&amp; posMaj.isBefore(dateDepart))) {</b>
+<b class="fc">&nbsp;            return trajet.getLatitudeDepart();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return lat;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Résout la longitude réelle du véhicule pour l&#39;affichage carte.
+&nbsp;     * Même logique que resolveVehiculeLatitude.
+&nbsp;     */
+&nbsp;    private Double resolveVehiculeLongitude(Trajet trajet) {
+<b class="fc">&nbsp;        if (trajet.getVehicule() == null) return null;</b>
+<b class="fc">&nbsp;        Double lng = trajet.getVehicule().getLongitudeActuelle();</b>
+<b class="fc">&nbsp;        if (lng == null) return trajet.getLongitudeDepart();</b>
+<b class="fc">&nbsp;        LocalDateTime posMaj = trajet.getVehicule().getDernierePositionMaj();</b>
+<b class="fc">&nbsp;        LocalDateTime dateDepart = trajet.getDateDepart();</b>
+<b class="pc">&nbsp;        if (posMaj == null || (dateDepart != null &amp;&amp; posMaj.isBefore(dateDepart))) {</b>
+<b class="fc">&nbsp;            return trajet.getLongitudeDepart();</b>
+&nbsp;        }
+<b class="fc">&nbsp;        return lng;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void handleWeatherAlerts(Trajet trajet, Double latitude, Double longitude) {
+<b class="pc">&nbsp;        if (trajet == null || latitude == null || longitude == null || trajet.getId() == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        MeteoResponse meteo = meteoService.getMeteo(latitude, longitude);</b>
+<b class="pc">&nbsp;        if (meteo == null || meteo.dangereux() == null || !meteo.dangereux()) {</b>
+<b class="fc">&nbsp;            weatherAlertHistory.remove(trajet.getId());</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String signature = meteo.etatGeneral() + &quot;:&quot; + meteo.risqueConduite();</b>
+<b class="fc">&nbsp;        String previousSignature = weatherAlertHistory.put(trajet.getId(), signature);</b>
+<b class="fc">&nbsp;        if (signature.equals(previousSignature)) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        List&lt;Long&gt; audience = buildNotificationAudience(trajet);</b>
+<b class="fc">&nbsp;        for (Long userId : audience) {</b>
+<b class="fc">&nbsp;            utilisateurRepository.findById(userId).ifPresent(user -&gt; createWeatherNotification(user, trajet, meteo));</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private void createWeatherNotification(Utilisateur recipient, Trajet trajet, MeteoResponse meteo) {
+<b class="pc">&nbsp;        if (recipient == null || trajet == null || meteo == null) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        String message = buildWeatherMessage(recipient, trajet, meteo);</b>
+<b class="pc">&nbsp;        if (message == null || message.isBlank()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="fc">&nbsp;        Notification notification = Notification.builder()</b>
+<b class="fc">&nbsp;            .type(TypeNotif.NOTIF_TRAJET)</b>
+<b class="fc">&nbsp;            .message(message)</b>
+<b class="fc">&nbsp;            .utilisateur(recipient)</b>
+<b class="fc">&nbsp;            .build();</b>
+<b class="fc">&nbsp;        notificationRepository.save(notification);</b>
+<b class="fc">&nbsp;        notificationRealtimeService.publishToUsers(List.of(recipient.getId()), notification);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private String buildWeatherMessage(Utilisateur recipient, Trajet trajet, MeteoResponse meteo) {
+<b class="fc">&nbsp;        String chauffeurNom = trajet.getChauffeur() != null</b>
+<b class="fc">&nbsp;            ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim()</b>
+<b class="fc">&nbsp;            : &quot;le chauffeur&quot;;</b>
+<b class="fc">&nbsp;        String destination = trajet.getDestination() != null ? trajet.getDestination() : &quot;votre destination&quot;;</b>
+&nbsp;
+<b class="pc">&nbsp;        return switch (meteo.etatGeneral()) {</b>
+<b class="pc">&nbsp;            case &quot;ORAGE&quot; -&gt; switch (recipient.getRole()) {</b>
+<b class="fc">&nbsp;                case CHAUFFEUR -&gt; &quot;⛈️ Conditions météo dangereuses sur votre itinéraire. Orage en cours. Réduisez votre vitesse et soyez extrêmement prudent.&quot;;</b>
+<b class="fc">&nbsp;                case MANAGER -&gt; &quot;⛈️ Alerte météo — Orage sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;. Vitesse simulée réduite automatiquement.&quot;;</b>
+<b class="fc">&nbsp;                case SUPERADMIN -&gt; &quot;⛈️ Alerte météo — Orage détecté sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</b>
+<b class="nc">&nbsp;                default -&gt; null;</b>
+&nbsp;            };
+<b class="pc">&nbsp;            case &quot;BROUILLARD&quot; -&gt; switch (recipient.getRole()) {</b>
+<b class="fc">&nbsp;                case CHAUFFEUR -&gt; &quot;🌫️ Brouillard épais détecté. Visibilité inférieure à 200 mètres. Allumez vos feux et réduisez votre vitesse.&quot;;</b>
+<b class="fc">&nbsp;                case MANAGER -&gt; &quot;🌫️ Alerte météo — Brouillard épais sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</b>
+<b class="fc">&nbsp;                case SUPERADMIN -&gt; &quot;🌫️ Alerte météo — Brouillard épais détecté sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</b>
+<b class="nc">&nbsp;                default -&gt; null;</b>
+&nbsp;            };
+<b class="pc">&nbsp;            case &quot;NEIGE&quot; -&gt; switch (recipient.getRole()) {</b>
+<b class="fc">&nbsp;                case CHAUFFEUR -&gt; &quot;❄️ Chute de neige détectée sur votre itinéraire. Réduisez votre vitesse et soyez très prudent.&quot;;</b>
+<b class="fc">&nbsp;                case MANAGER -&gt; &quot;❄️ Alerte météo — Neige sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</b>
+<b class="fc">&nbsp;                case SUPERADMIN -&gt; &quot;❄️ Alerte météo — Neige détectée sur le trajet de &quot; + chauffeurNom + &quot; vers &quot; + destination + &quot;.&quot;;</b>
+<b class="nc">&nbsp;                default -&gt; null;</b>
+&nbsp;            };
+<b class="fc">&nbsp;            default -&gt; null;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

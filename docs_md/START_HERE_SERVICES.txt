@@ -1,0 +1,76 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   🚀 DÉMARRER LES SERVICES IA EN 30 SECONDES 🚀              ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  ÉTAPE 1 : Double-clique sur ce fichier                      │
+│                                                               │
+│      📄 DEMARRER_TOUS_SERVICES.bat                           │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  ÉTAPE 2 : Attends 10 secondes                               │
+│                                                               │
+│      Tu verras 3 fenêtres CMD s'ouvrir                       │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  ÉTAPE 3 : Vérifie que tout marche                           │
+│                                                               │
+│  Ouvre dans ton navigateur :                                 │
+│                                                               │
+│      http://localhost:5000/health                            │
+│      http://localhost:5001/health                            │
+│      http://localhost:8000/health                            │
+│                                                               │
+│  Tu dois voir : {"status":"healthy"} ou {"status":"ok"}      │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────┐
+│  ✅ C'EST TOUT !                                              │
+│                                                               │
+│  Les 3 services IA sont maintenant actifs :                  │
+│                                                               │
+│     ✓ Pause AI Service        (port 5000)                    │
+│     ✓ Réclamation AI Service  (port 5001)                    │
+│     ✓ RAG Chatbot Service     (port 8000)                    │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════
+
+📖 BESOIN D'AIDE ?
+
+   Lis le guide complet : INDEX_SERVICES_IA.md
+
+   OU double-clique sur : VOIR_GUIDE_SERVICES.bat
+
+═══════════════════════════════════════════════════════════════
+
+
+🧪 POUR LES TESTS UNITAIRES :
+
+   Les tests n'ont PAS besoin des services IA !
+   
+   Dans IntelliJ :
+   1. Clic droit sur : backend/src/test/java/com/logiway/services/
+   2. Run 'Tests in services'
+
+   Lis : TESTS_CORRIGES_EXECUTER.md
+
+═══════════════════════════════════════════════════════════════
+
+
+⚠️ IMPORTANT : NE FERME PAS les fenêtres CMD des services !
+
+═══════════════════════════════════════════════════════════════

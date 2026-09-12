@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ChatbotController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">ChatbotController.java</span></div><h1>ChatbotController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.request.ChatbotMessageRequest;
+import com.logiway.security.AuthenticatedUserService;
+import com.logiway.services.ChatbotRAGService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/chat&quot;)
+<span class="fc" id="L17">@RequiredArgsConstructor</span>
+<span class="fc" id="L18">@Slf4j</span>
+public class ChatbotController {
+
+    private final ChatbotRAGService chatbotRAGService;
+    private final AuthenticatedUserService authenticatedUserService;
+
+    @PostMapping(&quot;/message&quot;)
+    @PreAuthorize(&quot;hasAnyAuthority('ROLE_SUPERADMIN','ROLE_MANAGER','ROLE_CHAUFFEUR')&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; sendMessage(@Valid @RequestBody ChatbotMessageRequest request) {
+<span class="fc" id="L27">        String question = request.getQuestion();</span>
+<span class="fc bfc" id="L28" title="All 4 branches covered.">        if (question == null || question.trim().isEmpty()) {</span>
+<span class="fc" id="L29">            return ResponseEntity.badRequest().body(Map.of(&quot;error&quot;, &quot;La question ne peut pas être vide&quot;));</span>
+        }
+
+        try {
+<span class="fc" id="L33">            var utilisateur = authenticatedUserService.getCurrentUser();</span>
+<span class="fc" id="L34">            String utilisateurInfo = utilisateur.getPrenom() + &quot; &quot; + utilisateur.getNom();</span>
+<span class="fc" id="L35">            log.debug(&quot;Question reçue de {} : {}&quot;, utilisateurInfo, question);</span>
+
+<span class="fc" id="L37">            String reponse = chatbotRAGService.traiterQuestion(question.trim(), utilisateurInfo);</span>
+<span class="fc" id="L38">            return ResponseEntity.ok(Map.of(&quot;reponse&quot;, reponse));</span>
+<span class="fc" id="L39">        } catch (Exception e) {</span>
+<span class="fc" id="L40">            log.error(&quot;Erreur traitement chatbot: {}&quot;, e.getMessage(), e);</span>
+<span class="fc" id="L41">            return ResponseEntity.internalServerError()</span>
+<span class="fc" id="L42">                .body(Map.of(&quot;error&quot;, &quot;Erreur lors du traitement de la demande: &quot; + e.getMessage()));</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

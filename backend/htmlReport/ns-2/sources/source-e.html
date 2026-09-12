@@ -1,0 +1,919 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > PauseReglementaireServiceImpl</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services.impl</a>
+</div>
+
+<h1>Coverage Summary for Class: PauseReglementaireServiceImpl (com.logiway.services.impl)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+<th class="coverageStat 
+">
+  Method, %
+</th>
+<th class="coverageStat 
+">
+  Branch, %
+</th>
+<th class="coverageStat 
+">
+  Line, %
+</th>
+</tr>
+<tr>
+  <td class="name">PauseReglementaireServiceImpl</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/18)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/274)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/405)
+  </span>
+</td>
+</tr>
+  <tr>
+    <td class="name">PauseReglementaireServiceImpl$1</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">PauseReglementaireServiceImpl$2</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+  <tr>
+    <td class="name">PauseReglementaireServiceImpl$3</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/1)
+  </span>
+</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/21)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/274)
+  </span>
+</td>
+<td class="coverageStat">
+  <span class="percent">
+    0%
+  </span>
+  <span class="absValue">
+    (0/408)
+  </span>
+</td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services.impl;
+&nbsp;
+&nbsp;import com.fasterxml.jackson.core.type.TypeReference;
+&nbsp;import com.fasterxml.jackson.databind.ObjectMapper;
+&nbsp;import com.logiway.dto.pause.PauseReglementaireResponse;
+&nbsp;import com.logiway.entities.PauseReglementaire;
+&nbsp;import com.logiway.entities.Trajet;
+&nbsp;import com.logiway.entities.Utilisateur;
+&nbsp;import com.logiway.entities.enums.Role;
+&nbsp;import com.logiway.entities.enums.StatutPause;
+&nbsp;import com.logiway.entities.enums.TypePause;
+&nbsp;import com.logiway.exceptions.ResourceNotFoundException;
+&nbsp;import com.logiway.repositories.PauseReglementaireRepository;
+&nbsp;import com.logiway.repositories.TrajetRepository;
+&nbsp;import com.logiway.repositories.UtilisateurRepository;
+&nbsp;import com.logiway.security.AuthenticatedUserService;
+&nbsp;import com.logiway.services.NotificationRealtimeService;
+&nbsp;import com.logiway.services.PauseReglementaireService;
+&nbsp;import jakarta.transaction.Transactional;
+&nbsp;import lombok.RequiredArgsConstructor;
+&nbsp;import lombok.extern.slf4j.Slf4j;
+&nbsp;import org.springframework.beans.factory.annotation.Value;
+&nbsp;import org.springframework.http.HttpEntity;
+&nbsp;import org.springframework.http.HttpHeaders;
+&nbsp;import org.springframework.http.MediaType;
+&nbsp;import org.springframework.http.ResponseEntity;
+&nbsp;import org.springframework.stereotype.Service;
+&nbsp;import org.springframework.web.client.RestTemplate;
+&nbsp;
+&nbsp;import java.time.LocalDateTime;
+&nbsp;import java.time.format.DateTimeFormatter;
+&nbsp;import java.util.ArrayList;
+&nbsp;import java.util.Comparator;
+&nbsp;import java.util.HashMap;
+&nbsp;import java.util.List;
+&nbsp;import java.util.Map;
+&nbsp;import java.util.UUID;
+&nbsp;
+&nbsp;@Service
+<b class="nc">&nbsp;@RequiredArgsConstructor</b>
+&nbsp;@Transactional
+<b class="nc">&nbsp;@Slf4j</b>
+&nbsp;public class PauseReglementaireServiceImpl implements PauseReglementaireService {
+&nbsp;
+&nbsp;    private final PauseReglementaireRepository pauseRepository;
+&nbsp;    private final TrajetRepository trajetRepository;
+&nbsp;    private final AuthenticatedUserService authenticatedUserService;
+&nbsp;    private final ObjectMapper objectMapper;
+&nbsp;    private final NotificationRealtimeService notificationRealtimeService;
+&nbsp;    private final UtilisateurRepository utilisateurRepository;
+&nbsp;    private final RestTemplate restTemplate;
+&nbsp;
+&nbsp;    @Value(&quot;${pause-ai.url:http://localhost:5000}&quot;)
+&nbsp;    private String pauseAiUrl;
+&nbsp;
+&nbsp;    @Value(&quot;${app.debug-pauses:false}&quot;)
+&nbsp;    private boolean appDebugPauses;
+&nbsp;
+&nbsp;    private boolean isDebugEnabled() {
+<b class="nc">&nbsp;        return appDebugPauses || &quot;true&quot;.equalsIgnoreCase(System.getenv(&quot;APP_DEBUG_PAUSES&quot;));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;PauseReglementaireResponse&gt; genererPauses(Long trajetId) {
+<b class="nc">&nbsp;        log.info(&quot;[PAUSE-GEN] === DEBUT genererPauses pour trajet {} ===&quot;, trajetId);</b>
+&nbsp;        
+<b class="nc">&nbsp;        Trajet trajet = trajetRepository.findById(trajetId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+&nbsp;
+&nbsp;        // Check if trip duration is available
+<b class="nc">&nbsp;        Integer dureeMinutes = trajet.getDureeEstimeeMinutes();</b>
+<b class="nc">&nbsp;        log.info(&quot;[PAUSE-GEN] Trajet {} - Durée estimée: {} minutes&quot;, trajetId, dureeMinutes);</b>
+&nbsp;        
+<b class="nc">&nbsp;        if (dureeMinutes == null || dureeMinutes &lt;= 0) {</b>
+<b class="nc">&nbsp;            log.warn(&quot;[PAUSE-GEN] Trajet {} has no valid duration ({}min), skipping pause generation&quot;, trajetId, dureeMinutes);</b>
+<b class="nc">&nbsp;            return new ArrayList&lt;&gt;();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        if (dureeMinutes &lt; 180) {</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] Trajet {} duration is {}min (&lt; 3h threshold), simulator will return empty pauses&quot;, trajetId, dureeMinutes);</b>
+&nbsp;        } else {
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] Trajet {} duration is {}min (&gt;= 3h), pauses will be generated&quot;, trajetId, dureeMinutes);</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        // 1. deleteByTrajetId(trajetId)
+<b class="nc">&nbsp;        log.info(&quot;[PAUSE-GEN] Deleting all existing pauses for trajet {}&quot;, trajetId);</b>
+<b class="nc">&nbsp;        pauseRepository.deleteByTrajetId(trajetId);</b>
+&nbsp;
+&nbsp;        try {
+&nbsp;            // 2. Construire JSON stdin avec startLat, startLon, endLat, endLon, trip_id, trip_duration_minutes, departure_time
+<b class="nc">&nbsp;            Map&lt;String, Object&gt; input = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;            input.put(&quot;trip_id&quot;, trajetId);</b>
+<b class="nc">&nbsp;            input.put(&quot;trip_duration_minutes&quot;, dureeMinutes);</b>
+<b class="nc">&nbsp;            input.put(&quot;startLat&quot;, trajet.getLatitudeDepart());</b>
+<b class="nc">&nbsp;            input.put(&quot;startLon&quot;, trajet.getLongitudeDepart());</b>
+<b class="nc">&nbsp;            input.put(&quot;endLat&quot;, trajet.getLatitudeArrivee());</b>
+<b class="nc">&nbsp;            input.put(&quot;endLon&quot;, trajet.getLongitudeArrivee());</b>
+&nbsp;            
+<b class="nc">&nbsp;            if (trajet.getDateDepart() != null) {</b>
+<b class="nc">&nbsp;                input.put(&quot;departure_time&quot;, trajet.getDateDepart().toString());</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            Map&lt;String, Object&gt; tripMap = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;id&quot;, trajet.getId());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;pointDepart&quot;, trajet.getPointDepart());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;destination&quot;, trajet.getDestination());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;latitudeDepart&quot;, trajet.getLatitudeDepart());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;longitudeDepart&quot;, trajet.getLongitudeDepart());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;latitudeArrivee&quot;, trajet.getLatitudeArrivee());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;longitudeArrivee&quot;, trajet.getLongitudeArrivee());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;distanceKm&quot;, trajet.getDistanceKm());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;dureeEstimeeMinutes&quot;, trajet.getDureeEstimeeMinutes());</b>
+<b class="nc">&nbsp;            tripMap.put(&quot;geometrieItineraire&quot;, trajet.getGeometrieItineraire());</b>
+<b class="nc">&nbsp;            if (trajet.getVehicule() != null) {</b>
+<b class="nc">&nbsp;                tripMap.put(&quot;vehiculeId&quot;, trajet.getVehicule().getId());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (trajet.getChauffeur() != null) {</b>
+<b class="nc">&nbsp;                tripMap.put(&quot;chauffeurId&quot;, trajet.getChauffeur().getId());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            input.put(&quot;trip&quot;, tripMap);</b>
+&nbsp;
+<b class="nc">&nbsp;            String inputJson = objectMapper.writeValueAsString(input);</b>
+&nbsp;
+&nbsp;            // 3. Appel au service Flask IA
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] Appel Flask AI à {}/api/predict: {}&quot;, pauseAiUrl, inputJson);</b>
+&nbsp;
+<b class="nc">&nbsp;            HttpHeaders headers = new HttpHeaders();</b>
+<b class="nc">&nbsp;            headers.setContentType(MediaType.APPLICATION_JSON);</b>
+<b class="nc">&nbsp;            HttpEntity&lt;String&gt; requestEntity = new HttpEntity&lt;&gt;(inputJson, headers);</b>
+&nbsp;
+<b class="nc">&nbsp;            ResponseEntity&lt;String&gt; response = restTemplate.postForEntity(</b>
+&nbsp;                pauseAiUrl + &quot;/api/predict&quot;, requestEntity, String.class);
+&nbsp;
+<b class="nc">&nbsp;            String responseBody = response.getBody();</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] Réponse Flask AI: {}&quot;, responseBody);</b>
+&nbsp;
+<b class="nc">&nbsp;            if (responseBody == null || responseBody.isBlank()) {</b>
+<b class="nc">&nbsp;                log.error(&quot;[PAUSE-GEN] Réponse vide du service Flask AI pour trajet {}&quot;, trajetId);</b>
+<b class="nc">&nbsp;                return new ArrayList&lt;&gt;();</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Parse service response
+<b class="nc">&nbsp;            Map&lt;String, Object&gt; result = objectMapper.readValue(responseBody, new TypeReference&lt;&gt;() {});</b>
+&nbsp;            
+&nbsp;            @SuppressWarnings(&quot;unchecked&quot;)
+<b class="nc">&nbsp;            Map&lt;String, Object&gt; meta = (Map&lt;String, Object&gt;) result.get(&quot;meta&quot;);</b>
+<b class="nc">&nbsp;            if (meta != null &amp;&amp; Boolean.FALSE.equals(meta.get(&quot;break_alert_applicable&quot;))) {</b>
+<b class="nc">&nbsp;                log.info(&quot;[PAUSE-GEN] Trajet {} - breaks not applicable: {}&quot;, trajetId, meta.get(&quot;reason&quot;));</b>
+<b class="nc">&nbsp;                return new ArrayList&lt;&gt;();</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            @SuppressWarnings(&quot;unchecked&quot;)
+<b class="nc">&nbsp;            List&lt;Map&lt;String, Object&gt;&gt; stops = (List&lt;Map&lt;String, Object&gt;&gt;) result.get(&quot;stops&quot;);</b>
+<b class="nc">&nbsp;            if (stops == null || stops.isEmpty()) {</b>
+<b class="nc">&nbsp;                log.info(&quot;[PAUSE-GEN] No stops generated for trajet {}&quot;, trajetId);</b>
+<b class="nc">&nbsp;                return new ArrayList&lt;&gt;();</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] Received {} pauses from simulator for trajet {}&quot;, stops.size(), trajetId);</b>
+<b class="nc">&nbsp;            for (Map&lt;String, Object&gt; stop : stops) {</b>
+<b class="nc">&nbsp;                log.info(&quot;[PAUSE-GEN] - Pause type: {}, distance: {} m&quot;, stop.get(&quot;type&quot;), stop.get(&quot;distanceAlongRouteM&quot;));</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // Save pauses to database
+<b class="nc">&nbsp;            List&lt;PauseReglementaire&gt; pauses = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;            for (Map&lt;String, Object&gt; stop : stops) {</b>
+<b class="nc">&nbsp;                PauseReglementaire pause = new PauseReglementaire();</b>
+<b class="nc">&nbsp;                pause.setTrajet(trajet);</b>
+<b class="nc">&nbsp;                pause.setType(parseTypePause((String) stop.get(&quot;type&quot;)));</b>
+&nbsp;                
+&nbsp;                // Parse coordinates - support both lonlat array and lat/lon fields
+<b class="nc">&nbsp;                Double longitude = null;</b>
+<b class="nc">&nbsp;                Double latitude = null;</b>
+&nbsp;                
+&nbsp;                // Try lonlat array first
+&nbsp;                @SuppressWarnings(&quot;unchecked&quot;)
+<b class="nc">&nbsp;                List&lt;Number&gt; lonlat = (List&lt;Number&gt;) stop.get(&quot;lonlat&quot;);</b>
+<b class="nc">&nbsp;                if (lonlat != null &amp;&amp; lonlat.size() &gt;= 2) {</b>
+<b class="nc">&nbsp;                    longitude = lonlat.get(0).doubleValue();</b>
+<b class="nc">&nbsp;                    latitude = lonlat.get(1).doubleValue();</b>
+&nbsp;                } else {
+&nbsp;                    // Try lat/lon fields
+<b class="nc">&nbsp;                    Object latObj = stop.get(&quot;lat&quot;);</b>
+<b class="nc">&nbsp;                    Object lonObj = stop.get(&quot;lon&quot;);</b>
+<b class="nc">&nbsp;                    if (latObj != null &amp;&amp; lonObj != null) {</b>
+<b class="nc">&nbsp;                        latitude = getDoubleValue(latObj);</b>
+<b class="nc">&nbsp;                        longitude = getDoubleValue(lonObj);</b>
+&nbsp;                    }
+&nbsp;                }
+&nbsp;                
+&nbsp;                // Fallback to trip start if no coordinates
+<b class="nc">&nbsp;                if (longitude == null || latitude == null) {</b>
+<b class="nc">&nbsp;                    longitude = trajet.getLongitudeDepart() != null ? trajet.getLongitudeDepart() : 0.0;</b>
+<b class="nc">&nbsp;                    latitude = trajet.getLatitudeDepart() != null ? trajet.getLatitudeDepart() : 0.0;</b>
+&nbsp;                }
+&nbsp;                
+<b class="nc">&nbsp;                pause.setLongitude(longitude);</b>
+<b class="nc">&nbsp;                pause.setLatitude(latitude);</b>
+&nbsp;                
+&nbsp;                // Parse other fields with support for both camelCase and snake_case
+<b class="nc">&nbsp;                pause.setDistanceAlongRouteM(getDoubleValue(stop.containsKey(&quot;distanceAlongRouteM&quot;) ? stop.get(&quot;distanceAlongRouteM&quot;) : stop.get(&quot;distance_along_route_m&quot;)));</b>
+<b class="nc">&nbsp;                pause.setHeureArriveePlanifiee(parseDateTime((String) (stop.containsKey(&quot;arrivalTime&quot;) ? stop.get(&quot;arrivalTime&quot;) : stop.get(&quot;arrival_time&quot;))));</b>
+<b class="nc">&nbsp;                pause.setDurationSeconds(getIntegerValue(stop.containsKey(&quot;durationSec&quot;) ? stop.get(&quot;durationSec&quot;) : stop.get(&quot;duration_sec&quot;)));</b>
+<b class="nc">&nbsp;                pause.setHeureRepriseEstimee(parseDateTime((String) (stop.containsKey(&quot;resumeTime&quot;) ? stop.get(&quot;resumeTime&quot;) : stop.get(&quot;resume_time&quot;))));</b>
+<b class="nc">&nbsp;                pause.setStatut(StatutPause.PLANIFIEE);</b>
+&nbsp;                
+&nbsp;                // 4. Parser aiScore, fatigueScore, accessibilityScore, contextScore, reasoning, confidence
+<b class="nc">&nbsp;                pause.setAiScore(getIntegerValue(stop.containsKey(&quot;aiScore&quot;) ? stop.get(&quot;aiScore&quot;) : stop.get(&quot;ai_score&quot;)));</b>
+<b class="nc">&nbsp;                pause.setFatigueScore(getIntegerValue(stop.containsKey(&quot;fatigueScore&quot;) ? stop.get(&quot;fatigueScore&quot;) : stop.get(&quot;fatigue_score&quot;)));</b>
+<b class="nc">&nbsp;                pause.setAccessibilityScore(getIntegerValue(stop.containsKey(&quot;accessibilityScore&quot;) ? stop.get(&quot;accessibilityScore&quot;) : stop.get(&quot;accessibility_score&quot;)));</b>
+<b class="nc">&nbsp;                pause.setContextScore(getIntegerValue(stop.containsKey(&quot;contextScore&quot;) ? stop.get(&quot;contextScore&quot;) : stop.get(&quot;context_score&quot;)));</b>
+<b class="nc">&nbsp;                pause.setConfidence(getDoubleValue(stop.get(&quot;confidence&quot;)));</b>
+&nbsp;                
+&nbsp;                // Parse reasoning array to string
+&nbsp;                @SuppressWarnings(&quot;unchecked&quot;)
+<b class="nc">&nbsp;                List&lt;String&gt; reasoningList = (List&lt;String&gt;) stop.get(&quot;reasoning&quot;);</b>
+<b class="nc">&nbsp;                if (reasoningList != null &amp;&amp; !reasoningList.isEmpty()) {</b>
+<b class="nc">&nbsp;                    pause.setReasoning(String.join(&quot;; &quot;, reasoningList));</b>
+&nbsp;                }
+&nbsp;                
+&nbsp;                // WARNING_ALERT rules enforcement
+<b class="nc">&nbsp;                if (pause.getType() == TypePause.WARNING_ALERT) {</b>
+<b class="nc">&nbsp;                    pause.setDurationSeconds(0);</b>
+<b class="nc">&nbsp;                    pause.setHeureRepriseEstimee(pause.getHeureArriveePlanifiee());</b>
+&nbsp;                }
+&nbsp;                
+&nbsp;                // Generate or use provided nomLieu
+<b class="nc">&nbsp;                String nomLieu = (String) stop.get(&quot;nomLieu&quot;);</b>
+<b class="nc">&nbsp;                if (nomLieu == null || nomLieu.isBlank()) {</b>
+<b class="nc">&nbsp;                    nomLieu = generateNomLieu(pause.getType(), pause.getDistanceAlongRouteM());</b>
+&nbsp;                }
+<b class="nc">&nbsp;                pause.setNomLieu(nomLieu);</b>
+&nbsp;                
+<b class="nc">&nbsp;                pauses.add(pause);</b>
+&nbsp;            }
+&nbsp;
+&nbsp;            // 5. saveAll() → OBLIGATOIRE (and flush to force DB write before SSE)
+<b class="nc">&nbsp;            List&lt;PauseReglementaire&gt; savedPauses = pauseRepository.saveAll(pauses);</b>
+<b class="nc">&nbsp;            pauseRepository.flush();</b>
+&nbsp;            
+&nbsp;            // 3. Logger TOUT : nb pauses saveAll()
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] nb pauses saveAll(): {}&quot;, savedPauses.size());</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] Successfully saved {} PauseReglementaire entities to database for trajet {}&quot;, savedPauses.size(), trajetId);</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] === FIN genererPauses pour trajet {} ===&quot;, trajetId);</b>
+&nbsp;            
+&nbsp;            // 6. envoyerSSE(&quot;PAUSES_GENEREES&quot;, trajetId) → APRÈS save()
+<b class="nc">&nbsp;            List&lt;Long&gt; audience = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;            if (trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getId() != null) {</b>
+<b class="nc">&nbsp;                audience.add(trajet.getChauffeur().getId());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            if (trajet.getManager() != null &amp;&amp; trajet.getManager().getId() != null) {</b>
+<b class="nc">&nbsp;                audience.add(trajet.getManager().getId());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            utilisateurRepository.findByRole(Role.SUPERADMIN).stream()</b>
+<b class="nc">&nbsp;                .map(Utilisateur::getId)</b>
+<b class="nc">&nbsp;                .forEach(audience::add);</b>
+<b class="nc">&nbsp;            List&lt;Long&gt; distinctAudience = audience.stream().distinct().toList();</b>
+&nbsp;            
+<b class="nc">&nbsp;            if (!distinctAudience.isEmpty()) {</b>
+<b class="nc">&nbsp;                log.info(&quot;[PAUSE-GEN] envoyerSSE(\&quot;PAUSES_GENEREES\&quot;, {}) to audience {}&quot;, trajetId, distinctAudience);</b>
+<b class="nc">&nbsp;                notificationRealtimeService.publishNamedEventToUsers(distinctAudience, &quot;PAUSES_GENEREES&quot;, trajetId);</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            return savedPauses.stream().map(this::toResponse).toList();</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            log.error(&quot;[PAUSE-GEN] Failed to generate pauses via Python for trajet {}: {}&quot;, trajetId, e.getMessage(), e);</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] Attempting fallback generation for trajet {}...&quot;, trajetId);</b>
+&nbsp;            try {
+<b class="nc">&nbsp;                List&lt;PauseReglementaire&gt; fallbackPauses = genererPausesFallback(trajet, trajet.getDureeEstimeeMinutes());</b>
+<b class="nc">&nbsp;                if (fallbackPauses != null &amp;&amp; !fallbackPauses.isEmpty()) {</b>
+<b class="nc">&nbsp;                    List&lt;PauseReglementaire&gt; savedFallback = pauseRepository.saveAll(fallbackPauses);</b>
+<b class="nc">&nbsp;                    pauseRepository.flush();</b>
+<b class="nc">&nbsp;                    log.info(&quot;[PAUSE-GEN] Fallback: generated {} pauses for trajet {}&quot;, savedFallback.size(), trajetId);</b>
+<b class="nc">&nbsp;                    return savedFallback.stream().map(this::toResponse).toList();</b>
+&nbsp;                }
+&nbsp;            } catch (Exception fallbackEx) {
+<b class="nc">&nbsp;                log.warn(&quot;[PAUSE-GEN] Fallback generation also failed for trajet {}: {}&quot;, trajetId, fallbackEx.getMessage());</b>
+&nbsp;            }
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GEN] === FIN genererPauses (avec erreur) pour trajet {} ===&quot;, trajetId);</b>
+<b class="nc">&nbsp;            return new ArrayList&lt;&gt;();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public List&lt;PauseReglementaireResponse&gt; getPausesForTrajet(Long trajetId) {
+&nbsp;        // Verify trajet exists
+<b class="nc">&nbsp;        Trajet trajet = trajetRepository.findById(trajetId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+&nbsp;
+&nbsp;        try {
+<b class="nc">&nbsp;            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;            Role userRole = currentUser.getRole();</b>
+<b class="nc">&nbsp;            Long userId = currentUser.getId();</b>
+&nbsp;
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GET] GET /api/trajets/{}/pauses called by user {} (role: {})&quot;, trajetId, userId, userRole);</b>
+&nbsp;
+&nbsp;            List&lt;PauseReglementaire&gt; pauses;
+&nbsp;
+<b class="nc">&nbsp;            if (userRole == Role.SUPERADMIN) {</b>
+<b class="nc">&nbsp;                pauses = pauseRepository.findByTrajetId(trajetId);</b>
+<b class="nc">&nbsp;                log.info(&quot;[PAUSE-GET] SuperAdmin access granted for trajet {}&quot;, trajetId);</b>
+<b class="nc">&nbsp;            } else if (userRole == Role.MANAGER) {</b>
+&nbsp;                // Manager: sees breaks of their drivers and of their company (entreprise)
+<b class="nc">&nbsp;                boolean isManagerOfChauffeur = trajet.getChauffeur() != null </b>
+<b class="nc">&nbsp;                    &amp;&amp; trajet.getChauffeur().getManager() != null </b>
+<b class="nc">&nbsp;                    &amp;&amp; trajet.getChauffeur().getManager().getId().equals(userId);</b>
+&nbsp;                
+<b class="nc">&nbsp;                boolean isSameCompany = false;</b>
+<b class="nc">&nbsp;                if (currentUser.getEntreprise() != null) {</b>
+<b class="nc">&nbsp;                    if (trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getEntreprise() != null) {</b>
+<b class="nc">&nbsp;                        isSameCompany = trajet.getChauffeur().getEntreprise().getId().equals(currentUser.getEntreprise().getId());</b>
+<b class="nc">&nbsp;                    } else if (trajet.getManager() != null &amp;&amp; trajet.getManager().getEntreprise() != null) {</b>
+<b class="nc">&nbsp;                        isSameCompany = trajet.getManager().getEntreprise().getId().equals(currentUser.getEntreprise().getId());</b>
+&nbsp;                    }
+&nbsp;                }
+&nbsp;                
+<b class="nc">&nbsp;                boolean isAssignedManager = trajet.getManager() != null &amp;&amp; trajet.getManager().getId().equals(userId);</b>
+&nbsp;
+<b class="nc">&nbsp;                if (!isAssignedManager &amp;&amp; !isManagerOfChauffeur &amp;&amp; !isSameCompany) {</b>
+<b class="nc">&nbsp;                    log.warn(&quot;[PAUSE-GET] Manager {} denied access to trajet {}&quot;, userId, trajetId);</b>
+<b class="nc">&nbsp;                    throw new ResourceNotFoundException(&quot;Accès refusé à ce trajet&quot;);</b>
+&nbsp;                }
+<b class="nc">&nbsp;                pauses = pauseRepository.findByTrajetId(trajetId);</b>
+<b class="nc">&nbsp;                log.info(&quot;[PAUSE-GET] Manager access granted for trajet {}&quot;, trajetId);</b>
+<b class="nc">&nbsp;            } else if (userRole == Role.CHAUFFEUR) {</b>
+<b class="nc">&nbsp;                if (trajet.getChauffeur() == null || !trajet.getChauffeur().getId().equals(userId)) {</b>
+<b class="nc">&nbsp;                    log.warn(&quot;[PAUSE-GET] Chauffeur {} denied access to trajet {}&quot;, userId, trajetId);</b>
+<b class="nc">&nbsp;                    throw new ResourceNotFoundException(&quot;Accès refusé à ce trajet&quot;);</b>
+&nbsp;                }
+<b class="nc">&nbsp;                pauses = pauseRepository.findByTrajetId(trajetId);</b>
+<b class="nc">&nbsp;                log.info(&quot;[PAUSE-GET] Chauffeur access granted for trajet {}&quot;, trajetId);</b>
+&nbsp;            } else {
+<b class="nc">&nbsp;                log.warn(&quot;[PAUSE-GET] User {} denied access (role: {})&quot;, userId, userRole);</b>
+<b class="nc">&nbsp;                throw new ResourceNotFoundException(&quot;Rôle non autorisé&quot;);</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-GET] Returning {} pauses for trajet {}&quot;, pauses.size(), trajetId);</b>
+&nbsp;
+<b class="nc">&nbsp;            return pauses.stream().map(this::toResponse).toList();</b>
+&nbsp;
+&nbsp;        } catch (ResourceNotFoundException | SecurityException ex) {
+&nbsp;            throw ex;
+&nbsp;        } catch (Exception ex) {
+<b class="nc">&nbsp;            log.warn(&quot;[PAUSE-GET] getPausesForTrajet called without authentication for trajet {}, returning empty list: {}&quot;, trajetId, ex.getMessage());</b>
+<b class="nc">&nbsp;            return new ArrayList&lt;&gt;();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    @Override
+&nbsp;    public PauseReglementaireResponse mettreAJourStatutPause(Long trajetId, Long pauseId, StatutPause statut) {
+<b class="nc">&nbsp;        if (statut == null) {</b>
+<b class="nc">&nbsp;            throw new IllegalArgumentException(&quot;Le statut de pause est obligatoire&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Trajet trajet = trajetRepository.findById(trajetId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Trajet introuvable&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;        PauseReglementaire pause = pauseRepository.findById(pauseId)</b>
+<b class="nc">&nbsp;            .orElseThrow(() -&gt; new ResourceNotFoundException(&quot;Pause introuvable&quot;));</b>
+&nbsp;
+<b class="nc">&nbsp;        if (pause.getTrajet() == null || !pause.getTrajet().getId().equals(trajetId)) {</b>
+<b class="nc">&nbsp;            throw new ResourceNotFoundException(&quot;Pause introuvable pour ce trajet&quot;);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        verifierAccesPause(trajet);</b>
+&nbsp;
+<b class="nc">&nbsp;        pause.setStatut(statut);</b>
+<b class="nc">&nbsp;        if (statut == StatutPause.ATTEINTE &amp;&amp; pause.getHeureRepriseEstimee() == null) {</b>
+<b class="nc">&nbsp;            pause.setHeureRepriseEstimee(LocalDateTime.now());</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        PauseReglementaire saved = pauseRepository.save(pause);</b>
+&nbsp;
+<b class="nc">&nbsp;        String chauffeurNom = trajet.getChauffeur() != null</b>
+<b class="nc">&nbsp;            ? (trajet.getChauffeur().getPrenom() + &quot; &quot; + trajet.getChauffeur().getNom()).trim()</b>
+<b class="nc">&nbsp;            : &quot;N/A&quot;;</b>
+&nbsp;
+<b class="nc">&nbsp;        if (statut == StatutPause.ATTEINTE) {</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-AI] ✅ Pause effectuée — TrajetId={} | Chauffeur={} | Durée pause={}min | Remise à zéro du compteur hours_driving&quot;, trajetId, chauffeurNom, saved.getDurationSeconds() != null ? saved.getDurationSeconds() / 60 : 0);</b>
+<b class="nc">&nbsp;        } else if (statut == StatutPause.IGNOREE) {</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-AI] Pause ignorée — TrajetId={} | Chauffeur={} | Score au moment de l&#39;ignorance={} | Snooze 15min activé&quot;, trajetId, chauffeurNom, saved.getAiScore() != null ? saved.getAiScore() : 0);</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        broadcasterPauseStatus(trajet, saved);</b>
+<b class="nc">&nbsp;        return toResponse(saved);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private PauseReglementaireResponse toResponse(PauseReglementaire pause) {
+<b class="nc">&nbsp;        return PauseReglementaireResponse.builder()</b>
+<b class="nc">&nbsp;            .id(pause.getId())</b>
+<b class="nc">&nbsp;            .trajetId(pause.getTrajet().getId())</b>
+<b class="nc">&nbsp;            .type(pause.getType())</b>
+<b class="nc">&nbsp;            .longitude(pause.getLongitude())</b>
+<b class="nc">&nbsp;            .latitude(pause.getLatitude())</b>
+<b class="nc">&nbsp;            .distanceAlongRouteM(pause.getDistanceAlongRouteM())</b>
+<b class="nc">&nbsp;            .heureArriveePlanifiee(pause.getHeureArriveePlanifiee())</b>
+<b class="nc">&nbsp;            .durationSeconds(pause.getDurationSeconds())</b>
+<b class="nc">&nbsp;            .heureRepriseEstimee(pause.getHeureRepriseEstimee())</b>
+<b class="nc">&nbsp;            .statut(pause.getStatut())</b>
+<b class="nc">&nbsp;            .nomLieu(pause.getNomLieu())</b>
+<b class="nc">&nbsp;            .aiScore(pause.getAiScore())</b>
+<b class="nc">&nbsp;            .fatigueScore(pause.getFatigueScore())</b>
+<b class="nc">&nbsp;            .accessibilityScore(pause.getAccessibilityScore())</b>
+<b class="nc">&nbsp;            .contextScore(pause.getContextScore())</b>
+<b class="nc">&nbsp;            .reasoning(pause.getReasoning())</b>
+<b class="nc">&nbsp;            .confidence(pause.getConfidence())</b>
+<b class="nc">&nbsp;            .build();</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void broadcasterPauseStatus(Trajet trajet, PauseReglementaire pause) {
+<b class="nc">&nbsp;        List&lt;Long&gt; audience = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;        if (trajet.getChauffeur() != null &amp;&amp; trajet.getChauffeur().getId() != null) {</b>
+<b class="nc">&nbsp;            audience.add(trajet.getChauffeur().getId());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (trajet.getManager() != null &amp;&amp; trajet.getManager().getId() != null) {</b>
+<b class="nc">&nbsp;            audience.add(trajet.getManager().getId());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        utilisateurRepository.findByRole(Role.SUPERADMIN).stream()</b>
+<b class="nc">&nbsp;            .map(Utilisateur::getId)</b>
+<b class="nc">&nbsp;            .forEach(audience::add);</b>
+&nbsp;
+<b class="nc">&nbsp;        List&lt;Long&gt; distinctAudience = audience.stream().distinct().toList();</b>
+<b class="nc">&nbsp;        if (distinctAudience.isEmpty()) {</b>
+&nbsp;            return;
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        Map&lt;String, Object&gt; payload = new HashMap&lt;&gt;();</b>
+<b class="nc">&nbsp;        payload.put(&quot;trajetId&quot;, trajet.getId());</b>
+<b class="nc">&nbsp;        payload.put(&quot;pauseId&quot;, pause.getId());</b>
+<b class="nc">&nbsp;        payload.put(&quot;statut&quot;, pause.getStatut());</b>
+<b class="nc">&nbsp;        payload.put(&quot;latitude&quot;, pause.getLatitude());</b>
+<b class="nc">&nbsp;        payload.put(&quot;longitude&quot;, pause.getLongitude());</b>
+<b class="nc">&nbsp;        payload.put(&quot;nomLieu&quot;, pause.getNomLieu());</b>
+<b class="nc">&nbsp;        payload.put(&quot;type&quot;, pause.getType() != null ? pause.getType().name() : null);</b>
+<b class="nc">&nbsp;        payload.put(&quot;score&quot;, pause.getAiScore());</b>
+&nbsp;
+<b class="nc">&nbsp;        notificationRealtimeService.publishNamedEventToUsers(distinctAudience, &quot;PAUSE_STATUS_UPDATED&quot;, payload);</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    private void verifierAccesPause(Trajet trajet) {
+&nbsp;        try {
+<b class="nc">&nbsp;            Utilisateur currentUser = authenticatedUserService.getCurrentUser();</b>
+<b class="nc">&nbsp;            Role userRole = currentUser.getRole();</b>
+<b class="nc">&nbsp;            Long userId = currentUser.getId();</b>
+&nbsp;
+<b class="nc">&nbsp;            if (userRole == Role.SUPERADMIN) {</b>
+&nbsp;                return;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            if (userRole == Role.MANAGER) {</b>
+<b class="nc">&nbsp;                boolean isManagerOfChauffeur = trajet.getChauffeur() != null</b>
+<b class="nc">&nbsp;                    &amp;&amp; trajet.getChauffeur().getManager() != null</b>
+<b class="nc">&nbsp;                    &amp;&amp; trajet.getChauffeur().getManager().getId().equals(userId);</b>
+<b class="nc">&nbsp;                boolean isSameCompany = currentUser.getEntreprise() != null</b>
+<b class="nc">&nbsp;                    &amp;&amp; trajet.getChauffeur() != null</b>
+<b class="nc">&nbsp;                    &amp;&amp; trajet.getChauffeur().getEntreprise() != null</b>
+<b class="nc">&nbsp;                    &amp;&amp; trajet.getChauffeur().getEntreprise().getId().equals(currentUser.getEntreprise().getId());</b>
+<b class="nc">&nbsp;                boolean isAssignedManager = trajet.getManager() != null &amp;&amp; trajet.getManager().getId().equals(userId);</b>
+&nbsp;
+<b class="nc">&nbsp;                if (!isAssignedManager &amp;&amp; !isManagerOfChauffeur &amp;&amp; !isSameCompany) {</b>
+<b class="nc">&nbsp;                    throw new ResourceNotFoundException(&quot;Accès refusé à cette pause&quot;);</b>
+&nbsp;                }
+&nbsp;                return;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            if (userRole == Role.CHAUFFEUR) {</b>
+<b class="nc">&nbsp;                if (trajet.getChauffeur() == null || !trajet.getChauffeur().getId().equals(userId)) {</b>
+<b class="nc">&nbsp;                    throw new ResourceNotFoundException(&quot;Accès refusé à cette pause&quot;);</b>
+&nbsp;                }
+&nbsp;                return;
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            throw new ResourceNotFoundException(&quot;Rôle non autorisé&quot;);</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            throw new ResourceNotFoundException(&quot;Accès refusé&quot;);</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private TypePause parseTypePause(String type) {
+<b class="nc">&nbsp;        if (type == null) {</b>
+<b class="nc">&nbsp;            return TypePause.POI;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return switch (type.toLowerCase()) {</b>
+<b class="nc">&nbsp;            case &quot;warning_alert&quot; -&gt; TypePause.WARNING_ALERT;</b>
+<b class="nc">&nbsp;            case &quot;mandatory_rest&quot; -&gt; TypePause.MANDATORY_REST;</b>
+<b class="nc">&nbsp;            case &quot;station_service&quot;, &quot;planned_stop&quot; -&gt; TypePause.STATION_SERVICE;</b>
+<b class="nc">&nbsp;            case &quot;kiosk&quot; -&gt; TypePause.KIOSK;</b>
+<b class="nc">&nbsp;            case &quot;rest_area&quot; -&gt; TypePause.REST_AREA;</b>
+<b class="nc">&nbsp;            case &quot;cafe&quot; -&gt; TypePause.CAFE;</b>
+<b class="nc">&nbsp;            case &quot;parking&quot; -&gt; TypePause.PARKING;</b>
+<b class="nc">&nbsp;            default -&gt; TypePause.POI;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    private LocalDateTime parseDateTime(String dateTimeStr) {
+<b class="nc">&nbsp;        if (dateTimeStr == null || dateTimeStr.isBlank()) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;        try {
+<b class="nc">&nbsp;            return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_DATE_TIME);</b>
+&nbsp;        } catch (Exception e) {
+&nbsp;            try {
+<b class="nc">&nbsp;                return LocalDateTime.parse(dateTimeStr);</b>
+&nbsp;            } catch (Exception ex) {
+<b class="nc">&nbsp;                log.warn(&quot;Failed to parse datetime: {}&quot;, dateTimeStr);</b>
+<b class="nc">&nbsp;                return null;</b>
+&nbsp;            }
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private Double getDoubleValue(Object value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (value instanceof Number) {</b>
+<b class="nc">&nbsp;            return ((Number) value).doubleValue();</b>
+&nbsp;        }
+&nbsp;        try {
+<b class="nc">&nbsp;            return Double.parseDouble(value.toString());</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private Integer getIntegerValue(Object value) {
+<b class="nc">&nbsp;        if (value == null) {</b>
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        if (value instanceof Number) {</b>
+<b class="nc">&nbsp;            return ((Number) value).intValue();</b>
+&nbsp;        }
+&nbsp;        try {
+<b class="nc">&nbsp;            return Integer.parseInt(value.toString());</b>
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            return null;</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    private String generateNomLieu(TypePause type, Double distanceM) {
+<b class="nc">&nbsp;        String distanceKm = distanceM != null ? String.format(&quot;%.1f&quot;, distanceM / 1000.0) : &quot;?&quot;;</b>
+<b class="nc">&nbsp;        return switch (type) {</b>
+<b class="nc">&nbsp;            case WARNING_ALERT -&gt; &quot;⏰ Alerte pause 3h - km &quot; + distanceKm;</b>
+<b class="nc">&nbsp;            case MANDATORY_REST -&gt; &quot;⛔ Pause obligatoire 4h30 - km &quot; + distanceKm;</b>
+<b class="nc">&nbsp;            case STATION_SERVICE -&gt; &quot;⛽ Station service - km &quot; + distanceKm;</b>
+<b class="nc">&nbsp;            case REST_AREA -&gt; &quot;🅿️ Aire de repos - km &quot; + distanceKm;</b>
+<b class="nc">&nbsp;            case KIOSK -&gt; &quot;🛒 Kiosque - km &quot; + distanceKm;</b>
+<b class="nc">&nbsp;            case CAFE -&gt; &quot;☕ Café - km &quot; + distanceKm;</b>
+<b class="nc">&nbsp;            case PARKING -&gt; &quot;🅿️ Parking - km &quot; + distanceKm;</b>
+<b class="nc">&nbsp;            case POI -&gt; &quot;📍 Point d&#39;intérêt - km &quot; + distanceKm;</b>
+&nbsp;        };
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Fallback: generate basic WARNING_ALERT and MANDATORY_REST stops
+&nbsp;     * by interpolating on the OSRM route geometry, without calling the Python script.
+&nbsp;     */
+&nbsp;    private List&lt;PauseReglementaire&gt; genererPausesFallback(Trajet trajet, Integer dureeMinutes) {
+<b class="nc">&nbsp;        if (dureeMinutes == null || dureeMinutes &lt; 180) {</b>
+<b class="nc">&nbsp;            log.info(&quot;[PAUSE-FALLBACK] Trajet {} duration {} &lt; 180 min, no fallback stops&quot;, trajet.getId(), dureeMinutes);</b>
+<b class="nc">&nbsp;            return new ArrayList&lt;&gt;();</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        String geomJson = trajet.getGeometrieItineraire();</b>
+<b class="nc">&nbsp;        if (geomJson == null || geomJson.isBlank()) {</b>
+<b class="nc">&nbsp;            log.warn(&quot;[PAUSE-FALLBACK] No route geometry for trajet {}&quot;, trajet.getId());</b>
+<b class="nc">&nbsp;            return new ArrayList&lt;&gt;();</b>
+&nbsp;        }
+&nbsp;
+&nbsp;        try {
+&nbsp;            // Parse GeoJSON polyline coordinates
+&nbsp;            @SuppressWarnings(&quot;unchecked&quot;)
+<b class="nc">&nbsp;            List&lt;List&lt;Double&gt;&gt; coords = parseCoordinatesFromGeometry(geomJson);</b>
+<b class="nc">&nbsp;            if (coords == null || coords.size() &lt; 2) {</b>
+<b class="nc">&nbsp;                log.warn(&quot;[PAUSE-FALLBACK] Invalid geometry coordinates for trajet {}&quot;, trajet.getId());</b>
+<b class="nc">&nbsp;                return new ArrayList&lt;&gt;();</b>
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            double totalDistM = trajet.getDistanceKm() != null ? trajet.getDistanceKm() * 1000.0 : 0.0;</b>
+<b class="nc">&nbsp;            if (totalDistM &lt;= 0) {</b>
+&nbsp;                // Calculate from coordinates
+<b class="nc">&nbsp;                totalDistM = 0;</b>
+<b class="nc">&nbsp;                for (int i = 1; i &lt; coords.size(); i++) {</b>
+<b class="nc">&nbsp;                    totalDistM += haversineM(coords.get(i - 1).get(1), coords.get(i - 1).get(0),</b>
+<b class="nc">&nbsp;                            coords.get(i).get(1), coords.get(i).get(0));</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;            // Calculate speed from duration
+<b class="nc">&nbsp;            double speedMS = dureeMinutes &gt; 0 ? (totalDistM / (dureeMinutes * 60.0)) : 18.0;</b>
+<b class="nc">&nbsp;            if (speedMS &lt;= 0) speedMS = 18.0;</b>
+&nbsp;
+<b class="nc">&nbsp;            LocalDateTime depDt = trajet.getDateDepart() != null ? trajet.getDateDepart() : LocalDateTime.now();</b>
+&nbsp;
+<b class="nc">&nbsp;            List&lt;PauseReglementaire&gt; pauses = new ArrayList&lt;&gt;();</b>
+<b class="nc">&nbsp;            List&lt;PauseReglementaire&gt; existingPauses = pauseRepository.findByTrajetId(trajet.getId());</b>
+&nbsp;
+&nbsp;            // WARNING_ALERT at 3h
+<b class="nc">&nbsp;            double warnDistM = Math.min(3.0 * 3600.0 * speedMS, totalDistM * 0.93);</b>
+<b class="nc">&nbsp;            double[] warnPos = interpolateOnRoute(coords, warnDistM, totalDistM);</b>
+<b class="nc">&nbsp;            if (warnPos != null) {</b>
+<b class="nc">&nbsp;                boolean exists = existingPauses.stream().anyMatch(p -&gt; p.getType() == TypePause.WARNING_ALERT);</b>
+<b class="nc">&nbsp;                if (!exists) {</b>
+<b class="nc">&nbsp;                    PauseReglementaire warn = new PauseReglementaire();</b>
+<b class="nc">&nbsp;                    warn.setTrajet(trajet);</b>
+<b class="nc">&nbsp;                    warn.setType(TypePause.WARNING_ALERT);</b>
+<b class="nc">&nbsp;                    warn.setLatitude(warnPos[0]);</b>
+<b class="nc">&nbsp;                    warn.setLongitude(warnPos[1]);</b>
+<b class="nc">&nbsp;                    warn.setDistanceAlongRouteM(warnDistM);</b>
+<b class="nc">&nbsp;                    LocalDateTime warnTime = depDt.plusSeconds((long) (warnDistM / speedMS));</b>
+<b class="nc">&nbsp;                    warn.setHeureArriveePlanifiee(warnTime);</b>
+<b class="nc">&nbsp;                    warn.setDurationSeconds(0);</b>
+<b class="nc">&nbsp;                    warn.setHeureRepriseEstimee(warnTime);</b>
+<b class="nc">&nbsp;                    warn.setStatut(StatutPause.PLANIFIEE);</b>
+<b class="nc">&nbsp;                    warn.setNomLieu(generateNomLieu(TypePause.WARNING_ALERT, warnDistM));</b>
+<b class="nc">&nbsp;                    warn.setAiScore(100);</b>
+<b class="nc">&nbsp;                    warn.setFatigueScore(100);</b>
+<b class="nc">&nbsp;                    warn.setAccessibilityScore(100);</b>
+<b class="nc">&nbsp;                    warn.setContextScore(100);</b>
+<b class="nc">&nbsp;                    warn.setReasoning(&quot;Seuil légal d&#39;alerte anticipée de 3h de conduite atteint (fallback)&quot;);</b>
+<b class="nc">&nbsp;                    warn.setConfidence(1.0);</b>
+<b class="nc">&nbsp;                    pauses.add(warn);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;
+&nbsp;            // MANDATORY_REST at 4.5h
+<b class="nc">&nbsp;            double mandDistM = Math.min(4.5 * 3600.0 * speedMS, totalDistM * 0.97);</b>
+<b class="nc">&nbsp;            double[] mandPos = interpolateOnRoute(coords, mandDistM, totalDistM);</b>
+<b class="nc">&nbsp;            if (mandPos != null) {</b>
+<b class="nc">&nbsp;                boolean exists = existingPauses.stream().anyMatch(p -&gt; p.getType() == TypePause.MANDATORY_REST);</b>
+<b class="nc">&nbsp;                if (!exists) {</b>
+<b class="nc">&nbsp;                    PauseReglementaire mand = new PauseReglementaire();</b>
+<b class="nc">&nbsp;                    mand.setTrajet(trajet);</b>
+<b class="nc">&nbsp;                    mand.setType(TypePause.MANDATORY_REST);</b>
+<b class="nc">&nbsp;                    mand.setLatitude(mandPos[0]);</b>
+<b class="nc">&nbsp;                    mand.setLongitude(mandPos[1]);</b>
+<b class="nc">&nbsp;                    mand.setDistanceAlongRouteM(mandDistM);</b>
+<b class="nc">&nbsp;                    LocalDateTime mandTime = depDt.plusSeconds((long) (mandDistM / speedMS));</b>
+<b class="nc">&nbsp;                    mand.setHeureArriveePlanifiee(mandTime);</b>
+<b class="nc">&nbsp;                    mand.setDurationSeconds(2700);</b>
+<b class="nc">&nbsp;                    mand.setHeureRepriseEstimee(mandTime.plusSeconds(2700));</b>
+<b class="nc">&nbsp;                    mand.setStatut(StatutPause.PLANIFIEE);</b>
+<b class="nc">&nbsp;                    mand.setNomLieu(generateNomLieu(TypePause.MANDATORY_REST, mandDistM));</b>
+<b class="nc">&nbsp;                    mand.setAiScore(100);</b>
+<b class="nc">&nbsp;                    mand.setFatigueScore(100);</b>
+<b class="nc">&nbsp;                    mand.setAccessibilityScore(100);</b>
+<b class="nc">&nbsp;                    mand.setContextScore(100);</b>
+<b class="nc">&nbsp;                    mand.setReasoning(&quot;Seuil légal de repos obligatoire de 4h30 de conduite atteint (fallback)&quot;);</b>
+<b class="nc">&nbsp;                    mand.setConfidence(1.0);</b>
+<b class="nc">&nbsp;                    pauses.add(mand);</b>
+&nbsp;                }
+&nbsp;            }
+&nbsp;
+<b class="nc">&nbsp;            return pauses;</b>
+&nbsp;
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            log.warn(&quot;[PAUSE-FALLBACK] Error in fallback generation for trajet {}: {}&quot;, trajet.getId(), e.getMessage());</b>
+<b class="nc">&nbsp;            return new ArrayList&lt;&gt;();</b>
+&nbsp;        }
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Parse [lon, lat] coordinates from GeoJSON geometry stored in geometrieItineraire
+&nbsp;     */
+&nbsp;    @SuppressWarnings(&quot;unchecked&quot;)
+&nbsp;    private List&lt;List&lt;Double&gt;&gt; parseCoordinatesFromGeometry(String geomJson) {
+&nbsp;        try {
+<b class="nc">&nbsp;            Map&lt;String, Object&gt; parsed = objectMapper.readValue(geomJson, new TypeReference&lt;&gt;() {});</b>
+<b class="nc">&nbsp;            Object geomObj = parsed;</b>
+<b class="nc">&nbsp;            if (parsed.containsKey(&quot;type&quot;) &amp;&amp; &quot;FeatureCollection&quot;.equals(parsed.get(&quot;type&quot;))) {</b>
+<b class="nc">&nbsp;                List&lt;Map&lt;String, Object&gt;&gt; features = (List&lt;Map&lt;String, Object&gt;&gt;) parsed.get(&quot;features&quot;);</b>
+<b class="nc">&nbsp;                if (features != null &amp;&amp; !features.isEmpty()) {</b>
+<b class="nc">&nbsp;                    geomObj = features.get(0).get(&quot;geometry&quot;);</b>
+&nbsp;                }
+&nbsp;            }
+<b class="nc">&nbsp;            if (geomObj instanceof Map) {</b>
+<b class="nc">&nbsp;                Map&lt;String, Object&gt; geom = (Map&lt;String, Object&gt;) geomObj;</b>
+<b class="nc">&nbsp;                Object coordsObj = geom.get(&quot;coordinates&quot;);</b>
+<b class="nc">&nbsp;                if (coordsObj instanceof List) {</b>
+<b class="nc">&nbsp;                    return (List&lt;List&lt;Double&gt;&gt;) coordsObj;</b>
+&nbsp;                }
+&nbsp;            }
+<b class="nc">&nbsp;            Object coordsDirect = parsed.get(&quot;coordinates&quot;);</b>
+<b class="nc">&nbsp;            if (coordsDirect instanceof List) {</b>
+<b class="nc">&nbsp;                return (List&lt;List&lt;Double&gt;&gt;) coordsDirect;</b>
+&nbsp;            }
+&nbsp;        } catch (Exception e) {
+<b class="nc">&nbsp;            log.warn(&quot;Failed to parse geometry JSON: {}&quot;, e.getMessage());</b>
+&nbsp;        }
+<b class="nc">&nbsp;        return null;</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Haversine distance in meters
+&nbsp;     */
+&nbsp;    private double haversineM(double lon1, double lat1, double lon2, double lat2) {
+<b class="nc">&nbsp;        double R = 6371000.0;</b>
+<b class="nc">&nbsp;        double dLat = Math.toRadians(lat2 - lat1);</b>
+<b class="nc">&nbsp;        double dLon = Math.toRadians(lon2 - lon1);</b>
+<b class="nc">&nbsp;        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)</b>
+<b class="nc">&nbsp;                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))</b>
+<b class="nc">&nbsp;                * Math.sin(dLon / 2) * Math.sin(dLon / 2);</b>
+<b class="nc">&nbsp;        return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));</b>
+&nbsp;    }
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Interpolate a [lat, lon] position at targetDistanceM along the route
+&nbsp;     */
+&nbsp;    private double[] interpolateOnRoute(List&lt;List&lt;Double&gt;&gt; coords, double targetDistanceM, double totalDistanceM) {
+<b class="nc">&nbsp;        if (coords == null || coords.size() &lt; 2) return null;</b>
+<b class="nc">&nbsp;        if (targetDistanceM &gt;= totalDistanceM || totalDistanceM &lt;= 0) {</b>
+<b class="nc">&nbsp;            List&lt;Double&gt; last = coords.get(coords.size() - 1);</b>
+<b class="nc">&nbsp;            return new double[]{last.get(1), last.get(0)};</b>
+&nbsp;        }
+&nbsp;
+<b class="nc">&nbsp;        double cumDist = 0;</b>
+<b class="nc">&nbsp;        for (int i = 1; i &lt; coords.size(); i++) {</b>
+<b class="nc">&nbsp;            List&lt;Double&gt; p1 = coords.get(i - 1);</b>
+<b class="nc">&nbsp;            List&lt;Double&gt; p2 = coords.get(i);</b>
+<b class="nc">&nbsp;            double segLen = haversineM(p1.get(0), p1.get(1), p2.get(0), p2.get(1));</b>
+<b class="nc">&nbsp;            if (cumDist + segLen &gt;= targetDistanceM) {</b>
+<b class="nc">&nbsp;                double frac = segLen &gt; 0 ? (targetDistanceM - cumDist) / segLen : 0;</b>
+<b class="nc">&nbsp;                double lat = p1.get(1) + (p2.get(1) - p1.get(1)) * frac;</b>
+<b class="nc">&nbsp;                double lon = p1.get(0) + (p2.get(0) - p1.get(0)) * frac;</b>
+<b class="nc">&nbsp;                return new double[]{lat, lon};</b>
+&nbsp;            }
+<b class="nc">&nbsp;            cumDist += segLen;</b>
+&nbsp;        }
+<b class="nc">&nbsp;        List&lt;Double&gt; last = coords.get(coords.size() - 1);</b>
+<b class="nc">&nbsp;        return new double[]{last.get(1), last.get(0)};</b>
+&nbsp;    }
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-08-10 02:59</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<div class="glass-card dialog-container animate-fade-up">
+    <h2 mat-dialog-title class="text-gradient">Ajouter un Événement</h2>
+
+    <mat-dialog-content class="mat-typography">
+        <form [formGroup]="eventForm" class="dialog-form">
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Titre de l'événement</mat-label>
+                <input matInput formControlName="title" placeholder="Ex: Mission Gabès">
+                <mat-icon matSuffix>title</mat-icon>
+            </mat-form-field>
+
+            <div class="form-row">
+                <mat-form-field appearance="outline">
+                    <mat-label>Date</mat-label>
+                    <input matInput [matDatepicker]="picker" formControlName="date">
+                    <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                    <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                    <mat-label>Type</mat-label>
+                    <mat-select formControlName="type">
+                        <mat-option value="mission">Mission Logistique</mat-option>
+                        <mat-option value="maintenance">Maintenance Véhicule</mat-option>
+                        <mat-option value="other">Autre / Personnel</mat-option>
+                    </mat-select>
+                    <mat-icon matSuffix>category</mat-icon>
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Description (Optionnel)</mat-label>
+                <textarea matInput formControlName="description" rows="3"></textarea>
+                <mat-icon matSuffix>description</mat-icon>
+            </mat-form-field>
+        </form>
+    </mat-dialog-content>
+
+    <mat-dialog-actions align="end">
+        <button mat-button (click)="onCancel()" class="px-4">ANNULER</button>
+        <button mat-raised-button color="primary" class="glow-on-hover px-4" [disabled]="eventForm.invalid"
+            (click)="onSubmit()">
+            AJOUTER AU CALENDRIER
+        </button>
+    </mat-dialog-actions>
+</div>

@@ -1,0 +1,821 @@
+/* =========================================================
+   CONTROL PANEL — Ultra Responsive · All screen sizes
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+/* ── CSS Custom Properties ── */
+:host {
+    --cp-bg: #0b1629;
+    --cp-bg-card: rgba(255, 255, 255, 0.035);
+    --cp-bg-card-hover: rgba(255, 255, 255, 0.065);
+    --cp-bg-header: linear-gradient(135deg, #1a3a8f 0%, #1d4ed8 55%, #2563eb 100%);
+
+    --cp-accent: #3b82f6;
+    --cp-accent-light: #0cbeffe8;
+    --cp-accent-muted: rgba(59, 130, 246, 0.13);
+    --cp-accent-glow: rgba(59, 130, 246, 0.22);
+
+    --cp-green: #0ae62b;
+    --cp-green-bg: rgba(16, 185, 129, 0.13);
+    --cp-red: #ef4444;
+
+    --cp-text-1: #f1f5f9;
+    --cp-text-2: #0cbeffe8;
+    --cp-text-3: #dae1eade;
+
+    --cp-border: rgba(148, 163, 184, 0.09);
+    --cp-border-hi: rgba(96, 165, 250, 0.32);
+
+    --r-xs: 6px;
+    --r-sm: 9px;
+    --r-md: 13px;
+    --r-lg: 18px;
+    --r-xl: 22px;
+
+    --shadow: 0 16px 50px rgba(0, 0, 0, 0.55);
+    --ease: all .18s cubic-bezier(.4, 0, .2, 1);
+
+    /* Fluid sizing tokens — clamp(min, preferred, max) */
+    --panel-w: clamp(260px, 88vw, 320px);
+    --panel-maxh: clamp(400px, 88vh, 740px);
+    --pad: clamp(10px, 2.5vw, 14px);
+    --gap: clamp(8px, 2vw, 13px);
+    --fs-label: clamp(0.60rem, 1.2vw, 0.70rem);
+    --fs-body: clamp(0.72rem, 1.5vw, 0.82rem);
+    --fs-value: clamp(0.75rem, 1.5vw, 0.84rem);
+    --fs-title: clamp(0.82rem, 2vw, 0.94rem);
+}
+
+/* ══════════════════════════════════════════
+   SHELL
+══════════════════════════════════════════ */
+.control-panel {
+    width: var(--panel-w);
+    max-height: var(--panel-maxh);
+    background: var(--cp-bg);
+    color: var(--cp-text-1);
+    border-radius: var(--r-xl);
+    border: 1px solid var(--cp-border);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Outfit', sans-serif;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(96, 165, 250, .45), transparent);
+        z-index: 2;
+        pointer-events: none;
+    }
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.panel-header {
+    background: var(--cp-bg-header);
+    padding: clamp(10px, 2.5vw, 13px) clamp(12px, 3vw, 16px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: rgba(255, 255, 255, 0.10);
+    }
+}
+
+.header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--fs-title);
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: .015em;
+}
+
+.header-icon {
+    width: clamp(26px, 5vw, 30px);
+    height: clamp(26px, 5vw, 30px);
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    mat-icon {
+        font-size: clamp(14px, 3vw, 17px);
+        width: clamp(14px, 3vw, 17px);
+        height: clamp(14px, 3vw, 17px);
+        color: #fff;
+    }
+}
+
+.close-btn {
+    color: rgba(255, 255, 255, 0.978) !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 50% !important;
+    transition: var(--ease) !important;
+    flex-shrink: 0;
+
+    &:hover {
+        color: #fff !important;
+        background: rgba(255, 255, 255, .16) !important;
+    }
+
+    mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* ══════════════════════════════════════════
+   SCROLLABLE CONTENT
+══════════════════════════════════════════ */
+.panel-content {
+    padding: var(--pad);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, .15) transparent;
+
+    &::-webkit-scrollbar {
+        width: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, .18);
+        border-radius: 99px;
+    }
+}
+
+/* ══════════════════════════════════════════
+   SECTION
+══════════════════════════════════════════ */
+.section {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(6px, 1.5vw, 9px);
+}
+
+.section-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--fs-label);
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--cp-text-2);
+
+    .label-icon {
+        font-size: 13px;
+        width: 13px;
+        height: 13px;
+        color: var(--cp-accent-light);
+    }
+}
+
+/* ── Divider ── */
+.divider {
+    height: 1px;
+    background: var(--cp-border);
+}
+
+/* ══════════════════════════════════════════
+   MAP STYLE GRID
+══════════════════════════════════════════ */
+.style-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(6px, 1.8vw, 10px);
+}
+
+.style-item {
+    cursor: pointer;
+    border-radius: var(--r-sm);
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: var(--ease);
+
+    &:hover {
+        border-color: rgba(96, 165, 250, .38);
+        transform: translateY(-2px);
+    }
+
+    &.active {
+        border-color: var(--cp-accent-light);
+        box-shadow: 0 0 0 3px var(--cp-accent-muted),
+            0 4px 14px rgba(36, 120, 255, 0.797);
+    }
+}
+
+.style-thumb {
+    width: 100%;
+    aspect-ratio: 1;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: flex-end;
+
+    &.standard {
+        background-image: url('https://a.tile.openstreetmap.org/13/4403/2880.png');
+    }
+
+    &.satellite {
+        background-image: url('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/13/4741/2644');
+    }
+
+    &.terrain {
+        background-image: url('https://a.tile.opentopomap.org/13/4403/2880.png');
+    }
+}
+
+.style-overlay {
+    width: 100%;
+    padding: 3px 4px;
+    font-size: clamp(0.58rem, 1.3vw, 0.66rem);
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+    background: linear-gradient(0deg, rgba(0, 0, 0, .72) 0%, transparent 100%);
+    letter-spacing: .03em;
+}
+
+/* ══════════════════════════════════════════
+   ACTION BUTTONS
+══════════════════════════════════════════ */
+.action-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.action-btn {
+    width: 100%;
+    height: auto !important;
+    padding: clamp(7px, 2vw, 10px) clamp(8px, 2.5vw, 11px) !important;
+    background: var(--cp-bg-card) !important;
+    border-radius: var(--r-xs) !important;
+    border: 1px solid var(--cp-border) !important;
+    color: var(--cp-text-1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    transition: var(--ease) !important;
+
+    &:hover {
+        background: var(--cp-bg-card-hover) !important;
+        border-color: var(--cp-border-hi) !important;
+        transform: translateX(2px);
+    }
+}
+
+.action-btn-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--fs-body);
+    font-weight: 600;
+}
+
+.action-icon-wrap {
+    width: clamp(22px, 4.5vw, 26px);
+    height: clamp(22px, 4.5vw, 26px);
+    background: var(--cp-accent-muted);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: var(--cp-accent-light);
+    }
+}
+
+.chevron {
+    font-size: 15px !important;
+    width: 15px !important;
+    height: 15px !important;
+    color: var(--cp-text-3) !important;
+}
+
+/* ══════════════════════════════════════════
+   LAYER TOGGLES
+══════════════════════════════════════════ */
+.layer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.layer-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(7px, 2vw, 10px) clamp(8px, 2.5vw, 11px);
+    background: var(--cp-bg-card);
+    border-radius: var(--r-xs);
+    border: 1px solid var(--cp-border);
+    cursor: pointer;
+    transition: var(--ease);
+
+    &:hover {
+        background: var(--cp-bg-card-hover);
+        border-color: var(--cp-border-hi);
+    }
+}
+
+.layer-toggle-left {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: var(--fs-body);
+    font-weight: 600;
+    color: var(--cp-text-1);
+
+    mat-icon {
+        font-size: 15px;
+        width: 15px;
+        height: 15px;
+        color: var(--cp-accent-light);
+    }
+}
+
+::ng-deep .layer-toggle .mdc-checkbox {
+    padding: 0 !important;
+}
+
+::ng-deep .mat-mdc-checkbox label {
+    font-size: var(--fs-body) !important;
+    color: var(--cp-text-1) !important;
+}
+
+/* ══════════════════════════════════════════
+   TRUCK CARD
+══════════════════════════════════════════ */
+.truck-card {
+    background: linear-gradient(135deg,
+            rgba(37, 99, 235, .09) 0%,
+            rgba(11, 22, 41, .45) 100%);
+    border: 1px solid var(--cp-border-hi);
+    border-radius: var(--r-lg);
+    padding: clamp(10px, 2.5vw, 13px);
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 2vw, 11px);
+}
+
+.info-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.truck-id-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.truck-id-icon {
+    font-size: 15px !important;
+    width: 15px !important;
+    height: 15px !important;
+    color: var(--cp-accent-light) !important;
+}
+
+.truck-id {
+    font-size: clamp(0.78rem, 2vw, 0.88rem);
+    font-weight: 700;
+    color: #dbeafe;
+    letter-spacing: .02em;
+}
+
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(0.60rem, 1.3vw, 0.67rem);
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    letter-spacing: .04em;
+
+    &.en-route {
+        background: var(--cp-green-bg);
+        color: var(--cp-green);
+        border: 1px solid rgba(16, 185, 129, .28);
+    }
+}
+
+.status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--cp-green);
+    animation: pulse-dot 1.6s infinite;
+}
+
+@keyframes pulse-dot {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: .45;
+        transform: scale(.65);
+    }
+}
+
+/* Route */
+.route-summary {
+    display: flex;
+    flex-direction: column;
+}
+
+.route-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: clamp(6px, 1.8vw, 8px) clamp(8px, 2vw, 10px);
+    font-size: clamp(0.68rem, 1.5vw, 0.75rem);
+    font-weight: 600;
+    color: var(--cp-text-1);
+    background: rgba(11, 22, 41, .35);
+    position: relative;
+
+    mat-icon {
+        font-size: 13px;
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+    }
+
+    span:last-child {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &.start {
+        border-radius: var(--r-xs) var(--r-xs) 0 0;
+        border: 1px solid rgba(34, 197, 94, .28);
+        border-bottom-color: transparent;
+
+        mat-icon {
+            color: var(--cp-green);
+        }
+    }
+
+    &.end {
+        border-radius: 0 0 var(--r-xs) var(--r-xs);
+        border: 1px solid rgba(239, 68, 68, .28);
+        border-top-color: transparent;
+
+        mat-icon {
+            color: var(--cp-red);
+        }
+    }
+}
+
+.route-connector {
+    padding: 0 13px;
+    height: 5px;
+    display: flex;
+    align-items: center;
+
+    .connector-line {
+        width: 2px;
+        height: 100%;
+        margin-left: 6px;
+        background: repeating-linear-gradient(to bottom,
+                var(--cp-text-3) 0, var(--cp-text-3) 2px,
+                transparent 2px, transparent 5px);
+    }
+}
+
+/* Info Grid */
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(5px, 1.5vw, 8px);
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: clamp(6px, 1.8vw, 8px) clamp(7px, 2vw, 9px);
+    background: rgba(11, 22, 41, .30);
+    border-radius: var(--r-xs);
+    border: 1px solid var(--cp-border);
+    min-width: 0;
+
+    .label {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        font-size: clamp(0.58rem, 1.2vw, 0.64rem);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .055em;
+        color: var(--cp-text-3);
+
+        mat-icon {
+            font-size: 10px;
+            width: 10px;
+            height: 10px;
+        }
+    }
+
+    .value {
+        font-size: var(--fs-value);
+        font-weight: 700;
+        color: var(--cp-text-1);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        &.highlight {
+            color: var(--cp-accent-light);
+        }
+    }
+}
+
+/* Fuel / Progress bar */
+.fuel-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+
+    .value {
+        font-size: clamp(0.70rem, 1.5vw, 0.78rem);
+        font-weight: 700;
+        color: var(--cp-text-1);
+    }
+}
+
+.fuel-bar {
+    height: 3px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, .07);
+    overflow: hidden;
+
+    .fuel-fill {
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, #3b82f6, #06b6d4);
+        transition: width .6s cubic-bezier(.4, 0, .2, 1);
+    }
+}
+
+.progress-bar .progress-fill {
+    background: linear-gradient(90deg, var(--cp-green), #34d399);
+}
+
+.weather-card {
+    background: linear-gradient(135deg, rgba(37, 99, 235, .10) 0%, rgba(11, 22, 41, .42) 100%);
+    border: 1px solid var(--cp-border-hi);
+    border-radius: var(--r-lg);
+    padding: clamp(10px, 2.5vw, 13px);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.weather-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.weather-icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.weather-temp-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.weather-temp {
+    font-size: clamp(1.2rem, 3vw, 1.55rem);
+    font-weight: 800;
+    color: #f8fafc;
+    line-height: 1;
+}
+
+.weather-desc {
+    margin-top: 2px;
+    font-size: var(--fs-body);
+    color: var(--cp-text-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.weather-risk-badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, .14);
+    color: #e2e8f0;
+    flex-shrink: 0;
+}
+
+.weather-card[data-risk='VERT'] .weather-risk-badge {
+    background: rgba(16, 185, 129, .14);
+    color: var(--cp-green);
+}
+
+.weather-card[data-risk='ORANGE'] .weather-risk-badge {
+    background: rgba(245, 158, 11, .18);
+    color: #f59e0b;
+}
+
+.weather-card[data-risk='ROUGE'] .weather-risk-badge {
+    background: rgba(239, 68, 68, .18);
+    color: #ef4444;
+}
+
+.weather-meta {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.weather-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 9px;
+    border-radius: var(--r-xs);
+    background: rgba(11, 22, 41, .30);
+    border: 1px solid var(--cp-border);
+    font-size: var(--fs-body);
+    color: var(--cp-text-1);
+    min-width: 0;
+}
+
+.weather-meta-item mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: var(--cp-accent-light);
+    flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   All sizes: watch · phone · tablet · desktop
+   large desktop · ultrawide
+══════════════════════════════════════════ */
+
+/* ── Smartwatch / tiny (<280px) ── */
+@media (max-width: 279px) {
+    :host {
+        --panel-w: 98vw;
+        --pad: 8px;
+        --gap: 6px;
+    }
+
+    .style-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-header {
+        padding: 8px 10px;
+    }
+}
+
+/* ── Small phone (280–359px) ── */
+@media (min-width: 280px) and (max-width: 359px) {
+    :host {
+        --panel-w: 96vw;
+        --pad: 9px;
+        --gap: 7px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Phone (360–599px) ── */
+@media (min-width: 360px) and (max-width: 599px) {
+    :host {
+        --panel-w: clamp(300px, 92vw, 340px);
+    }
+}
+
+/* ── Phone landscape / small tablet (600–767px) ── */
+@media (min-width: 600px) and (max-width: 767px) {
+    :host {
+        --panel-w: clamp(300px, 55vw, 340px);
+    }
+}
+
+/* ── Tablet (768–1023px) ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+    :host {
+        --panel-w: clamp(280px, 38vw, 320px);
+        --panel-maxh: clamp(440px, 80vh, 720px);
+    }
+}
+
+/* ── Desktop (1024–1439px) ── */
+@media (min-width: 1024px) and (max-width: 1439px) {
+    :host {
+        --panel-w: 300px;
+        --panel-maxh: clamp(460px, 82vh, 720px);
+    }
+}
+
+/* ── Large desktop (1440–1919px) ── */
+@media (min-width: 1440px) and (max-width: 1919px) {
+    :host {
+        --panel-w: 310px;
+        --panel-maxh: 740px;
+    }
+}
+
+/* ── 4K / Ultrawide (≥1920px) ── */
+@media (min-width: 1920px) {
+    :host {
+        --panel-w: 330px;
+        --panel-maxh: 780px;
+        --fs-body: 0.88rem;
+        --fs-value: 0.90rem;
+        --fs-title: 1rem;
+    }
+}
+
+/* ── Mobile drawer mode (phone portrait) ── */
+@media (max-width: 599px) {
+    .control-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100% !important;
+        max-height: 88vh !important;
+        border-radius: 20px 20px 0 0 !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, .55);
+        padding-bottom: max(env(safe-area-inset-bottom), 12px);
+    }
+}
+
+/* ── Tall screens ── */
+@media (min-height: 900px) {
+    :host {
+        --panel-maxh: min(85vh, 760px);
+    }
+}
+
+/* ── Short screens / landscape phone ── */
+@media (max-height: 500px) {
+    :host {
+        --panel-maxh: 96vh;
+    }
+
+    .style-thumb {
+        aspect-ratio: 4/3;
+    }
+}

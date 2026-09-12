@@ -1,0 +1,6 @@
+ALTER TABLE messenger_message ADD COLUMN IF NOT EXISTS modifie BOOLEAN DEFAULT FALSE;
+ALTER TABLE messenger_message ADD COLUMN IF NOT EXISTS date_modification DATETIME;
+ALTER TABLE messenger_message ADD COLUMN IF NOT EXISTS contenu_original LONGTEXT;
+ALTER TABLE messenger_message ADD COLUMN IF NOT EXISTS supprime BOOLEAN DEFAULT FALSE;
+ALTER TABLE messenger_message ADD COLUMN IF NOT EXISTS date_suppression DATETIME;
+

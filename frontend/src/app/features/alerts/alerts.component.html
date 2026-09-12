@@ -1,0 +1,41 @@
+<div class="alerts-page animate-fade-up">
+    <div class="header">
+        <div>
+            <h1 class="text-gradient">Centre d'Alertes</h1>
+            <p class="subtitle">Restez informé des activités critiques et du statut de la flotte</p>
+        </div>
+        <button mat-stroked-button color="accent" (click)="markAllAsRead()">
+            Tout marquer comme lu
+        </button>
+    </div>
+
+    <div class="alerts-container">
+        <mat-card *ngFor="let alert of alerts" class="glass-card alert-card" [class.unread]="!alert.isRead" [ngClass]="getColorClass(alert)">
+            <div class="alert-icon-wrapper" [ngClass]="getColorClass(alert)">
+                <mat-icon>{{getIcon(alert.category)}}</mat-icon>
+            </div>
+            <div class="alert-content">
+                <div class="alert-header">
+                    <span class="alert-title">{{alert.title}}</span>
+                    <span class="alert-time">{{alert.time}}</span>
+                </div>
+                <p class="alert-message">{{alert.message}}</p>
+                <div class="alert-actions">
+                    <button mat-button color="primary" class="small-btn"
+                        (click)="$event.stopPropagation(); viewDetails(alert)">
+                        VOIR LES DÉTAILS
+                    </button>
+                    <!-- Role-based actions for Alerts Center too -->
+                    <div class="notif-actions"
+                        *ngIf="alert.type === 'ACTION' && !(alert.category === 'NOTIF_CONGE' && authService.getUser()?.role === 'DRIVER')">
+                        <button mat-flat-button class="btn-accept-mini"
+                            (click)="$event.stopPropagation(); handleAction(alert, 'ACCEPT')">Accepter</button>
+                        <button mat-flat-button class="btn-reject-mini"
+                            (click)="$event.stopPropagation(); handleAction(alert, 'REJECT')">Refuser</button>
+                    </div>
+                </div>
+            </div>
+            <div class="unread-dot" *ngIf="!alert.isRead"></div>
+        </mat-card>
+    </div>
+</div>

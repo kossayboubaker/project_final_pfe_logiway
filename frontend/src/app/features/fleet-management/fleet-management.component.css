@@ -1,0 +1,263 @@
+.fleet-page {
+    padding: 24px;
+}
+
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: clamp(16px, 3vw, 24px);
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+
+
+.table-header {
+    padding: clamp(10px, 2vw, 16px) clamp(12px, 3vw, 24px);
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.search-field.compact {
+    width: clamp(160px, 40vw, 300px);
+    margin-bottom: 0;
+}
+
+.plate-number {
+    background: var(--primary-light);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    border: 1px solid var(--glass-border);
+    color: var(--accent);
+}
+
+.company-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: 600;
+    border: 1px solid rgba(59, 130, 246, 0.18);
+    color: #93c5fd;
+}
+
+.col-capacite {
+    width: 70px;
+    /* 👈 petite colonne */
+    max-width: 70px;
+    text-align: center;
+    font-weight: 600;
+
+    white-space: nowrap;
+
+}
+
+.status-badge {
+    padding: 6px 14px;
+    /* un peu plus grand */
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+
+    display: inline-flex;
+    /* important */
+    align-items: center;
+    justify-content: center;
+
+    white-space: nowrap;
+    /* 🔥 empêche HORS SERVICE sur 2 lignes */
+    line-height: 1;
+}
+
+.status-badge.en-service {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge.maintenance {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-badge.hors-service {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+
+}
+
+.action-btn {
+    color: var(--text-secondary);
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.menu-divider {
+    border: 0;
+    border-top: 1px solid var(--glass-border);
+    margin: 4px 0;
+}
+
+.success-text {
+    color: var(--success);
+}
+
+.warn-text {
+    color: var(--warning);
+}
+
+/* ── Table scroll mobile ── */
+.premium-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.premium-table {
+    min-width: 480px;
+}
+
+/* ── Stats responsive ── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: clamp(8px, 2vw, 12px);
+}
+
+/* ── Breakpoint tablette ── */
+@media (max-width: 768px) {
+    .header-section {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .search-field.compact {
+        width: 100%;
+    }
+}
+
+/* ── Breakpoint mobile ── */
+@media (max-width: 480px) {
+    .plate-number {
+        padding: 3px 7px;
+        font-size: 11px;
+    }
+
+    .company-badge {
+        padding: 3px 7px;
+        font-size: 11px;
+    }
+
+    .status-badge {
+        padding: 3px 7px;
+        font-size: 10px;
+    }
+}
+
+/* ── Très petits écrans ── */
+@media (max-width: 360px) {
+    .fleet-page {
+        padding: 8px;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+    }
+}
+
+/* ── Stats row responsive ── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: clamp(8px, 2vw, 12px);
+    margin-bottom: 16px;
+}
+
+.stat-mini {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: clamp(10px, 2vw, 16px) !important;
+    min-width: 0;
+}
+
+.stat-mini mat-icon {
+    font-size: clamp(22px, 4vw, 28px);
+    width: clamp(22px, 4vw, 28px);
+    height: clamp(22px, 4vw, 28px);
+    flex-shrink: 0;
+}
+
+.stat-mini-info,
+.stat-mini-success,
+.stat-mini-warning,
+.stat-mini-wrong {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.stat-mini .label {
+    font-size: clamp(10px, 2vw, 12px);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.stat-mini .value {
+    font-size: clamp(18px, 4vw, 26px);
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* ── Breakpoints ── */
+@media (max-width: 480px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 360px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .stat-mini {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}

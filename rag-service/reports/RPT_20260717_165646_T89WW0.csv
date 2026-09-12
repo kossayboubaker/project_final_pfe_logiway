@@ -1,0 +1,7 @@
+﻿# Rapport Global - Toutes périodes
+# Généré le: 17/07/2026 16:56:46
+# Domaine: global
+# Nombre d'enregistrements: 1
+#
+statistiques,alertes
+"{'vehicules': [{'statut': 'EN_SERVICE', 'count': 1}, {'statut': 'HORS_SERVICE', 'count': 4}], 'chauffeurs': [], 'trajets': [{'statut': 'EN_COURS', 'count': 1, 'distance_totale': 227.52429999999998}, {'statut': 'COMPLETE', 'count': 6, 'distance_totale': 2403.5159}], 'reclamations': [{'count': 2, 'priorite': 'URGENT'}]}",[]

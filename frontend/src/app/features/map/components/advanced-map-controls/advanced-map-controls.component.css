@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap');
+
+.top-right-controls {
+    display: flex;
+    gap: 16px;
+}
+
+.control-btn {
+    width: 48px !important;
+    height: 48px !important;
+    background: rgba(15, 23, 42, 0.8) !important;
+    color: white !important;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+.control-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(30, 41, 59, 0.9) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+
+.control-btn mat-icon {
+    font-size: 24px;
+}
+
+::ng-deep .mat-badge-content {
+    background-color: #ef4444 !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 11px !important;
+    border: 2px solid #0f172a !important;
+}
+
+/* Theme toggle map button - warm amber for sun, cool indigo for moon */
+.control-btn.theme-toggle-map {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+    border-color: rgba(251, 191, 36, 0.4) !important;
+}
+
+.control-btn.theme-toggle-map:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    transform: translateY(-2px) rotate(15deg);
+}
+
+
+/* ══════════════════════════════════════════
+   RESPONSIVE BREAKPOINTS
+   All sizes: watch · phone · tablet · desktop
+   large desktop · ultrawide
+══════════════════════════════════════════ */
+
+/* ── Smartwatch / tiny (<280px) ── */
+@media (max-width: 279px) {
+    :host {
+        --panel-w: 98vw;
+        --pad: 8px;
+        --gap: 6px;
+    }
+
+    .style-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 4px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-header {
+        padding: 8px 10px;
+    }
+}
+
+/* ── Small phone (280–359px) ── */
+@media (min-width: 280px) and (max-width: 359px) {
+    :host {
+        --panel-w: 96vw;
+        --pad: 9px;
+        --gap: 7px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Phone (360–599px) ── */
+@media (min-width: 360px) and (max-width: 599px) {
+    :host {
+        --panel-w: clamp(300px, 92vw, 340px);
+    }
+}
+
+/* ── Phone landscape / small tablet (600–767px) ── */
+@media (min-width: 600px) and (max-width: 767px) {
+    :host {
+        --panel-w: clamp(300px, 55vw, 340px);
+    }
+}
+
+/* ── Tablet (768–1023px) ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+    :host {
+        --panel-w: clamp(280px, 38vw, 320px);
+        --panel-maxh: clamp(440px, 80vh, 720px);
+    }
+}
+
+/* ── Desktop (1024–1439px) ── */
+@media (min-width: 1024px) and (max-width: 1439px) {
+    :host {
+        --panel-w: 300px;
+        --panel-maxh: clamp(460px, 82vh, 720px);
+    }
+}
+
+/* ── Large desktop (1440–1919px) ── */
+@media (min-width: 1440px) and (max-width: 1919px) {
+    :host {
+        --panel-w: 310px;
+        --panel-maxh: 740px;
+    }
+}
+
+/* ── 4K / Ultrawide (≥1920px) ── */
+@media (min-width: 1920px) {
+    :host {
+        --panel-w: 330px;
+        --panel-maxh: 780px;
+        --fs-body: 0.88rem;
+        --fs-value: 0.90rem;
+        --fs-title: 1rem;
+    }
+}
+
+/* ── Mobile drawer mode (phone portrait) ── */
+@media (max-width: 599px) {
+    .control-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100% !important;
+        max-height: 88vh !important;
+        border-radius: 20px 20px 0 0 !important;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, .55);
+        padding-bottom: max(env(safe-area-inset-bottom), 12px);
+    }
+}
+
+/* ── Tall screens ── */
+@media (min-height: 900px) {
+    :host {
+        --panel-maxh: min(85vh, 760px);
+    }
+}
+
+/* ── Short screens / landscape phone ── */
+@media (max-height: 500px) {
+    :host {
+        --panel-maxh: 96vh;
+    }
+
+    .style-thumb {
+        aspect-ratio: 4/3;
+    }
+}

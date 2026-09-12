@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificationResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.dto.response</a> &gt; <span class="el_source">NotificationResponse.java</span></div><h1>NotificationResponse.java</h1><pre class="source lang-java linenums">package com.logiway.dto.response;
+
+import com.logiway.entities.enums.TypeNotif;
+
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+
+<span class="fc" id="L8">public record NotificationResponse(</span>
+    Long id,
+    TypeNotif type,
+    String message,
+    LocalDateTime dateCreation,
+    Boolean estLu,
+    String tone
+) {
+    public String getFormattedTime() {
+<span class="fc bfc" id="L17" title="All 2 branches covered.">        if (dateCreation == null) return &quot;À l'instant&quot;;</span>
+        
+<span class="fc" id="L19">        long seconds = ChronoUnit.SECONDS.between(dateCreation, LocalDateTime.now());</span>
+<span class="fc" id="L20">        long minutes = ChronoUnit.MINUTES.between(dateCreation, LocalDateTime.now());</span>
+<span class="fc" id="L21">        long hours = ChronoUnit.HOURS.between(dateCreation, LocalDateTime.now());</span>
+<span class="fc" id="L22">        long days = ChronoUnit.DAYS.between(dateCreation, LocalDateTime.now());</span>
+        
+<span class="fc bfc" id="L24" title="All 2 branches covered.">        if (seconds &lt; 60) return &quot;À l'instant&quot;;</span>
+<span class="fc bfc" id="L25" title="All 2 branches covered.">        if (minutes &lt; 60) return &quot;Il y a &quot; + minutes + &quot; min&quot;;</span>
+<span class="fc bfc" id="L26" title="All 2 branches covered.">        if (hours &lt; 24) return &quot;Il y a &quot; + hours + &quot;h&quot;;</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">        if (days == 1) return &quot;Hier&quot;;</span>
+<span class="fc bfc" id="L28" title="All 2 branches covered.">        if (days &lt; 7) return &quot;Il y a &quot; + days + &quot; jours&quot;;</span>
+        
+<span class="fc" id="L30">        return dateCreation.toString();</span>
+    }
+    
+    public String getNotificationTitle() {
+<span class="fc bfc" id="L34" title="All 2 branches covered.">        if (type == null) {</span>
+<span class="fc" id="L35">            return &quot;Notification&quot;;</span>
+        }
+
+<span class="pc bpc" id="L38" title="1 of 10 branches missed.">        return switch(type) {</span>
+<span class="fc" id="L39">            case NOTIF_COMPTE -&gt; &quot;Compte&quot;;</span>
+<span class="fc" id="L40">            case NOTIF_TRAJET -&gt; &quot;Trajet&quot;;</span>
+<span class="fc" id="L41">            case NOTIF_CONGE -&gt; &quot;Congé&quot;;</span>
+<span class="fc" id="L42">            case NOTIF_RECLAMATION -&gt; &quot;Réclamation&quot;;</span>
+<span class="fc" id="L43">            case NOTIF_MESSAGE -&gt; &quot;Message&quot;;</span>
+<span class="fc" id="L44">            case NOTIF_ENTREPRISE -&gt; &quot;Entreprise&quot;;</span>
+<span class="fc" id="L45">            case NOTIF_AFFECTATION -&gt; &quot;Affectation&quot;;</span>
+<span class="fc" id="L46">            case NOTIF_VEHICULE -&gt; &quot;Camion&quot;;</span>
+<span class="fc" id="L47">            case SECTEUR -&gt; &quot;Secteur&quot;;</span>
+<span class="nc" id="L48">            default -&gt; &quot;Notification&quot;;</span>
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

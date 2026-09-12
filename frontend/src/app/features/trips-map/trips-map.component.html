@@ -1,0 +1,56 @@
+<div class="trips-map-page">
+    <div class="hero glass-card">
+        <div>
+            <p class="eyebrow">Carte GPS en direct</p>
+            <h1>Trajets actifs et positions véhicules</h1>
+            <p class="subtitle">Suivi visuel des trajets en cours avec mise à jour automatique toutes les 10 secondes.</p>
+        </div>
+        <a mat-flat-button color="primary" routerLink="/dashboard/trips">
+            <mat-icon>arrow_back</mat-icon>
+            Retour trajets
+        </a>
+    </div>
+
+    <div class="stats-grid">
+        <mat-card class="glass-card stat-card">
+            <span class="label">Total trajets</span>
+            <span class="value">{{ trips.length }}</span>
+        </mat-card>
+        <mat-card class="glass-card stat-card accent">
+            <span class="label">En cours</span>
+            <span class="value">{{ activeTrips.length }}</span>
+        </mat-card>
+        <mat-card class="glass-card stat-card">
+            <span class="label">Suivi actuel</span>
+            <span class="value">{{ activeTrips.length ? 'Oui' : 'Aucun' }}</span>
+        </mat-card>
+    </div>
+
+    <div class="layout">
+        <mat-card class="glass-card map-shell">
+            <div id="trips-live-map" class="live-map"></div>
+        </mat-card>
+
+        <mat-card class="glass-card list-shell">
+            <div class="panel-header">
+                <h2>Trajets visibles</h2>
+                <span>{{ trips.length }} éléments</span>
+            </div>
+
+            <div class="trip-list">
+                <article class="trip-item" *ngFor="let trip of trips">
+                    <div class="trip-top">
+                        <strong>{{ trip.vehiculeMatricule || 'Véhicule' }}</strong>
+                        <span class="status" [class.active]="trip.statut === 'En Cours' || trip.statut === 'Actif' || trip.statut === 'ACTIF'">{{ trip.statut || 'Inconnu' }}</span>
+                    </div>
+                    <p class="trip-route">{{ trip.pointDepart }} → {{ trip.destination }}</p>
+                    <small>{{ trip.chauffeurNom || 'Chauffeur non renseigné' }}</small>
+                    <div class="trip-meta">
+                        <span>Distance: {{ trip.distanceKm ? (trip.distanceKm | number:'1.0-1') + ' km' : 'N/A' }}</span>
+                        <span>Vitesse: {{ trip.vehiculeVitesse != null ? trip.vehiculeVitesse + ' km/h' : 'N/A' }}</span>
+                    </div>
+                </article>
+            </div>
+        </mat-card>
+    </div>
+</div>

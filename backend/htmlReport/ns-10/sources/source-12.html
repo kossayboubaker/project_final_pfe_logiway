@@ -1,0 +1,112 @@
+
+
+
+<!DOCTYPE html>
+<html id="htmlId">
+<head>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8"> 
+  <title>Coverage Report > VehiculeService</title>
+  <style type="text/css">
+    @import "../../css/coverage.css";
+    @import "../../css/idea.min.css";
+  </style>
+  <script type="text/javascript" src="../../js/highlight.min.js"></script>
+  <script type="text/javascript" src="../../js/highlightjs-line-numbers.min.js"></script>
+</head>
+
+<body>
+<div class="content">
+<div class="breadCrumbs">
+Current scope:     <a href="../../index.html">all classes</a>
+    <span class="separator">|</span>
+    <a href="../index.html">com.logiway.services</a>
+</div>
+
+<h1>Coverage Summary for Class: VehiculeService (com.logiway.services)</h1>
+
+<table class="coverageStats">
+
+<tr>
+  <th class="name">Class</th>
+</tr>
+  <tr>
+    <td class="name">VehiculeService$MockitoMock$WU0ZO9RF</td>
+  </tr>
+  <tr>
+    <td class="name">VehiculeService$MockitoMock$WU0ZO9RF$auxiliary$3qOZpKgN</td>
+  </tr>
+  <tr>
+    <td class="name">VehiculeService$MockitoMock$WU0ZO9RF$auxiliary$BTr2wQMz</td>
+  </tr>
+<tr>
+  <td class="name"><strong>Total</strong></td>
+</tr>
+</table>
+
+<br/>
+<br/>
+
+
+<pre>
+<code class="sourceCode" id="sourceCode">&nbsp;package com.logiway.services;
+&nbsp;
+&nbsp;import com.logiway.dto.request.AssignVehiculeDriverRequest;
+&nbsp;import com.logiway.dto.request.CreateVehiculeRequest;
+&nbsp;import com.logiway.dto.request.UpdateVehiculeRequest;
+&nbsp;import com.logiway.dto.request.UpdateVehiculeStatusRequest;
+&nbsp;import com.logiway.dto.response.AvailableDriverResponse;
+&nbsp;import com.logiway.dto.response.VehiculeResponse;
+&nbsp;
+&nbsp;import java.util.List;
+&nbsp;
+&nbsp;public interface VehiculeService {
+&nbsp;
+&nbsp;    List&lt;VehiculeResponse&gt; getAccessibleVehicules();
+&nbsp;
+&nbsp;    VehiculeResponse getVehicule(Long id);
+&nbsp;
+&nbsp;    VehiculeResponse createVehicule(CreateVehiculeRequest request);
+&nbsp;
+&nbsp;    VehiculeResponse updateVehicule(Long id, UpdateVehiculeRequest request);
+&nbsp;
+&nbsp;    VehiculeResponse updateVehiculeStatus(Long id, UpdateVehiculeStatusRequest request);
+&nbsp;
+&nbsp;    VehiculeResponse assignDriver(Long id, AssignVehiculeDriverRequest request);
+&nbsp;
+&nbsp;    VehiculeResponse clearDriver(Long id);
+&nbsp;
+&nbsp;    void deleteVehicule(Long id);
+&nbsp;
+&nbsp;    /**
+&nbsp;     * Récupère les chauffeurs disponibles (LIBRE) pour un véhicule donné
+&nbsp;     * Filtre par entreprise du véhicule pour éviter les affectations inter-entreprises
+&nbsp;     */
+&nbsp;    List&lt;AvailableDriverResponse&gt; getAvailableDriversForVehicle(Long vehiculeId);
+&nbsp;}
+</code>
+</pre>
+</div>
+
+<script type="text/javascript">
+(function() {
+    var msie = false, msie9 = false;
+    /*@cc_on
+      msie = true;
+      @if (@_jscript_version >= 9)
+        msie9 = true;
+      @end
+    @*/
+
+    if (!msie || msie && msie9) {
+      hljs.highlightAll()
+      hljs.initLineNumbersOnLoad();
+    }
+})();
+</script>
+
+<div class="footer">
+    
+    <div style="float:right;">generated on 2026-09-02 16:50</div>
+</div>
+</body>
+</html>

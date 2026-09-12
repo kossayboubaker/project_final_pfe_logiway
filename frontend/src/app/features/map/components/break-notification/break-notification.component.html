@@ -1,0 +1,226 @@
+<div class="pause-overlay" 
+     [class.critical]="severity === 'critical' || isUrgent" 
+     [class.warning]="severity === 'warning' || isRecommended"
+     [class.ai-enhanced]="showAIDetails"
+     [class.timer-active]="!showAIDetails">
+    
+    <!-- Header -->
+    <div class="pause-header">
+        <div class="pause-title">
+            <span class="header-icon-badge">
+                <mat-icon *ngIf="showAIDetails">{{ isUrgent ? 'error' : 'warning' }}</mat-icon>
+                <span class="letter-p" *ngIf="!showAIDetails">P</span>
+            </span>
+            <span class="title-text">
+                {{ showAIDetails ? (isUrgent ? 'Pause obligatoire - Alerte urgente' : 'Pause recommandée') : 'Pause obligatoire' }}
+            </span>
+        </div>
+        <button class="close-btn" mat-icon-button (click)="onClose()" title="Fermer">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
+
+    <!-- Subtitle / Vehicle Ref -->
+    <div class="truck-ref">
+        <span class="truck-label"><mat-icon>local_shipping</mat-icon> Camion: {{ truckId }}</span>
+        <span class="location-label" *ngIf="poiInfo">
+            <mat-icon>location_on</mat-icon>
+            {{ poiInfo.name || 'Point de pause recommandé' }}
+        </span>
+        <span class="location-label" *ngIf="!poiInfo">
+            <mat-icon>location_on</mat-icon>
+            Point de pause recommandé
+        </span>
+    </div>
+
+    <!-- Alert Message / Description -->
+    <div class="alert-message" *ngIf="message">
+        {{ message }}
+    </div>
+
+    <!-- CASE 1: AI Alert (showAIDetails = true) -->
+    <ng-container *ngIf="showAIDetails">
+        <!-- Route Context (Current -> Next) -->
+        <div class="route-context">
+            <div class="route-pill">
+                <span class="route-pill__label">Point actuel</span>
+                <span class="route-pill__value">{{ getCurrentPointLabel() }}</span>
+            </div>
+            <div class="route-pill route-pill--accent">
+                <span class="route-pill__label">Prochain point</span>
+                <span class="route-pill__value">{{ getNextPointLabel() }}</span>
+            </div>
+        </div>
+
+        <!-- AI Score & Details Section -->
+        <div class="ai-details-section">
+            <div class="score-row">
+                <div class="score-circle">
+                    <span class="score-val">{{ aiScore }}</span>
+                    <span class="score-den">/100</span>
+                </div>
+                <div class="score-meta">
+                    <span class="score-status" [style.color]="isUrgent ? '#ff5252' : '#f59e0b'">
+                        {{ isUrgent ? 'Score critique' : 'Score modéré' }}
+                    </span>
+                    <span class="hours-val" *ngIf="hoursDriving">
+                        <mat-icon>schedule</mat-icon>
+                        {{ getFormattedHoursDriving() }} de conduite
+                    </span>
+                </div>
+            </div>
+
+            <!-- Red progress bar (only for recommended alert) -->
+            <div class="critical-progress-bar" *ngIf="!isUrgent">
+                <div class="progress-bar-fill progress-bar-red" style="width: 100%;"></div>
+            </div>
+
+            <!-- Detailed Scores Grid -->
+            <div class="detailed-scores-grid" *ngIf="fatigueScore || accessibilityScore || contextScore || confidence">
+                <div class="score-item" *ngIf="fatigueScore !== undefined">
+                    <div class="score-item-header">
+                        <mat-icon [style.color]="getFatigueColor()">{{ getFatigueIcon() }}</mat-icon>
+                        <span class="score-label">Fatigue</span>
+                    </div>
+                    <div class="score-item-value" [style.color]="getFatigueColor()">
+                        {{ fatigueScore }}/100
+                    </div>
+                </div>
+
+                <div class="score-item" *ngIf="accessibilityScore !== undefined">
+                    <div class="score-item-header">
+                        <mat-icon style="color: #10b981">accessible</mat-icon>
+                        <span class="score-label">Accessibilité</span>
+                    </div>
+                    <div class="score-item-value">
+                        {{ accessibilityScore }}/100
+                    </div>
+                </div>
+
+                <div class="score-item" *ngIf="contextScore !== undefined">
+                    <div class="score-item-header">
+                        <mat-icon style="color: #8b5cf6">psychology</mat-icon>
+                        <span class="score-label">Contexte</span>
+                    </div>
+                    <div class="score-item-value">
+                        {{ contextScore }}/100
+                    </div>
+                </div>
+
+                <div class="score-item" *ngIf="confidence !== undefined">
+                    <div class="score-item-header">
+                        <mat-icon style="color: #06b6d4">verified</mat-icon>
+                        <span class="score-label">Confiance IA</span>
+                    </div>
+                    <div class="score-item-value">
+                        {{ getConfidencePercent() }}%
+                    </div>
+                </div>
+            </div>
+
+            <!-- Destination POI Info Card -->
+            <div class="poi-info-card" *ngIf="poiInfo">
+                <div class="poi-name-row">
+                    <mat-icon>{{ getPOIIcon() }}</mat-icon>
+                    <span>{{ poiInfo.name }}</span>
+                </div>
+                <div class="poi-meta-grid">
+                    <span class="poi-meta-item" *ngIf="distanceToPoiM">
+                        <mat-icon>near_me</mat-icon> À {{ getFormattedDistance() }}
+                    </span>
+                    <span class="poi-meta-item" *ngIf="distanceFromStartKm">
+                        <mat-icon>route</mat-icon> Depuis départ: {{ distanceFromStartKm }} km
+                    </span>
+                    <span class="poi-meta-item" *ngIf="estimatedArrivalTime">
+                        <mat-icon>access_time</mat-icon> ETA: {{ estimatedArrivalTime }}
+                    </span>
+                    <span class="poi-meta-item" *ngIf="poiInfo.type">
+                        <mat-icon>category</mat-icon> {{ getPOITypeLabel() }}
+                    </span>
+                </div>
+
+                <!-- Amenities with Emojis and check/cross -->
+                <div class="poi-amenities-row">
+                    <span class="amenity-badge" [class.enabled]="hasEquipment('hgv')" title="Accès Poids Lourds">
+                        🚚 <mat-icon class="amenity-icon">{{ hasEquipment('hgv') ? 'check' : 'close' }}</mat-icon>
+                    </span>
+                    <span class="amenity-badge" [class.enabled]="hasEquipment('shower')" title="Douches">
+                        🚿 <mat-icon class="amenity-icon">{{ hasEquipment('shower') ? 'check' : 'close' }}</mat-icon>
+                    </span>
+                    <span class="amenity-badge" [class.enabled]="hasEquipment('toilets')" title="Sanitaires">
+                        🚻 <mat-icon class="amenity-icon">{{ hasEquipment('toilets') ? 'check' : 'close' }}</mat-icon>
+                    </span>
+                    <span class="amenity-badge" [class.enabled]="hasEquipment('opening_hours')" title="Ouvert 24h/24">
+                        ⏰ <mat-icon class="amenity-icon">{{ hasEquipment('opening_hours') ? 'check' : 'close' }}</mat-icon>
+                    </span>
+                    <span class="amenity-badge" [class.enabled]="hasEquipment('restaurant')" title="Restaurant">
+                        🍽️ <mat-icon class="amenity-icon">{{ hasEquipment('restaurant') ? 'check' : 'close' }}</mat-icon>
+                    </span>
+                    <span class="amenity-badge" [class.enabled]="hasEquipment('fuel')" title="Station essence">
+                        ⛽ <mat-icon class="amenity-icon">{{ hasEquipment('fuel') ? 'check' : 'close' }}</mat-icon>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Reasoning -->
+            <div class="reasoning-text" *ngIf="reasoning">
+                <mat-icon>psychology</mat-icon>
+                <p>{{ reasoning }}</p>
+            </div>
+        </div>
+
+        <!-- AI Actions -->
+        <div class="ai-actions-footer">
+            <button class="btn btn-primary btn-green" (click)="onMarkCompleted()">
+                <mat-icon>check_circle</mat-icon>
+                <span>Marquer comme effectuée</span>
+            </button>
+            <button class="btn btn-secondary" (click)="onViewOnMap()" *ngIf="poiInfo">
+                <mat-icon>map</mat-icon>
+                <span>Voir sur la carte</span>
+            </button>
+            <button class="btn btn-secondary btn-ignore" (click)="onIgnore()" *ngIf="!isUrgent && canClosePausePopup">
+                <mat-icon>snooze</mat-icon>
+                <span>Ignorer ce point</span>
+            </button>
+        </div>
+    </ng-container>
+
+    <!-- CASE 2: Active Pause Timer (showAIDetails = false) -->
+    <ng-container *ngIf="!showAIDetails">
+        <!-- Timer display -->
+        <div class="timer-section">
+            <mat-icon class="timer-icon">hourglass_empty</mat-icon>
+            <span class="timer-value">{{ remainingTime }}</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="timer-progress-container">
+            <div class="timer-progress-fill" style="width: 75%;"></div>
+        </div>
+
+        <!-- Status status -->
+        <div class="timer-status">
+            <span class="status-badge-letter">P</span>
+            <span class="status-text">Camion arrêté - Pause réglementaire</span>
+        </div>
+
+        <!-- Timer Actions -->
+        <div class="timer-actions">
+            <button class="btn btn-danger" (click)="onCancel()">
+                <mat-icon>cancel</mat-icon>
+                <span>Annuler la pause</span>
+            </button>
+            <button class="btn btn-primary btn-green" (click)="onAction()">
+                <mat-icon>check_circle</mat-icon>
+                <span>Terminer pause</span>
+            </button>
+        </div>
+
+        <!-- Auto-detect Footer -->
+        <div class="timer-auto-detect">
+            <mat-icon>gps_fixed</mat-icon>
+            <span>Arrêt détecté automatiquement sur l'itinéraire</span>
+        </div>
+    </ng-container>
+</div>

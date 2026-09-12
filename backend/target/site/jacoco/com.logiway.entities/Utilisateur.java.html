@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Utilisateur.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.entities</a> &gt; <span class="el_source">Utilisateur.java</span></div><h1>Utilisateur.java</h1><pre class="source lang-java linenums">package com.logiway.entities;
+
+import com.logiway.entities.enums.Role;
+import com.logiway.entities.enums.StatutCompte;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = &quot;utilisateurs&quot;)
+@Inheritance(strategy = InheritanceType.JOINED)
+@Getter
+<span class="fc" id="L17">@Setter</span>
+<span class="fc" id="L18">@NoArgsConstructor</span>
+<span class="fc" id="L19">@AllArgsConstructor</span>
+<span class="pc bpc" id="L20" title="2 of 4 branches missed.">@SuperBuilder</span>
+public class Utilisateur {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+<span class="fc" id="L25">    private Long id;</span>
+
+    @Column(name = &quot;keycloak_id&quot;, length = 36, nullable = false, unique = true)
+<span class="fc" id="L28">    private String keycloakId;</span>
+
+    @Column(length = 100)
+<span class="fc" id="L31">    private String prenom;</span>
+
+    @Column(length = 100)
+<span class="fc" id="L34">    private String nom;</span>
+
+    @Column(length = 150, nullable = false, unique = true)
+<span class="fc" id="L37">    private String email;</span>
+
+    @Column(name = &quot;password_hash&quot;, nullable = false, length = 255)
+<span class="fc" id="L40">    private String passwordHash;</span>
+
+    @Column(length = 20)
+<span class="fc" id="L43">    private String telephone;</span>
+
+    @Column(length = 100)
+<span class="fc" id="L46">    private String pays;</span>
+
+    @Lob
+    @Column(columnDefinition = &quot;LONGTEXT&quot;)
+<span class="fc" id="L50">    private String image;</span>
+
+    @Column(name = &quot;date_creation&quot;, nullable = false)
+<span class="fc" id="L53">    private LocalDateTime dateCreation;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = &quot;est_actif&quot;, nullable = false, length = 20)
+<span class="fc" id="L57">    private StatutCompte estActif;</span>
+
+    @Column(name = &quot;rejection_reason&quot;, length = 500)
+<span class="fc" id="L60">    private String rejectionReason;</span>
+
+    @Column(name = &quot;email_verifie&quot;, nullable = false)
+<span class="fc" id="L63">    private Boolean emailVerifie;</span>
+
+    @Column(name = &quot;verification_token&quot;, length = 120)
+<span class="fc" id="L66">    private String verificationToken;</span>
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+<span class="fc" id="L70">    private Role role;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;entreprise_id&quot;)
+<span class="fc" id="L74">    private Entreprise entreprise;</span>
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = &quot;created_by_id&quot;)
+<span class="fc" id="L78">    private Utilisateur createdBy;</span>
+
+    @OneToMany(mappedBy = &quot;utilisateur&quot;, cascade = CascadeType.ALL, orphanRemoval = false)
+    @Builder.Default
+<span class="fc" id="L82">    private Set&lt;Reclamation&gt; reclamations = new HashSet&lt;&gt;();</span>
+
+    @OneToMany(mappedBy = &quot;utilisateur&quot;, cascade = CascadeType.ALL, orphanRemoval = false)
+    @Builder.Default
+<span class="fc" id="L86">    private Set&lt;Notification&gt; notifications = new HashSet&lt;&gt;();</span>
+
+    @PrePersist
+    void onCreate() {
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if (dateCreation == null) {</span>
+<span class="fc" id="L91">            dateCreation = LocalDateTime.now();</span>
+        }
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (emailVerifie == null) {</span>
+<span class="fc" id="L94">            emailVerifie = Boolean.FALSE;</span>
+        }
+<span class="fc" id="L96">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

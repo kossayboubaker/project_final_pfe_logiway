@@ -1,0 +1,267 @@
+<div class="trips-page animate-fade-up">
+    <div class="header">
+        <h1 class="text-gradient">Historique des Trajets</h1>
+        <p>Suivi détaillé de l'activité logistique et performances</p>
+    </div>
+
+    <!-- Histogram (preserved) -->
+    <mat-card class="glass-card histogram-card animate-fade-up" style="animation-delay: 0.1s">
+        <mat-card-header>
+            <mat-card-title>Flux des Missions (Hebdomadaire)</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="chart-container">
+            <canvas baseChart [data]="barChartData" [options]="barChartOptions" [type]="barChartType"></canvas>
+        </mat-card-content>
+    </mat-card>
+
+    <!-- Add button (NOUVEL ÉVÉNEMENT style) -->
+    <div class="add-trajet-row animate-fade-up" style="animation-delay: 0.15s" *ngIf="isManager">
+        <button class="btn-add-trajet" (click)="openCreate()">
+            <mat-icon>add</mat-icon>
+            NOUVEAU TRAJET
+        </button>
+        <a mat-stroked-button routerLink="/dashboard/trajets-map" class="btn-add-trajet" style="margin-left: 0.75rem; text-decoration: none;">
+            <mat-icon>gps_fixed</mat-icon>
+            CARTE GPS
+        </a>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="stats-row mb-4">
+        <mat-card class="glass-card stat-mini">
+            <mat-icon color="primary">route</mat-icon>
+            <div class="stat-mini-info">
+                <span class="label">Total</span>
+                <span class="value">{{dataSource.data.length}}</span>
+            </div>
+        </mat-card>
+        <mat-card class="glass-card stat-mini">
+            <mat-icon style="color: var(--success);">check_circle</mat-icon>
+            <div class="stat-mini-success">
+                <span class="label">Actifs</span>
+                <span class="value">{{getActiveCount()}}</span>
+            </div>
+        </mat-card>
+        <mat-card class="glass-card stat-mini">
+            <mat-icon style="color: var(--info);">sync</mat-icon>
+            <div class="stat-mini-primary">
+                <span class="label">En Cours</span>
+                <span class="value">{{getInProgressCount()}}</span>
+            </div>
+        </mat-card>
+        <mat-card class="glass-card stat-mini">
+            <mat-icon style="color: #10b981;">done_all</mat-icon>
+            <div class="stat-mini-success">
+                <span class="label">Complétés</span>
+                <span class="value">{{getCompletedCount()}}</span>
+            </div>
+        </mat-card>
+    </div>
+
+    <!-- Search (preserved) -->
+    <div class="table-actions animate-fade-up" style="animation-delay: 0.2s">
+        <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Filtrer les trajets (Véhicule, Chauffeur, Ville...)</mat-label>
+            <input matInput (keyup)="applyFilter($event)" placeholder="Ex. Tunis" #input>
+            <mat-icon matSuffix>filter_list</mat-icon>
+        </mat-form-field>
+    </div>
+
+    <!-- Table (preserved + actions column) -->
+    <mat-card class="glass-card table-card animate-fade-up" style="animation-delay: 0.3s">
+        <div class="premium-table-container">
+            <table mat-table [dataSource]="dataSource" matSort class="premium-table">
+
+                <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Date </th>
+                    <td mat-cell *matCellDef="let t"> {{t.date}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="vehicle">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Véhicule </th>
+                    <td mat-cell *matCellDef="let t"> <strong>{{t.vehicle}}</strong> </td>
+                </ng-container>
+
+                <ng-container matColumnDef="from">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Départ </th>
+                    <td mat-cell *matCellDef="let t"> {{t.from}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="to">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Arrivée </th>
+                    <td mat-cell *matCellDef="let t"> {{t.to}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="driver">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Chauffeur </th>
+                    <td mat-cell *matCellDef="let t"> {{t.driver}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Status </th>
+                    <td mat-cell *matCellDef="let t">
+                        <span class="trip-status" [ngClass]="getStatusClass(t.status)">{{t.status}}</span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> Actions </th>
+                    <td mat-cell *matCellDef="let t">
+                        <div class="action-btns" *ngIf="isManager">
+                            <button mat-icon-button class="btn-edit" matTooltip="Modifier"
+                                (click)="openEdit(t); $event.stopPropagation()">
+                                <mat-icon>edit</mat-icon>
+                            </button>
+                            <button mat-icon-button class="btn-del" matTooltip="Supprimer"
+                                (click)="deleteTrip(t); $event.stopPropagation()">
+                                <mat-icon>delete_outline</mat-icon>
+                            </button>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="animate-fade-in"></tr>
+            </table>
+
+            <mat-paginator [pageSize]="5" [pageSizeOptions]="[5, 10, 20]"
+                aria-label="Sélectionner la page"></mat-paginator>
+        </div>
+    </mat-card>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!--  Centered Modal: Form + Mini Map       -->
+<!-- ═══════════════════════════════════════ -->
+
+<div class="modal-backdrop" [class.visible]="showModal" (click)="closeModal()"></div>
+
+<div class="modal-container" [class.visible]="showModal">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="modal-header">
+            <div class="modal-title-row">
+                <mat-icon class="modal-icon">{{ isEditMode ? 'edit_road' : 'add_road' }}</mat-icon>
+                <h2>{{ isEditMode ? 'Modifier le Trajet' : 'Nouveau Trajet' }}</h2>
+            </div>
+            <button mat-icon-button class="modal-close" (click)="closeModal()">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <!-- Body: Form + Map side by side -->
+        <div class="modal-body">
+
+            <!-- LEFT: Form -->
+            <div class="modal-form-col">
+                <form [formGroup]="trajetForm">
+                    <div class="form-grid">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Point de départ</mat-label>
+                            <input matInput formControlName="pointDepart" placeholder="Cliquez la carte">
+                            <mat-icon matPrefix>trip_origin</mat-icon>
+                            <mat-error *ngIf="trajetForm.get('pointDepart')?.hasError('required')">Requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Destination</mat-label>
+                            <input matInput formControlName="destination" placeholder="Cliquez la carte">
+                            <mat-icon matPrefix>place</mat-icon>
+                            <mat-error *ngIf="trajetForm.get('destination')?.hasError('required')">Requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date de départ</mat-label>
+                            <input matInput [matDatepicker]="dp1" formControlName="dateDepart" [min]="today">
+                            <mat-datepicker-toggle matIconSuffix [for]="dp1"></mat-datepicker-toggle>
+                            <mat-datepicker #dp1></mat-datepicker>
+                            <mat-error *ngIf="trajetForm.get('dateDepart')?.hasError('required')">Requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Heure de départ</mat-label>
+                            <input matInput type="time" formControlName="heureDepart">
+                            <mat-error *ngIf="trajetForm.get('heureDepart')?.hasError('required')">Requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Date d'arrivée</mat-label>
+                            <input matInput [matDatepicker]="dp2" formControlName="dateArrivee" [min]="today">
+                            <mat-datepicker-toggle matIconSuffix [for]="dp2"></mat-datepicker-toggle>
+                            <mat-datepicker #dp2></mat-datepicker>
+                            <mat-error *ngIf="trajetForm.get('dateArrivee')?.hasError('required')">Requis</mat-error>
+                            <mat-error *ngIf="trajetForm.hasError('dateRange')">Doit être après le départ</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Heure d'arrivée</mat-label>
+                            <input matInput type="time" formControlName="heureArrivee">
+                            <mat-error *ngIf="trajetForm.get('heureArrivee')?.hasError('required')">Requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Statut</mat-label>
+                            <mat-select formControlName="statut">
+                                <mat-option *ngFor="let s of statusOptions" [value]="s.value">
+                                    <span class="status-badge" [ngClass]="getStatusClass(s.value)">{{ s.label }}</span>
+                                </mat-option>
+                            </mat-select>
+                            <mat-error *ngIf="trajetForm.get('statut')?.hasError('required')">Requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                            <mat-label>Véhicule</mat-label>
+                            <mat-select formControlName="IDVehicule" (selectionChange)="onVehicleSelected($event.value)">
+                                <mat-option *ngFor="let v of vehiclePlates" [value]="v.id">{{ v.plate }}</mat-option>
+                            </mat-select>
+                            <mat-error *ngIf="trajetForm.get('IDVehicule')?.hasError('required')">Requis</mat-error>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="full-span" *ngIf="isManager">
+                            <mat-label>Chauffeur</mat-label>
+                            <mat-select formControlName="IDChauffeur">
+                                <mat-option *ngFor="let d of drivers" [value]="d.id">{{ d.name }}</mat-option>
+                            </mat-select>
+                            <mat-error *ngIf="trajetForm.get('IDChauffeur')?.hasError('required')">Requis</mat-error>
+                            <mat-hint>{{ selectedVehicleDriverNote }}</mat-hint>
+                        </mat-form-field>
+                    </div>
+
+                    <div class="form-actions">
+                        <button mat-stroked-button type="button" class="btn-cancel" (click)="closeModal()">
+                            <mat-icon>close</mat-icon> Annuler
+                        </button>
+                        <button mat-flat-button type="submit" class="btn-save" [disabled]="trajetForm.invalid"
+                            (click)="onSubmit()">
+                            <mat-icon>save</mat-icon> Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- RIGHT: Mini Map -->
+            <div class="modal-map-col">
+                <div class="map-header">
+                    <span class="map-label">Sélectionner les points sur la carte</span>
+                    <div class="tile-btns">
+                        <button class="tile-btn" [class.active]="mapTileMode === 'standard'"
+                            (click)="changeTileMode('standard')">
+                            <mat-icon>map</mat-icon>
+                        </button>
+                        <button class="tile-btn" [class.active]="mapTileMode === 'satellite'"
+                            (click)="changeTileMode('satellite')">
+                            <mat-icon>satellite_alt</mat-icon>
+                        </button>
+                        <button class="tile-btn" [class.active]="mapTileMode === 'terrain'"
+                            (click)="changeTileMode('terrain')">
+                            <mat-icon>terrain</mat-icon>
+                        </button>
+                    </div>
+                </div>
+                <div id="trajet-mini-map" class="mini-map"></div>
+                <p class="map-hint">{{ mapInstruction }}</p>
+            </div>
+        </div>
+    </div>
+</div>

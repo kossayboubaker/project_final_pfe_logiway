@@ -1,0 +1,255 @@
+<div class="nc-dashboard" [class.nc-dashboard--blur]="drillDownOpen">
+
+    <header class="nc-header">
+        <div class="nc-header__left">
+            <div class="nc-header__icon-wrap">
+                <mat-icon>notifications</mat-icon>
+            </div>
+            <div>
+                <h1 class="nc-header__title">Historique des Notifications</h1>
+                <p class="nc-header__subtitle">Suivi et analyse des communications</p>
+            </div>
+        </div>
+        <div class="nc-header__right">
+            <div class="nc-header__stat-badge nc-header__stat-badge--violet">
+                <mat-icon>notifications</mat-icon>
+                <span>{{ kpiVolumeTotal }} notifications</span>
+            </div>
+            <div class="nc-header__stat-badge nc-header__stat-badge--red" *ngIf="kpiCritiques > 0">
+                <mat-icon>warning</mat-icon>
+                <span>{{ kpiCritiques }} critique(s)</span>
+            </div>
+        </div>
+    </header>
+
+    <section class="nc-kpi-strip">
+        <div class="nc-kpi nc-kpi--violet">
+            <div class="nc-kpi__icon"><mat-icon>notifications</mat-icon></div>
+            <div class="nc-kpi__body">
+                <span class="nc-kpi__label">Volume Total</span>
+                <span class="nc-kpi__value">{{ kpiVolumeTotal }}</span>
+                <span class="nc-kpi__sub">Moy. {{ kpiMoyJournaliere }}/{{ getGranularityLabel() }}</span>
+            </div>
+            <div class="nc-kpi__glow"></div>
+        </div>
+
+        <div class="nc-kpi nc-kpi--emerald">
+            <div class="nc-kpi__icon"><mat-icon>bar_chart</mat-icon></div>
+            <div class="nc-kpi__body">
+                <span class="nc-kpi__label">Notification dominante</span>
+                <span class="nc-kpi__value">{{ kpiDominantType?.label || '—' }}</span>
+                <span class="nc-kpi__sub" *ngIf="kpiDominantType">{{ kpiDominantType!.count }} notif. ({{ kpiDominantType!.pct }}%)</span>
+            </div>
+            <div class="nc-kpi__glow"></div>
+        </div>
+
+        <div class="nc-kpi nc-kpi--amber">
+            <div class="nc-kpi__icon"><mat-icon>trending_up</mat-icon></div>
+            <div class="nc-kpi__body">
+                <span class="nc-kpi__label">Pic d'envoi</span>
+                <span class="nc-kpi__value">{{ kpiPeakValue }}</span>
+                <span class="nc-kpi__sub">le {{ kpiPeakLabel }}</span>
+            </div>
+            <div class="nc-kpi__glow"></div>
+        </div>
+
+        <div class="nc-kpi nc-kpi--blue">
+            <div class="nc-kpi__icon">
+                <mat-icon>{{ kpiEvolutionDirection === 'up' ? 'arrow_upward' : kpiEvolutionDirection === 'down' ? 'arrow_downward' : 'remove' }}</mat-icon>
+            </div>
+            <div class="nc-kpi__body">
+                <span class="nc-kpi__label">Évolution</span>
+                <span class="nc-kpi__value" [style.color]="kpiEvolutionDirection === 'up' ? '#34d399' : kpiEvolutionDirection === 'down' ? '#f87171' : '#94a3b8'">
+                    {{ kpiEvolutionPct >= 0 ? '+' : '' }}{{ kpiEvolutionPct }}%
+                </span>
+                <span class="nc-kpi__sub">vs période précédente</span>
+            </div>
+            <div class="nc-kpi__glow"></div>
+        </div>
+    </section>
+
+    <section class="nc-filter-bar">
+        <div class="nc-filter-bar__left">
+            <mat-icon class="nc-filter-icon">tune</mat-icon>
+            <span class="nc-filter-label">Filtres</span>
+            <span class="nc-filter-badge" *ngIf="hasActiveFilters">!</span>
+        </div>
+        <div class="nc-filter-bar__controls">
+            <select class="nc-select" [value]="filterType" (change)="filterType = $any($event.target).value; onFilterChange()">
+                <option value="">Tous les types</option>
+                <option *ngFor="let opt of typeOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <select class="nc-select" [value]="filterGranularity" (change)="filterGranularity = $any($event.target).value; onFilterChange()">
+                <option *ngFor="let opt of granularityOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+            <input class="nc-date-input" type="date" [value]="dateFrom" (change)="dateFrom = $any($event.target).value; onFilterChange()" placeholder="Du" />
+            <input class="nc-date-input" type="date" [value]="dateTo" (change)="dateTo = $any($event.target).value; onFilterChange()" placeholder="Au" />
+            <button class="nc-btn-clear" *ngIf="hasActiveFilters" (click)="clearFilters()">
+                <mat-icon>restart_alt</mat-icon> Réinitialiser
+            </button>
+        </div>
+    </section>
+
+    <section class="nc-charts-grid">
+        <div class="nc-panel nc-panel--timeline">
+            <div class="nc-panel__header">
+                <div class="nc-panel__title-group">
+                    <span class="nc-panel__dot nc-panel__dot--indigo"></span>
+                    <h3 class="nc-panel__title">Volume par sévérité</h3>
+                </div>
+                <span class="nc-panel__hint"><mat-icon>touch_app</mat-icon> Cliquez sur un point pour les détails</span>
+            </div>
+            <div class="nc-panel__chart-wrap">
+                <canvas baseChart [data]="timelineData" [options]="timelineOptions" [type]="lineType" (chartClick)="onChartClick('timeline', $event)"></canvas>
+            </div>
+        </div>
+
+        <div class="nc-panel nc-panel--donut">
+            <div class="nc-panel__header">
+                <div class="nc-panel__title-group">
+                    <span class="nc-panel__dot nc-panel__dot--emerald"></span>
+                    <h3 class="nc-panel__title">Répartition par type</h3>
+                </div>
+                <span class="nc-panel__hint"><mat-icon>touch_app</mat-icon> Cliquez sur une section</span>
+            </div>
+            <div class="nc-donut-wrap">
+                <canvas baseChart [data]="typeDonutData" [options]="typeDonutOptions" [type]="donutType" (chartClick)="onChartClick('donut', $event)"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <section class="nc-table-section">
+        <div class="nc-table-header">
+            <div class="nc-table-title-group">
+                <mat-icon>table_chart</mat-icon>
+                <h3>Détail des notifications</h3>
+                <span class="nc-table-count">{{ totalElements }}</span>
+            </div>
+        </div>
+        <div class="nc-table-container">
+            <table mat-table [dataSource]="dataSource" class="nc-table">
+                <ng-container matColumnDef="date">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="nc-th"><mat-icon>access_time</mat-icon> Date</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row"><span class="nc-cell-date">{{ row.dateLabel }}</span></td>
+                </ng-container>
+
+                <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="nc-th"><mat-icon>category</mat-icon> Type</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="nc-type-badge" [style.background]="getTypeColor(row.type) + '22'" [style.color]="getTypeColor(row.type)" [style.borderColor]="getTypeColor(row.type) + '44'">
+                            <span class="nc-type-dot" [style.background]="getTypeColor(row.type)"></span>
+                            {{ row.typeLabel }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="message">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="nc-th"><mat-icon>message</mat-icon> Message</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <div class="nc-cell-msg-wrap">
+                            <span class="nc-cell-msg">{{ row.message }}</span>
+                        </div>
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="severity">
+                    <th mat-header-cell *matHeaderCellDef>
+                        <div class="nc-th"><mat-icon>gpp_maybe</mat-icon> Sévérité</div>
+                    </th>
+                    <td mat-cell *matCellDef="let row">
+                        <span class="nc-severity-pill" [ngClass]="getSeverityClass(row.tone)">
+                            <mat-icon>{{ getSeverityIcon(row.tone) }}</mat-icon>
+                            {{ getSeverityLabel(row.tone) }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="nc-table-row" (click)="onRowClick(row)" style="cursor:pointer"></tr>
+                <tr class="mat-row" *matNoDataRow>
+                    <td class="mat-cell nc-no-data" [attr.colspan]="displayedColumns.length">
+                        <div class="nc-empty-state">
+                            <mat-icon>notifications_off</mat-icon>
+                            <h4>Aucune notification trouvée</h4>
+                            <p>Modifiez vos filtres ou la période.</p>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="nc-paginator">
+            <mat-paginator [length]="totalElements" [pageIndex]="pageIndex" [pageSize]="pageSize"
+                [pageSizeOptions]="[5, 10, 20, 50]" (page)="onPageChange($event)" aria-label="Pagination notifications">
+            </mat-paginator>
+        </div>
+    </section>
+
+</div>
+
+<div class="nc-dd-overlay" [class.nc-dd-overlay--open]="drillDownOpen" (click)="closeDrillDown()"></div>
+
+<div class="nc-dd-panel" [class.nc-dd-panel--open]="drillDownOpen">
+    <ng-container *ngIf="drillDownData">
+        <div class="nc-dd-panel__header">
+            <div class="nc-dd-panel__title-group">
+                <div class="nc-dd-panel__icon-wrap">
+                    <mat-icon>notifications</mat-icon>
+                </div>
+                <div>
+                    <h2 class="nc-dd-panel__title">{{ drillDownData.title }}</h2>
+                    <p class="nc-dd-panel__subtitle">Détails de la sélection</p>
+                </div>
+            </div>
+            <button class="nc-dd-panel__close" (click)="closeDrillDown()">
+                <mat-icon>close</mat-icon>
+            </button>
+        </div>
+
+        <div class="nc-dd-panel__body">
+            <div class="nc-dd-stat" *ngIf="drillDownData.statLabel">
+                <span class="nc-dd-stat__label">{{ drillDownData.statLabel }}</span>
+                <span class="nc-dd-stat__value">{{ drillDownData.statValue }}</span>
+            </div>
+
+            <div class="nc-dd-divider"></div>
+
+            <div class="nc-dd-list">
+                <div class="nc-dd-item" *ngFor="let d of drillDownData.details">
+                    <mat-icon class="nc-dd-item__icon" [style.color]="d.color">{{ d.icon }}</mat-icon>
+                    <div class="nc-dd-item__body">
+                        <span class="nc-dd-item__label">{{ d.label }}</span>
+                        <span class="nc-dd-item__value">{{ d.value }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nc-dd-items" *ngIf="drillDownData.items && drillDownData.items.length > 0">
+                <div class="nc-dd-items__header">
+                    <mat-icon>list</mat-icon>
+                    <span>{{ drillDownData.items.length }} notification(s)</span>
+                </div>
+                <div class="nc-dd-items__list">
+                    <div class="nc-dd-item-card" *ngFor="let item of drillDownData.items">
+                        <div class="nc-dd-item-card__top">
+                            <span class="nc-dd-item-card__type" [style.background]="getTypeColor(item.type) + '22'" [style.color]="getTypeColor(item.type)">
+                                <span class="nc-dd-item-card__dot" [style.background]="getTypeColor(item.type)"></span>
+                                {{ item.typeLabel }}
+                            </span>
+                            <span class="nc-dd-item-card__sev" [style.color]="getSeverityColor(item.tone)">
+                                <mat-icon>{{ getSeverityIcon(item.tone) }}</mat-icon>
+                            </span>
+                        </div>
+                        <div class="nc-dd-item-card__msg">{{ item.message }}</div>
+                        <div class="nc-dd-item-card__date">{{ item.dateLabel }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </ng-container>
+</div>

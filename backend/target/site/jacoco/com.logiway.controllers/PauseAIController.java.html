@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PauseAIController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">logiway-backend</a> &gt; <a href="index.source.html" class="el_package">com.logiway.controllers</a> &gt; <span class="el_source">PauseAIController.java</span></div><h1>PauseAIController.java</h1><pre class="source lang-java linenums">package com.logiway.controllers;
+
+import com.logiway.dto.pause.PauseAIDashboardResponse;
+import com.logiway.dto.pause.PauseAIEvaluationRequest;
+import com.logiway.dto.pause.PauseAIPredictionResponse;
+import com.logiway.services.PauseAIService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping(&quot;/api/pauseai&quot;)
+<span class="fc" id="L26">@RequiredArgsConstructor</span>
+<span class="fc" id="L27">@Slf4j</span>
+@Tag(name = &quot;Pause AI&quot;, description = &quot;Endpoints pour l'évaluation IA des pauses réglementaires&quot;)
+@SecurityRequirement(name = &quot;bearer-jwt&quot;)
+public class PauseAIController {
+
+    private final PauseAIService pauseAIService;
+
+    @PostMapping(&quot;/evaluer/{trajetId}&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPERADMIN', 'MANAGER', 'CHAUFFEUR')&quot;)
+    @Operation(summary = &quot;Évaluer la nécessité d'une pause via le modèle IA&quot;,
+               description = &quot;Collecte les features GPS et POI, appelle le modèle Python, persiste le résultat et déclenche un événement SSE si nécessaire&quot;)
+    public ResponseEntity&lt;PauseAIPredictionResponse&gt; evaluerPause(
+            @PathVariable Long trajetId,
+            @RequestBody PauseAIEvaluationRequest request) {
+        
+<span class="fc" id="L42">        log.info(&quot;[API] POST /api/pauseai/evaluer/{} - lat: {}, lon: {}, dist: {} km&quot;, </span>
+<span class="fc" id="L43">                 trajetId, request.getCurrentLatitude(), request.getCurrentLongitude(), </span>
+<span class="fc" id="L44">                 request.getDistanceParcourueKm());</span>
+
+<span class="fc" id="L46">        PauseAIPredictionResponse response = pauseAIService.evaluerPause(</span>
+            trajetId,
+<span class="fc" id="L48">            request.getCurrentLatitude(),</span>
+<span class="fc" id="L49">            request.getCurrentLongitude(),</span>
+<span class="fc" id="L50">            request.getDistanceParcourueKm()</span>
+        );
+
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (response == null) {</span>
+<span class="fc" id="L54">            log.info(&quot;[API] Évaluation skippée pour trajet {} (conditions non remplies)&quot;, trajetId);</span>
+<span class="fc" id="L55">            return ResponseEntity.noContent().build();</span>
+        }
+
+<span class="fc" id="L58">        return ResponseEntity.ok(response);</span>
+    }
+
+    @GetMapping(&quot;/trajets/{trajetId}/historique&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPERADMIN', 'MANAGER', 'CHAUFFEUR')&quot;)
+    @Operation(summary = &quot;Récupérer l'historique des prédictions IA pour un trajet&quot;,
+               description = &quot;Retourne toutes les évaluations IA effectuées pendant un trajet, ordonnées par timestamp&quot;)
+    public ResponseEntity&lt;List&lt;PauseAIPredictionResponse&gt;&gt; getHistoriquePredictions(
+            @PathVariable Long trajetId) {
+        
+<span class="fc" id="L68">        log.info(&quot;[API] GET /api/pauseai/trajets/{}/historique&quot;, trajetId);</span>
+        
+<span class="fc" id="L70">        List&lt;PauseAIPredictionResponse&gt; historique = pauseAIService.getHistoriquePredictions(trajetId);</span>
+<span class="fc" id="L71">        return ResponseEntity.ok(historique);</span>
+    }
+
+    @GetMapping(&quot;/dashboard&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPERADMIN', 'MANAGER')&quot;)
+    @Operation(summary = &quot;Récupérer les statistiques agrégées pour le dashboard analytique&quot;,
+               description = &quot;Statistiques filtrées par entreprise selon le rôle. SUPERADMIN voit tout, MANAGER voit son entreprise&quot;)
+    public ResponseEntity&lt;PauseAIDashboardResponse&gt; getDashboardStats(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) Long chauffeurId) {
+        
+<span class="fc" id="L83">        log.info(&quot;[API] GET /api/pauseai/dashboard - startDate: {}, endDate: {}, chauffeurId: {}&quot;, </span>
+                 startDate, endDate, chauffeurId);
+        
+<span class="fc" id="L86">        PauseAIDashboardResponse dashboard = pauseAIService.getDashboardStats(startDate, endDate, chauffeurId);</span>
+<span class="fc" id="L87">        return ResponseEntity.ok(dashboard);</span>
+    }
+
+    @GetMapping(value = &quot;/export&quot;, produces = &quot;text/csv&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPERADMIN', 'MANAGER')&quot;)
+    @Operation(summary = &quot;Exporter les statistiques Pause AI en CSV&quot;,
+               description = &quot;Export CSV filtré par période et par entreprise selon le rôle de l'utilisateur&quot;)
+    public ResponseEntity&lt;String&gt; exportCsv(
+            @RequestParam(defaultValue = &quot;SEMAINE&quot;) String periode,
+            @RequestParam(defaultValue = &quot;csv&quot;) String format,
+            @RequestParam(required = false) Long chauffeurId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+
+<span class="fc bfc" id="L101" title="All 2 branches covered.">        if (!&quot;csv&quot;.equalsIgnoreCase(format)) {</span>
+<span class="fc" id="L102">            throw new IllegalArgumentException(&quot;Seul le format CSV est pris en charge&quot;);</span>
+        }
+
+<span class="fc" id="L105">        LocalDateTime[] range = resolvePeriodRange(periode, startDate, endDate);</span>
+<span class="fc" id="L106">        String csv = pauseAIService.exportDashboardCsv(range[0], range[1], chauffeurId);</span>
+
+<span class="fc" id="L108">        return ResponseEntity.ok()</span>
+<span class="fc" id="L109">            .header(HttpHeaders.CONTENT_DISPOSITION, &quot;attachment; filename=pause-ai-export.csv&quot;)</span>
+<span class="fc" id="L110">            .contentType(MediaType.parseMediaType(&quot;text/csv;charset=UTF-8&quot;))</span>
+<span class="fc" id="L111">            .body(csv);</span>
+    }
+
+    @GetMapping(&quot;/trajets/{trajetId}/pauses-completes&quot;)
+    @PreAuthorize(&quot;hasAnyRole('SUPERADMIN', 'MANAGER', 'CHAUFFEUR')&quot;)
+    @Operation(summary = &quot;Récupérer TOUS les points de pause (réglementaires + POI IA) pour un trajet&quot;,
+               description = &quot;Appelle directement l'API Flask /api/predict et retourne tous les stops (WARNING_ALERT, MANDATORY_REST, STATION_SERVICE, REST_AREA, CAFE, KIOSK, PARKING, etc.)&quot;)
+    public ResponseEntity&lt;Map&lt;String, Object&gt;&gt; getPausesCompletes(@PathVariable Long trajetId) {
+<span class="fc" id="L119">        log.info(&quot;[API] GET /api/pauseai/trajets/{}/pauses-completes&quot;, trajetId);</span>
+        
+<span class="fc" id="L121">        Map&lt;String, Object&gt; pauses = pauseAIService.getPausesCompletes(trajetId);</span>
+<span class="fc" id="L122">        return ResponseEntity.ok(pauses);</span>
+    }
+
+    private LocalDateTime[] resolvePeriodRange(String periode, LocalDate startDate, LocalDate endDate) {
+<span class="fc" id="L126">        LocalDate today = LocalDate.now();</span>
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        String normalized = periode == null ? &quot;SEMAINE&quot; : periode.toUpperCase();</span>
+
+<span class="fc bfc" id="L129" title="All 4 branches covered.">        if (&quot;JOUR&quot;.equals(normalized) || &quot;TODAY&quot;.equals(normalized)) {</span>
+<span class="fc" id="L130">            return new LocalDateTime[] { today.atStartOfDay(), today.atTime(23, 59, 59) };</span>
+        }
+
+<span class="fc bfc" id="L133" title="All 4 branches covered.">        if (&quot;MOIS&quot;.equals(normalized) || &quot;MONTH&quot;.equals(normalized)) {</span>
+<span class="fc" id="L134">            return new LocalDateTime[] { today.minusDays(30).atStartOfDay(), today.atTime(23, 59, 59) };</span>
+        }
+
+<span class="fc bfc" id="L137" title="All 2 branches covered.">        if (&quot;CUSTOM&quot;.equals(normalized)) {</span>
+<span class="fc" id="L138">            return new LocalDateTime[] {</span>
+<span class="fc bfc" id="L139" title="All 2 branches covered.">                (startDate != null ? startDate : today.minusDays(7)).atStartOfDay(),</span>
+<span class="fc bfc" id="L140" title="All 2 branches covered.">                (endDate != null ? endDate : today).atTime(23, 59, 59)</span>
+            };
+        }
+
+<span class="fc" id="L144">        return new LocalDateTime[] { today.minusDays(7).atStartOfDay(), today.atTime(23, 59, 59) };</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

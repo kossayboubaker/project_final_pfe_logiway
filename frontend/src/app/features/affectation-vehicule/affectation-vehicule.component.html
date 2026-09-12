@@ -1,0 +1,67 @@
+﻿<div class="affectation-container animate-fade-up">
+    
+    <div class="card-wrapper">
+        <mat-card class="glass-card affectation-card">
+            
+            <mat-card-header class="header-center">
+                <mat-card-title class="text-gradient">Nouvelle Affectation</mat-card-title>
+                <mat-card-subtitle class="subtitle">Associer un chauffeur LIBRE à un véhicule HORS SERVICE</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content class="mt-4">
+                <form (ngSubmit)="validerAffectation()">
+                    
+                    <!-- Sélection Entreprise (toujours visible) -->
+                    <div class="form-group mb-4">
+                        <label class="form-label">Sélectionner une Entreprise</label>
+                        <mat-form-field appearance="outline" class="full-width-field">
+                            <mat-select [(ngModel)]="selectedEntrepriseId" name="entrepriseId" placeholder="Choisir une entreprise..." required (selectionChange)="onEntrepriseChange()">
+                                <mat-option *ngFor="let entreprise of entreprises" [value]="entreprise.id">
+                                    {{ entreprise.name }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+
+                    <!-- Sélection Véhicule (visible uniquement si entreprise sélectionnée) -->
+                    <div class="form-group mb-4" *ngIf="selectedEntrepriseId">
+                        <label class="form-label">Sélectionner un Véhicule (HORS_SERVICE)</label>
+                        <mat-form-field appearance="outline" class="full-width-field">
+                            <mat-select [(ngModel)]="selectedVehiculeId" name="vehiculeId" placeholder="Choisir un véhicule..." required>
+                                <mat-option *ngFor="let vehicule of vehiculesHorsService" [value]="vehicule.id">
+                                    {{ vehicule.plate }} - {{ vehicule.brand || vehicule.model }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <div *ngIf="vehiculesHorsService.length === 0 && !isLoading" class="hint">Aucun véhicule HORS_SERVICE disponible pour cette entreprise.</div>
+                    </div>
+
+                    <!-- Sélection Chauffeur (visible uniquement si entreprise sélectionnée) -->
+                    <div class="form-group mb-4" *ngIf="selectedEntrepriseId">
+                        <label class="form-label">Sélectionner un Chauffeur Libre</label>
+                        <mat-form-field appearance="outline" class="full-width-field">
+                            <mat-select [(ngModel)]="selectedChauffeurId" name="chauffeurId" placeholder="Choisir un chauffeur..." required>
+                                <mat-option *ngFor="let chauffeur of chauffeursLibres" [value]="chauffeur.id">
+                                    {{ chauffeur.username | uppercase }}
+                                </mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                        <div *ngIf="chauffeursLibres.length === 0 && !isLoading" class="hint">Aucun chauffeur LIBRE disponible pour cette entreprise.</div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="actions">
+                        <button mat-button type="button" class="btn-cancel" (click)="annuler()">Annuler</button>
+                        <button mat-flat-button color="primary" type="submit" class="btn-submit" [disabled]="!selectedChauffeurId || !selectedVehiculeId || isLoading">
+                            <span *ngIf="!isLoading">Enregistrer l'affectation</span>
+                            <span *ngIf="isLoading">Chargement...</span>
+                        </button>
+                    </div>
+
+                </form>
+            </mat-card-content>
+
+        </mat-card>
+    </div>
+
+</div>
