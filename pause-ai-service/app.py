@@ -524,6 +524,7 @@ def predict_pauses(start_lat, start_lon, end_lat, end_lon, trip_id=None, trip_du
     }
 
 
+@app.route("/health", methods=["GET"])
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({
