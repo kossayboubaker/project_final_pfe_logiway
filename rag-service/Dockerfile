@@ -15,6 +15,7 @@ WORKDIR /app
 # ===========================================
 # 1. Installation dépendances système
 # ===========================================
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
@@ -51,7 +52,7 @@ RUN mkdir -p /app/reports /app/vectorstore /app/logs && \
 # ===========================================
 # 6. Vérification de l'installation
 # ===========================================
-RUN python -c "import fastapi; import langchain; import google.generativeai; import sqlalchemy; import reportlab; print('All packages installed successfully')"
+RUN python -c "import fastapi; import google.generativeai; import sqlalchemy; import reportlab; print('All packages installed successfully')"
 
 # ===========================================
 # 7. Configuration

@@ -12,8 +12,13 @@ WORKDIR /app
 # Copie des fichiers de dépendances (cache Docker)
 COPY package*.json ./
 
-# Installation des dépendances (ci pour reproductibilité)
-RUN npm ci --silent
+# Installation des dépendances
+# Utilise npm install si package-lock.json est absent ou invalide
+RUN if [ -f package-lock.json ]; then \
+        npm ci --silent || npm install --silent; \
+    else \
+        npm install --silent; \
+    fi
 
 # Copie du code source
 COPY . .
