@@ -173,6 +173,7 @@ services:
       # Configuration Google Gemini
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       GOOGLE_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
       
       # Configuration MySQL
       DB_HOST: mysql

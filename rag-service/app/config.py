@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     MYSQL_USER: Optional[str] = None
     MYSQL_PASSWORD: Optional[str] = None
     
-    # Google Gemini API Key
+    # Google Gemini API Key & Model
     GOOGLE_API_KEY: str = ""
     GEMINI_API_KEY: Optional[str] = None
-    GEMINI_MODEL: str = "models/gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     
     # API
     API_HOST: str = "0.0.0.0"
