@@ -1,7 +1,7 @@
 # ===========================================
 # STAGE 1: Build Angular avec Node.js
 # ===========================================
-FROM node:22-alpine AS build
+FROM node:20-alpine AS build
 
 # Métadonnées
 LABEL maintainer="LogiWay Team"
