@@ -13,11 +13,10 @@ WORKDIR /app
 COPY package*.json ./
 
 # Installation des dépendances
-# Utilise npm install si package-lock.json est absent ou invalide
 RUN if [ -f package-lock.json ]; then \
-        npm ci --silent || npm install --silent; \
+        npm ci --legacy-peer-deps || npm install --legacy-peer-deps; \
     else \
-        npm install --silent; \
+        npm install --legacy-peer-deps; \
     fi
 
 # Copie du code source
