@@ -172,13 +172,14 @@ services:
     environment:
       # Configuration Google Gemini
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_API_KEY: ${GEMINI_API_KEY}
       
       # Configuration MySQL
-      MYSQL_HOST: mysql
-      MYSQL_PORT: 3306
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-logiway}
-      MYSQL_USER: ${MYSQL_USER:-logiway_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-logiway}
+      DB_USER: ${MYSQL_USER:-logiway_user}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
       
       # Configuration serveur
       PORT: 8001
