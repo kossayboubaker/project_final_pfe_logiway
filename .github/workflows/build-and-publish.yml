@@ -38,7 +38,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/project_final_pfe_logiway/logiway-backend
+          images: ghcr.io/${{ github.repository_owner }}/logiway-backend
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=tag
@@ -84,7 +84,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/project_final_pfe_logiway/logiway-frontend
+          images: ghcr.io/${{ github.repository_owner }}/logiway-frontend
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=tag
@@ -130,7 +130,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/project_final_pfe_logiway/logiway-pause-ai
+          images: ghcr.io/${{ github.repository_owner }}/logiway-pause-ai
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=tag
@@ -176,7 +176,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/project_final_pfe_logiway/logiway-reclamation-ai
+          images: ghcr.io/${{ github.repository_owner }}/logiway-reclamation-ai
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=tag
@@ -222,7 +222,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/project_final_pfe_logiway/logiway-rag-service
+          images: ghcr.io/${{ github.repository_owner }}/logiway-rag-service
           tags: |
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=tag
