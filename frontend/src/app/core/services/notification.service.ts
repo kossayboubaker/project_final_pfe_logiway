@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { switchMap, tap, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { AppConfigService } from './app-config.service';
 
 export interface NotificationResponse {
     id: number;
@@ -36,7 +37,7 @@ export interface AppNotification {
     providedIn: 'root'
 })
 export class NotificationService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api/notifications';
+    private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/notifications`; }
     private readonly leaveTokenRegex = /\[CONGE_ID:(\d+)\]\s*/i;
     private dismissedNotificationIds = new Set<string>();
     private notificationOverrides = new Map<string, Partial<AppNotification>>();
@@ -53,7 +54,7 @@ export class NotificationService {
     private notificationBuffer?: AudioBuffer;
     private audioUnlocked = false;
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
     private ensureAudioSetup() {
         if (this.audioContext) return;

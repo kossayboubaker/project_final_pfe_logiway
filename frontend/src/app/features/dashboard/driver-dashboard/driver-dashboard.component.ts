@@ -12,6 +12,7 @@ import { Company, CompanyService } from '../../../core/services/company.service'
 import { DriverDashboardResponse, ProfileService } from '../../../core/services/profile.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { catchError, finalize, of, Subject, takeUntil } from 'rxjs';
+import { AppConfigService } from '../../../core/services/app-config.service';
 
 interface DriverSectorApi {
     id: number;
@@ -114,7 +115,7 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
     private currentDriverId: string | null = null;
     private currentDriverManagerId: string | null = null;
     private readonly destroy$ = new Subject<void>();
-    private readonly sectorsApiUrl = 'http://localhost:8080/api/secteurs';
+    private get sectorsApiUrl(): string { return `${this.appConfig.apiUrl}/secteurs`; }
 
     constructor(
         private authService: AuthService,
@@ -123,7 +124,8 @@ export class DriverDashboardComponent implements OnInit, OnDestroy {
         private companyService: CompanyService,
         private profileService: ProfileService,
         private notificationService: NotificationService,
-        private cdr: ChangeDetectorRef
+        private cdr: ChangeDetectorRef,
+        private appConfig: AppConfigService
     ) { }
 
     ngOnInit() {

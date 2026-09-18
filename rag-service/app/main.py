@@ -41,10 +41,12 @@ app = FastAPI(
     description="Service RAG (Retrieval-Augmented Generation) pour questions sur Logiway - Powered by Gemini"
 )
 
-# Configuration CORS
+# Configuration CORS dynamique
+cors_origins_str = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:4200,http://localhost:8080')
+cors_origins = [o.strip() for o in cors_origins_str.split(',')]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:4200", "http://localhost:8080"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

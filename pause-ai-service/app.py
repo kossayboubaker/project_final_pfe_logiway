@@ -7,6 +7,8 @@ import uuid
 import requests
 from datetime import datetime, timedelta
 
+import os
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -15,7 +17,13 @@ from model import PauseAIModel
 from data_generator import generate_dataset, get_feature_columns
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS dynamique depuis variable d'environnement
+cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', '*')
+if cors_origins == '*':
+    CORS(app)
+else:
+    CORS(app, origins=[o.strip() for o in cors_origins.split(',')])
 
 ai_model = PauseAIModel()
 

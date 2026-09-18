@@ -15,7 +15,7 @@ Le service RAG Chatbot a été **entièrement migré** de Ollama local vers **Go
 
 ### 2. Configuration Gemini fonctionnelle
 ```
-✅ GOOGLE_API_KEY: AIzaSyAzSMkHAj_QXYX0lh9ZCFHQpiiq8UNvF2A
+✅ GOOGLE_API_KEY: YOUR_GOOGLE_API_KEY_HERE
 ✅ GEMINI_MODEL: models/gemini-3.1-flash-lite
 ✅ API Status: ✓ Connecté et fonctionnel
 ✅ MySQL Status: ✓ Connecté (21 tables, 1924 lignes)
@@ -42,7 +42,7 @@ Le service RAG Chatbot a été **entièrement migré** de Ollama local vers **Go
 
 2. **.env** - Configuration Gemini:
    ```env
-   GOOGLE_API_KEY=AIzaSyAzSMkHAj_QXYX0lh9ZCFHQpiiq8UNvF2A
+   GOOGLE_API_KEY=YOUR_GOOGLE_API_KEY_HERE
    GEMINI_MODEL=models/gemini-3.1-flash-lite
    ```
 

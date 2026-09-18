@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 import { AuthService } from '../auth.service';
+import { AppConfigService } from './app-config.service';
 
 export type MessengerRole = 'SUPERADMIN' | 'MANAGER' | 'CHAUFFEUR';
 export type MessengerMessageType = 'TEXTE' | 'IMAGE' | 'PDF' | 'VOCAL' | 'APPEL';
@@ -106,8 +107,8 @@ export interface MessengerMessageView extends MessengerMessageResponse {
     providedIn: 'root'
 })
 export class MessengerService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api/messenger';
-    private readonly serverBaseUrl = 'http://localhost:8080';
+    private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/messenger`; }
+    private get serverBaseUrl(): string { return this.appConfig.apiBaseUrl; }
 
     private usersSubject = new BehaviorSubject<MessengerUserResponse[]>([]);
     private conversationsSubject = new BehaviorSubject<MessengerConversationResponse[]>([]);
@@ -123,7 +124,7 @@ export class MessengerService {
     public unreadCount$ = this.unreadCountSubject.asObservable();
     public realtimeEvents$ = this.realtimeEventSubject.asObservable();
 
-    constructor(private http: HttpClient, private authService: AuthService) {}
+    constructor(private http: HttpClient, private authService: AuthService, private appConfig: AppConfigService) {}
 
     loadUsers(search = ''): Observable<MessengerUserResponse[]> {
         let params = new HttpParams();

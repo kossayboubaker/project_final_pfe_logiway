@@ -1,4 +1,4 @@
-# Dockerfile for Truck Movement Simulator
+# Dockerfile for Multi-Trip GPS Simulator
 FROM python:3.11-slim
 
 # Set working directory
@@ -17,9 +17,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-
 # Copy application code
-COPY simulate_truck.py .
+COPY launch_all_simulators.py trip_route_utils.py simulate_truck_stops.py ./
 
 # Create logs directory
 RUN mkdir -p logs
@@ -33,7 +32,8 @@ USER simulator
 ENV PYTHONUNBUFFERED=1
 ENV LOG_LEVEL=INFO
 ENV BACKEND_URL=http://backend:8080
-ENV OSRM_URL=http://osrm:5000
+ENV OSRM_URL=https://router.project-osrm.org
+ENV SIMULATION_STEP_SECONDS=2.5
 
-# Run the truck simulator
-CMD ["python", "simulate_truck.py"]
+# Run the multi-trip parallel simulator in loop mode
+CMD ["python", "launch_all_simulators.py", "--loop"]

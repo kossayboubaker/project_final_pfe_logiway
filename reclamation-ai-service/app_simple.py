@@ -8,6 +8,7 @@ from flask_cors import CORS
 import logging
 import sys
 import re
+import os
 
 # Configuration du logging
 logging.basicConfig(
@@ -18,11 +19,17 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)
 
-# Configuration
-TOXICITY_THRESHOLD = 0.55
-SEMANTIC_THRESHOLD = 0.25
+# CORS dynamique depuis variable d'environnement
+cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', '*')
+if cors_origins == '*':
+    CORS(app)
+else:
+    CORS(app, origins=[o.strip() for o in cors_origins.split(',')])
+
+# Configuration depuis variables d'environnement
+TOXICITY_THRESHOLD = float(os.getenv('TOXICITY_THRESHOLD', '0.55'))
+SEMANTIC_THRESHOLD = float(os.getenv('SEMANTIC_THRESHOLD', '0.25'))
 
 # Mots toxiques pour validation simple
 TOXIC_WORDS = [
@@ -153,10 +160,11 @@ def validate():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
+    port = int(os.getenv('PORT', '5001'))
     logger.info("=" * 60)
     logger.info("SERVICE IA RÉCLAMATION - VERSION SIMPLIFIÉE")
-    logger.info("Port: 5001")
+    logger.info(f"Port: {port}")
     logger.info("Validation: Règles simples (pas de modèles lourds)")
     logger.info("=" * 60)
     
-    app.run(host='0.0.0.0', port=5001, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=False)

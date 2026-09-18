@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { AppConfigService } from '../../../core/services/app-config.service';
 
 @Component({
     selector: 'app-verify-email',
@@ -12,9 +13,9 @@ import { HttpClient } from '@angular/common/http';
 })
 export class VerifyEmailComponent implements OnInit {
     message = 'Verification en cours...';
-    private readonly apiBaseUrl = 'http://localhost:8080/api';
+    private get apiBaseUrl(): string { return this.appConfig.apiUrl; }
 
-    constructor(private route: ActivatedRoute, private http: HttpClient) {}
+    constructor(private route: ActivatedRoute, private http: HttpClient, private appConfig: AppConfigService) {}
 
     ngOnInit(): void {
         const token = this.route.snapshot.queryParamMap.get('token');

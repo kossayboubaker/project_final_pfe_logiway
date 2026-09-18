@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AppConfigService } from './app-config.service';
 
 export interface DriverDashboardResponse {
     chauffeur: any;
@@ -31,9 +32,9 @@ export interface PageResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api/profile/me';
+    private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/profile/me`; }
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
     getCurrentProfile(): Observable<any> {
         return this.http.get(this.apiBaseUrl);

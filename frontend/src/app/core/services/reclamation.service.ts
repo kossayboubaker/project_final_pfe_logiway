@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
+import { AppConfigService } from './app-config.service';
 
 export type ReclamationStatus = 'EN_COURS' | 'RESOLU' | 'REJETE';
 
@@ -51,9 +52,9 @@ export interface ValidateReclamationResponse {
 
 @Injectable({ providedIn: 'root' })
 export class ReclamationService {
-    private readonly apiBase = 'http://localhost:8080/api/reclamations';
+    private get apiBase(): string { return `${this.appConfig.apiUrl}/reclamations`; }
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
     list(): Observable<ReclamationRecord[]> {
         return this.http.get<ApiReclamation[]>(this.apiBase).pipe(

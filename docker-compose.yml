@@ -34,6 +34,40 @@ services:
       - logiway-network
 
   # ========================================
+  # KEYCLOAK — AUTHENTIFICATION OAuth2/JWT
+  # ========================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: logiway-keycloak
+    restart: unless-stopped
+    ports:
+      - "8180:8080"
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: mysql
+      KC_DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-logiway}
+      KC_DB_USERNAME: ${MYSQL_USER:-logiway_user}
+      KC_DB_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_ENABLED: true
+      KC_PROXY: edge
+    command: start-dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    networks:
+      - logiway-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200\\|UP'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ========================================
   # BACKEND JAVA SPRING BOOT
   # ========================================
   backend:
@@ -48,10 +82,23 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-logiway_user}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
       
+      # Keycloak
+      KEYCLOAK_SERVER_URL: ${KEYCLOAK_SERVER_URL:-http://keycloak:8080}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-logiway}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-logiway}
+      
+      # CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:4200}
+      
       # Services IA/ML
-      PAUSE_AI_SERVICE_URL: http://pause-ai:5000
-      RECLAMATION_AI_SERVICE_URL: http://reclamation-ai:5001
-      RAG_SERVICE_URL: http://rag-service:8001
+      PAUSE_AI_SERVICE_URL: ${PAUSE_AI_SERVICE_URL:-http://pause-ai:5000}
+      RECLAMATION_AI_SERVICE_URL: ${RECLAMATION_AI_SERVICE_URL:-http://reclamation-ai:5001}
+      RAG_SERVICE_URL: ${RAG_SERVICE_URL:-http://rag-service:8001}
+      
+      # API Keys
+      HF_API_TOKEN: ${HF_API_TOKEN:-}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
       
       # Configuration JPA
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -67,6 +114,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      keycloak:
+        condition: service_healthy
       pause-ai:
         condition: service_healthy
       reclamation-ai:
@@ -78,7 +127,7 @@ services:
     networks:
       - logiway-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -93,6 +142,11 @@ services:
     restart: unless-stopped
     ports:
       - "4200:80"
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8080}
+      KEYCLOAK_URL: ${KEYCLOAK_PUBLIC_URL:-http://localhost:8180}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-logiway}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-logiway}
     depends_on:
       - backend
     networks:
@@ -115,9 +169,10 @@ services:
     ports:
       - "5000:5000"
     environment:
-      MODEL_PATH: data/pause_model.joblib
-      TRAINING_DATA_PATH: data/training_data.csv
-      OSRM_URL: https://router.project-osrm.org
+      MODEL_PATH: ${MODEL_PATH:-data/pause_model.joblib}
+      TRAINING_DATA_PATH: ${TRAINING_DATA_PATH:-data/training_data.csv}
+      OSRM_URL: ${OSRM_URL:-https://router.project-osrm.org}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://localhost:8080}
       DEBUG: false
       FLASK_ENV: production
       WORKERS: 2
@@ -147,8 +202,9 @@ services:
     environment:
       FLASK_ENV: production
       PORT: 5001
-      TOXICITY_THRESHOLD: 0.55
-      SEMANTIC_THRESHOLD: 0.25
+      TOXICITY_THRESHOLD: ${TOXICITY_THRESHOLD:-0.55}
+      SEMANTIC_THRESHOLD: ${SEMANTIC_THRESHOLD:-0.25}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://localhost:8080}
       PYTHONUNBUFFERED: 1
     networks:
       - logiway-network
@@ -182,10 +238,13 @@ services:
       DB_USER: ${MYSQL_USER:-logiway_user}
       DB_PASSWORD: ${MYSQL_PASSWORD:-logiway_pass}
       
+      # CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://localhost:8080}
+      
       # Configuration serveur
       PORT: 8001
-      WORKERS: 2
-      LOG_LEVEL: info
+      WORKERS: ${RAG_WORKERS:-2}
+      LOG_LEVEL: ${RAG_LOG_LEVEL:-info}
       PYTHONUNBUFFERED: 1
     depends_on:
       mysql:
@@ -200,14 +259,38 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
       interval: 30s
       timeout: 10s
-      retries: 3
       start_period: 60s
+
+  # ========================================
+  # SIMULATEUR GPS — MULTI-TRAJETS EN PARALLÈLE
+  # Détecte et simule en temps réel tous les trajets EN_COURS
+  # ========================================
+  simulator:
+    build:
+      context: ./simulator
+      dockerfile: Dockerfile.simulator
+    container_name: logiway-simulator
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://backend:8080}
+      OSRM_URL: ${OSRM_URL:-https://router.project-osrm.org}
+      SIMULATION_STEP_SECONDS: ${SIMULATION_STEP_SECONDS:-2.5}
+      SIMULATION_SPEED_KMH: ${SIMULATION_SPEED_KMH:-55}
+      PYTHONUNBUFFERED: 1
+      LOG_LEVEL: INFO
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - logiway-network
 
 # ========================================
 # VOLUMES PERSISTANTS
 # ========================================
 volumes:
   mysql-data:
+    driver: local
+  keycloak-data:
     driver: local
   backend-logs:
     driver: local
@@ -230,5 +313,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
-
+        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16}

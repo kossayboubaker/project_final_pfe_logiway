@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { AppConfigService } from './app-config.service';
 
 export interface UserPayload {
     prenom: string;
@@ -31,9 +32,9 @@ export interface UserListItem {
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api/users';
+    private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/users`; }
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
     create(payload: UserPayload): Observable<any> {
         return this.http.post(`${this.apiBaseUrl}/create`, payload);

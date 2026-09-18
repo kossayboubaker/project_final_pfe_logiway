@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
+import { AppConfigService } from './app-config.service';
 
 export type WeatherRiskLevel = 'VERT' | 'ORANGE' | 'ROUGE';
 
@@ -27,11 +28,11 @@ interface WeatherCacheEntry {
     providedIn: 'root'
 })
 export class WeatherService {
-    private readonly apiUrl = 'http://localhost:8080/api/meteo';
+    private get apiUrl(): string { return `${this.appConfig.apiUrl}/meteo`; }
     private readonly cache = new Map<string, WeatherCacheEntry>();
     private readonly ttlMs = 5 * 60 * 1000;
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private appConfig: AppConfigService) { }
 
     getWeather(lat: number, lon: number, cacheKey?: string): Observable<WeatherInfo> {
         const key = cacheKey ?? this.buildKey(lat, lon);

@@ -14,7 +14,6 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/rapports")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "${app.cors.allowed-origins:http://localhost:4200}")
 public class RapportController {
 
     private final RapportService rapportService;

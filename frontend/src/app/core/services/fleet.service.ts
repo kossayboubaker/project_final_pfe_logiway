@@ -4,6 +4,7 @@ import { Observable, of } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { AuthService } from '../auth.service';
 import { VehiculeStatut } from '../../models/project.models';
+import { AppConfigService } from './app-config.service';
 
 export interface Vehicle {
     id: string;
@@ -107,8 +108,8 @@ export interface TripMapItem {
     providedIn: 'root'
 })
 export class FleetService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api/vehicules';
-    private readonly trajetsApiUrl = 'http://localhost:8080/api/trajets';
+    private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/vehicules`; }
+    private get trajetsApiUrl(): string { return `${this.appConfig.apiUrl}/trajets`; }
     private lastVehiclesCache: Vehicle[] = [];
 
     private vehicles: Vehicle[] = [];
@@ -117,7 +118,8 @@ export class FleetService {
 
     constructor(
         private authService: AuthService,
-        private http: HttpClient
+        private http: HttpClient,
+        private appConfig: AppConfigService
     ) { }
 
     getVehicles(): Observable<Vehicle[]> {

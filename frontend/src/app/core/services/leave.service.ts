@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map, of } from 'rxjs';
+import { AppConfigService } from './app-config.service';
 
 export type LeaveStatusCode = 'EN_ATTENTE' | 'APPROUVE' | 'REJETE' | 'ANNULE';
 export type LeaveRequesterRole = 'MANAGER' | 'CHAUFFEUR';
@@ -75,9 +76,9 @@ export interface LeaveDecisionPayload {
     providedIn: 'root'
 })
 export class LeaveService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api/conges';
+    private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/conges`; }
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
     getLeaves(): Observable<LeaveRecord[]> {
         return this.http.get<LeaveResponse[]>(this.apiBaseUrl).pipe(

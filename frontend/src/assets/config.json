@@ -1,0 +1,6 @@
+{
+  "apiBaseUrl": "__BACKEND_URL__",
+  "keycloakUrl": "__KEYCLOAK_URL__",
+  "keycloakRealm": "__KEYCLOAK_REALM__",
+  "keycloakClientId": "__KEYCLOAK_CLIENT_ID__"
+}

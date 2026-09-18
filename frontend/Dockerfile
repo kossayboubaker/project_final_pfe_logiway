@@ -30,6 +30,9 @@ FROM nginx:1.25-alpine
 LABEL maintainer="LogiWay Team"
 LABEL version="19.1"
 
+# Installation de dos2unix pour corriger les fins de ligne Windows
+RUN apk add --no-cache dos2unix
+
 # Suppression de la config Nginx par défaut
 RUN rm /etc/nginx/conf.d/default.conf
 
@@ -39,7 +42,11 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copie des fichiers buildés depuis stage précédent
 COPY --from=build /app/dist/logiway-frontend/browser /usr/share/nginx/html
 
-# Création utilisateur non-root
+# Copie du script d'entrypoint
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN dos2unix /docker-entrypoint.sh && chmod +x /docker-entrypoint.sh
+
+# Création utilisateur non-root avec accès en écriture pour config.json
 RUN addgroup -S nginx-logiway && adduser -S nginx-logiway -G nginx-logiway && \
     chown -R nginx-logiway:nginx-logiway /usr/share/nginx/html && \
     chown -R nginx-logiway:nginx-logiway /var/cache/nginx && \
@@ -56,5 +63,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 # Switch vers utilisateur non-root
 USER nginx-logiway
 
-# Démarrage Nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Démarrage via entrypoint (substitue les vars d'env puis lance Nginx)
+ENTRYPOINT ["/docker-entrypoint.sh"]

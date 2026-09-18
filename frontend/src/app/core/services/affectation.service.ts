@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AppConfigService } from './app-config.service';
 
 @Injectable({ providedIn: 'root' })
 export class AffectationService {
-  private readonly apiBaseUrl = 'http://localhost:8080/api/vehicules';
+  private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/vehicules`; }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
   // Assigner un chauffeur à un véhicule dans un secteur
   assignerChauffeurVehicule(secteurId: number, chauffeurId: number, vehiculeId: number): Observable<any> {

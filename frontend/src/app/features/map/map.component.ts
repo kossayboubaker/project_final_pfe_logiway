@@ -31,6 +31,7 @@ import { AlertNotificationsComponent } from './components/alert-notifications/al
 import { MapMenuComponent } from './components/map-menu/map-menu.component';
 import { NotificationService, AppNotification } from '../../core/services/notification.service';
 import { WeatherInfo, WeatherService } from '../../core/services/weather.service';
+import { AppConfigService } from '../../core/services/app-config.service';
 
 export interface Vehicle {
     id: string;
@@ -383,7 +384,8 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
         private fleetService: FleetService,
         private pauseAIService: PauseAIService,
         private notificationService: NotificationService,
-        private weatherService: WeatherService
+        private weatherService: WeatherService,
+        private appConfig: AppConfigService
     ) { }
 
     ngOnInit() {
@@ -719,7 +721,7 @@ export class MapComponent implements OnInit, AfterViewInit, OnDestroy {
             return;
         }
 
-        this.gpsRealtimeSource = new EventSource('http://localhost:8080/api/notifications/stream', { withCredentials: true });
+        this.gpsRealtimeSource = new EventSource(`${this.appConfig.apiUrl}/notifications/stream`, { withCredentials: true });
         this.gpsRealtimeSource.addEventListener('gps-position', () => {
             this.ngZone.run(() => {
                 this.loadTripsFromBackend(true);

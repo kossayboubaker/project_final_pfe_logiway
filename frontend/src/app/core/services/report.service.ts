@@ -8,14 +8,15 @@ import {
   ReportListResponse,
   ReportMetadata
 } from '../../models/report.models';
+import { AppConfigService } from './app-config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ReportService {
-  private apiUrl = 'http://localhost:8080/api/reports';
+  private get apiUrl(): string { return `${this.appConfig.apiUrl}/reports`; }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
   /**
    * Génère un rapport intelligent via requête en langage naturel

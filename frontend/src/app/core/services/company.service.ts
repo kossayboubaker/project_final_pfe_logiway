@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, catchError, map, of, switchMap, tap } from 'rxjs';
 import { AuthService } from '../auth.service';
+import { AppConfigService } from './app-config.service';
 
 export interface Company {
     id: string;
@@ -63,11 +64,11 @@ export interface CompanyPayload {
     providedIn: 'root'
 })
 export class CompanyService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api/entreprises';
+    private get apiBaseUrl(): string { return `${this.appConfig.apiUrl}/entreprises`; }
 
     private companiesSubject = new BehaviorSubject<Company[]>(this.buildFallbackCompanies());
 
-    constructor(private http: HttpClient, private authService: AuthService) { }
+    constructor(private http: HttpClient, private authService: AuthService, private appConfig: AppConfigService) { }
 
     getCompanies(): Observable<Company[]> {
         return this.http.get<EntrepriseResponse[]>(this.apiBaseUrl).pipe(

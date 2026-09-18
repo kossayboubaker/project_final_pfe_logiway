@@ -113,7 +113,7 @@ osrm:
   geocode-url: ${OSRM_GEOCODE_URL:https://nominatim.openstreetmap.org/search}
 
 openweather:
-  api-key: ${OPENWEATHER_API_KEY:2a21d92b69f3a928e6687cf817037c5c}
+  api-key: ${OPENWEATHER_API_KEY:}
   base-url: https://api.openweathermap.org/data/2.5/weather
 
   simulator:
@@ -122,7 +122,7 @@ openweather:
 
 hf:
   api:
-    token: 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
+    token: ${HF_API_TOKEN:}
 
 reclamation:
   ai:

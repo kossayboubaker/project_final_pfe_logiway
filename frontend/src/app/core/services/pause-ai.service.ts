@@ -11,13 +11,14 @@ import {
   PauseReglementaireResponse,
   PauseStatusUpdateEvent
 } from '../../models/pause-ai.models';
+import { AppConfigService } from './app-config.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class PauseAIService {
-  private readonly apiUrl = 'http://localhost:8080/api/pauseai';
-  private readonly tripsApiUrl = 'http://localhost:8080/api/trajets';
+  private get apiUrl(): string { return `${this.appConfig.apiUrl}/pauseai`; }
+  private get tripsApiUrl(): string { return `${this.appConfig.apiUrl}/trajets`; }
   
   // Subject pour notifier les composants des nouvelles alertes IA
   private alertSubject = new BehaviorSubject<PauseAIAlertEvent | null>(null);
@@ -29,7 +30,7 @@ export class PauseAIService {
   private realtimeSource?: EventSource;
   private realtimeReconnectTimer?: number;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
   connectRealtime(): void {
     if (this.realtimeSource || typeof EventSource === 'undefined') {
@@ -37,7 +38,7 @@ export class PauseAIService {
     }
 
     console.log('[PauseAIService] Connexion au flux SSE Pause AI');
-    this.realtimeSource = new EventSource('http://localhost:8080/api/notifications/stream', { withCredentials: true });
+    this.realtimeSource = new EventSource(`${this.appConfig.apiUrl}/notifications/stream`, { withCredentials: true });
 
     this.realtimeSource.addEventListener('PAUSE_AI_ALERT', (event: MessageEvent) => {
       try {

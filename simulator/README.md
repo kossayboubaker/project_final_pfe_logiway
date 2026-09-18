@@ -15,10 +15,22 @@ Installation rapide
 pip install -r simulator\requirements.txt
 ```
 
-Commandes utiles
+Commandes utiles :
+> **Note :** Si vous êtes dans le dossier `simulator\`, lancez `python run_simulation.py`. Si vous êtes à la racine du projet, lancez `python simulator\run_simulation.py`.
+
 - Simulateur principal (auto-détecte un trajet actif) :
 ```powershell
+# Depuis la racine :
 python simulator\run_simulation.py
+# Ou depuis le dossier simulator :
+python run_simulation.py
+```
+- Lanceur multi-trajets parallèle (simule TOUS les trajets EN_COURS simultanément en boucle) :
+```powershell
+# Depuis la racine :
+python simulator\launch_all_simulators.py --loop
+# Ou depuis le dossier simulator :
+python launch_all_simulators.py --loop
 ```
 - Créer un trajet test puis simuler (ex : Tunis → Sousse) :
 ```powershell

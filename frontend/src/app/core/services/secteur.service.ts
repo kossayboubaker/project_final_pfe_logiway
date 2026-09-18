@@ -2,12 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Secteur } from '../../models/project.models';
+import { AppConfigService } from './app-config.service';
 
 @Injectable({ providedIn: 'root' })
 export class SecteurService {
-  private apiUrl = 'http://localhost:8080/api/secteurs';
+  private get apiUrl(): string { return `${this.appConfig.apiUrl}/secteurs`; }
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private appConfig: AppConfigService) {}
 
   getAllSecteurs(): Observable<Secteur[]> {
     return this.http.get<Secteur[]>(this.apiUrl);

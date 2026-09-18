@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, finalize, map, tap } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { NotificationService, AppNotification, NotificationCategory } from './services/notification.service';
+import { AppConfigService } from './services/app-config.service';
 export { AppNotification, NotificationCategory } from './services/notification.service';
 
 interface LoginRequest {
@@ -32,7 +33,7 @@ interface AuthSessionResponse {
     providedIn: 'root'
 })
 export class AuthService {
-    private readonly apiBaseUrl = 'http://localhost:8080/api';
+    private get apiBaseUrl(): string { return this.appConfig.apiUrl; }
     private readonly hasCompanyStoragePrefix = 'logiway.hasCompany.';
     private profileSyncInProgress = false;
 
@@ -122,7 +123,7 @@ export class AuthService {
     ]);
     public notifications$ = this.notificationsSubject.asObservable();
 
-    constructor(private http: HttpClient, private notificationService: NotificationService) {}
+    constructor(private http: HttpClient, private notificationService: NotificationService, private appConfig: AppConfigService) {}
 
     public async init(): Promise<boolean> {
         return true;

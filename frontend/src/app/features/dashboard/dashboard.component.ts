@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 
 import { AuthService } from '../../core/auth.service';
+import { AppConfigService } from '../../core/services/app-config.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -12,11 +13,11 @@ import { AuthService } from '../../core/auth.service';
   styleUrls: ['./dashboard.component.css']
 })
 export class DashboardComponent implements OnInit {
-  private readonly apiUrl = 'http://localhost:8080/api/secteurs';
+  private get apiUrl(): string { return `${this.appConfig.apiUrl}/secteurs`; }
   isManager = false;
   managerSectorCount = 0;
 
-  constructor(private authService: AuthService, private http: HttpClient) { }
+  constructor(private authService: AuthService, private http: HttpClient, private appConfig: AppConfigService) { }
 
   ngOnInit(): void {
     const user = this.authService.getUser();

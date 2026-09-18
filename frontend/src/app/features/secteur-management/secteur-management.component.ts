@@ -20,6 +20,7 @@ import { catchError, finalize } from 'rxjs/operators';
 import { AuthService } from '../../core/auth.service';
 import { Company, CompanyService } from '../../core/services/company.service';
 import { UserListItem, UserService } from '../../core/services/user.service';
+import { AppConfigService } from '../../core/services/app-config.service';
 import { PremiumSnackbarComponent } from '../../shared/components/premium-snackbar/premium-snackbar.component';
 import { ConfirmDeleteDialogComponent } from '../../shared/components/confirm-delete-dialog/confirm-delete-dialog.component';
 
@@ -107,7 +108,7 @@ export class SecteurManagementComponent implements OnInit, AfterViewInit, OnDest
     managers: SectorManagerView[] = [];
     availableManagers: SectorManagerView[] = [];
     chauffeurs: SectorDriverView[] = [];
-    private readonly apiUrl = 'http://localhost:8080/api/secteurs';
+    private get apiUrl(): string { return `${this.appConfig.apiUrl}/secteurs`; }
     currentUserRole: string | null = null;
     canManageSectors = false;
     isSuperAdmin = false;
@@ -127,7 +128,8 @@ export class SecteurManagementComponent implements OnInit, AfterViewInit, OnDest
       private userService: UserService,
       private snackBar: MatSnackBar,
       private dialog: MatDialog,
-      private cdr: ChangeDetectorRef
+      private cdr: ChangeDetectorRef,
+      private appConfig: AppConfigService
   ) {}
 
   ngOnInit(): void {
