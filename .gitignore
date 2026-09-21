@@ -12,8 +12,18 @@
 .env.production
 .env.staging
 .env.development
-# Garder .env.example (pas de secrets dedans)
-!.env.example
+.env.example
+
+# Scripts de configuration sensibles
+kc_setup.ps1
+**/*kc_setup*.ps1
+*.bat
+
+# Fichiers SQL (peuvent contenir des données sensibles)
+*.sql
+# Garder les migrations Flyway (nécessaires au projet)
+!**/db/migration/*.sql
+!**/migration/*.sql
 
 # Clés privées / Certificats
 *.pem

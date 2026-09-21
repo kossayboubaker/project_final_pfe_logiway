@@ -1,0 +1,36 @@
+# ========================================
+# OVERRIDE pour Build Local
+# Force le build des images localement
+# ========================================
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: logiway-backend:latest
+  
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: logiway-frontend:latest
+  
+  pause-ai:
+    build:
+      context: ./pause-ai-service
+      dockerfile: Dockerfile
+    image: logiway-pause-ai:latest
+  
+  reclamation-ai:
+    build:
+      context: ./reclamation-ai-service
+      dockerfile: Dockerfile
+    image: logiway-reclamation-ai:latest
+  
+  rag-service:
+    build:
+      context: ./rag-service
+      dockerfile: Dockerfile
+    image: logiway-rag-service:latest
